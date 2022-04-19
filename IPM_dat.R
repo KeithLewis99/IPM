@@ -34,15 +34,16 @@ library(ggplot2)
 library(plotly)
 library(purrr)
 
-# Source files
-#source("simpleLRP_FUN.R")
-#save <- "no"
 
 
 rm(list=ls())
 
 options(dplyr.print_max = 1e9)
 
+
+# Source files
+source("IPM_fun.R")
+#save <- "no"
 
 # load data----
 
@@ -75,7 +76,7 @@ df_dis_summ <- df_dis %>%
      group_by(year, age) %>%
      filter(age != "Unknown") %>%
      #summarise(mat = mean(prop_mat), biomass = sum(biomass))
-     summarise(mat = mean(prop_mat), abun = sum(abundance), var = var(abundance))
+     summarise(mat = mean(prop_mat), abun = sum(abundance), biomass = sum(biomass), varA = var(abundance), varB = var(biomass))
 df_dis_summ  
 str(df_dis_summ)
 
@@ -195,4 +196,9 @@ df_con <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/d
 )
 str(df_con)
 
+
+# Bundle data----
+num_forecasts = 2 # 2 extra years
+jags.data <- ls_jag("yes", "yes")
+jd <- as.data.frame(jags.data)
 
