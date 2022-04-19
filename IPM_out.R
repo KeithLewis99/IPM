@@ -3,22 +3,20 @@
 
 library(rjags)
 library(R2jags)
+library(ggplot2)
 
 rm(list=ls())
 
 
 # Source files
-source("IPM_fun.R")
 source("IPM_dat.R")
+source("IPM_fun.R")
 source("IPM_mod.R")
-#save <- "no"
 
 
 
-# Bundle data----
-num_forecasts = 2 # 2 extra years
-jags.data <- ls_jag("yes", "yes")
-jd <- as.data.frame(jags.data)
+# Model ln scale: tice N3 mortality and INdex SE and split N2----
+# try to fix the priors ito variance
 
 # JAGS settings
 parms <- c("Sld", "N2",  "N3", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2", "I3", "y2", "y3")
@@ -38,7 +36,6 @@ raw <- ls_out(out)
 str(raw)
 
 #extract medians, credible intervals, and prediction intervals
-
 calc <- ls_med(raw)
 str(calc)
 cbind(N2_med, N3_med, N2_med+N3_med)
@@ -58,25 +55,10 @@ ly <- length(year)
 forecast <- 2022:2023
 lf <- length(forecast)
 
-source("IPM_fun.R")
 ipm_plot(calc)
 
 
 # Other plots
-ggplot(jd, aes(x = lag(LD,2) , y = I2)) + geom_point()
-
-# 2018 doesn't match but condition the best ever that year, 2021 doesn't match but survey incomplete, 2010 doesn't match but survey known to be low.keith
-p <- ggplot(jd, aes(x = lag(log10(LD),2) , y = log10(I2), text = paste("year: ", year, "\n", sep = ""))) + geom_point()
-ggplotly(p)
-
-
-p <- ggplot(jd, aes(x = log10(LD) , y = lead(log10(I3), 1), text = paste("year: ", year, "\n", sep = ""))) + geom_point()
-ggplotly(p)
-
-
-p <- ggplot(jd, aes(x = log10(I2) , y = lead(log10(I3), 1), text = paste("year: ", year, "\n", sep = ""))) + geom_point()
-ggplotly(p)
-
 
 tp = out$sims.list$tau.proc
 tp_med = apply(tp,2,'median') # median values of y_pred
