@@ -13,16 +13,24 @@ source("IPM_dat.R")
 source("IPM_mod.R")
 #save <- "no"
 
+
+
+# Bundle data----
+num_forecasts = 2 # 2 extra years
+jags.data <- ls_jag("yes", "yes")
+jd <- as.data.frame(jags.data)
+
+# JAGS settings
 parms <- c("Sld", "N2",  "N3", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2", "I3", "y2", "y3")
 
 # MCMC settings
 ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 
-jags.data <- ls_jag("yes", "yes")
-jd <- as.data.frame(jags.data)
-
+# run model
 ssm26 <- jags(jags.data, parameters=parms, model.file = textConnection(cap.v7))
 ssm26
+
+# create ouput
 out <- ssm26$BUGSoutput 
 
 ## extract raw values from chains
