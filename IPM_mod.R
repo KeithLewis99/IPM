@@ -26,12 +26,12 @@ cap.v7 = '
  # Likelihood 
  ## State process 
  ### Initial values for N2 and N3
-   N2[1] ~ dnorm(8.5, 20)    # Prior for initial population size - based on N2[1] above   
-   N3[1] ~ dnorm(8.9, 20)    # Prior for initial population size - based on N1 above 
+   N2[1] ~ dnorm(8.5, 1/9)    # Prior for initial population size - based on N2[1] above   
+   N3[1] ~ dnorm(8.9, 1/9)    # Prior for initial population size - based on N1 above 
  
  # these values are because 2000-2003 are NA for LD and therefore, N2 cant be calculated in this model formulation. VAlues are from the data, variance is made up
    for (t in 2:4){
-   N2[t] ~ dnorm(8.5, 20)
+   N2[t] ~ dnorm(8.5, 1/9)
    }
    
 
@@ -83,16 +83,17 @@ cap.v7 = '
    # this is a reasonable approach given the correlation between I2 and I
   alpha ~ dnorm(0, 100^-2) # int
   beta ~ dnorm(0, 100^-2) # larval abund
-  #gamma ~ dunif(0, 100)  #tices-max rate of increase
-  #delta ~ dgamma(11.5, 5.7) #tice-width
-  gamma ~ dnorm(0, 100^-2) # condition # for CO
+  gamma ~ dunif(0, 100)  #tices-max rate of increase
+  delta ~ dgamma(11.5, 5.7) #tice-width
+  #gamma ~ dnorm(0, 100^-2) # condition # for CO
   #epsilon ~ dnorm(0, 100^-2) # condition # for CO
   sigma ~ dunif(0, 100) 
    for (t in 5:n.occasions) {
+      #mut[t] <- alpha # want this so that I can have a null model but it wont run?????
       #mu[t] <- alpha + beta*LD[t-2]
-      mu[t] <- alpha + beta*LD[t-2] + gamma*CO[t-1]
-      #mu[t] <- alpha + beta*LD[t-2] + gamma*TI[t]*(1-TI[t]/delta)
-      #mu[t] <- alpha + beta*LD[t-2] + gamma*TI[t]*(1-TI[t]/delta) + epsilon*CO[t]
+      #mu[t] <- alpha + beta*LD[t-2] + gamma*CO[t-1]
+      mu[t] <- alpha + beta*LD[t-2] + gamma*TI[t]*(1-TI[t]/delta)
+      #mu[t] <- alpha + beta*LD[t-2] + gamma*TI[t]*(1-TI[t]/delta) + epsilon*CO[t-1]
       N2[t] ~ dnorm(mu[t], sigma^-2)
    }
 }'
