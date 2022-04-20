@@ -52,7 +52,7 @@ df_cap <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin-2021.csv
 
 str(df_cap)
 head(df_cap)
-# add extra years to time series
+# add extra years to end the time series
 df_tmp <- df_cap[1:2,]
 df_tmp[, 1:8] <- NA
 df_tmp$year[1:2] <- c(2020,2021)
@@ -163,7 +163,7 @@ df_ld  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/larvae2001_2021.
 )
 str(df_ld)
 
-# add extra years to time series
+# add extra years to start the time series
 df_tmp <- df_ld[1:2,]
 df_tmp[, 1:3] <- NA
 df_tmp$SurveyYear[1:2] <- c(1999,2000)
@@ -195,7 +195,16 @@ df_ice <- df_ice %>%
 df_con <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/data/condition_ag1_2_MF_out.csv"
 )
 str(df_con)
+df_con <- df_con %>%
+        slice(5:24)
 
+df_tmp <- df_con[1:3,]
+df_tmp[, 1:2] <- NA
+df_tmp$year[1:3] <- c(2019,2020, 2021)
+df_tmp
+imp <- mean(df_con$meanCond, na.rm = T) 
+df_tmp$meanCond[1:3] <- imp
+df_con <- rbind(df_con, df_tmp)
 
 # Bundle data----
 num_forecasts = 2 # 2 extra years
