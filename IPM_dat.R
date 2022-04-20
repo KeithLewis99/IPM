@@ -211,3 +211,13 @@ num_forecasts = 2 # 2 extra years
 jags.data <- ls_jag("yes", "yes")
 jd <- as.data.frame(jags.data)
 
+
+# add years for convenience of graphing later
+
+jdy <- cbind(year = 1999:2023, jd)
+str(jdy)
+
+jd_raw <- ls_jag("no", "no")
+jd_raw <- as.data.frame(jd_raw)
+jd_raw <- cbind(year = 1999:2021, jd_raw)
+
