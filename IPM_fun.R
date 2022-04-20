@@ -19,7 +19,7 @@ ls_jag <- function(log, forecast){
                         m = df_mat$mat,
                         LD = df_ld$lnlarvae,
                         TI = df_ice$tice,
-                        CO = df_ice$tice
+                        CO = df_con$meanCond
                 )
         } else if (log == "no" & forecast == "no"){
                 jags.data <- list(#year = df_dis_tab$year,
@@ -29,7 +29,7 @@ ls_jag <- function(log, forecast){
                         m = df_mat$mat,
                         LD = df_ld$larvae,
                         TI = df_ice$tice,
-                        CO = df_ice$tice
+                        CO = df_con$meanCond
                 )
         } else if (log == "no" & forecast == "yes"){
                 jags.data <- list(#year = df_dis_tab$year,
@@ -39,7 +39,7 @@ ls_jag <- function(log, forecast){
                         m = c(df_mat$mat, rep(mean(df_mat$mat), num_forecasts)),
                         LD = c(df_ld$larvae, rep(mean(df_ld$larvae), num_forecasts)),
                         TI = c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),
-                        CO = c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts))
+                        CO = c(df_con$meanCond, rep(mean(df_ice$tice), num_forecasts))
                 )
         } else if(log == "yes" & forecast == "yes"){
                 jags.data <- list(#year = df_dis_tab$year,
@@ -47,9 +47,9 @@ ls_jag <- function(log, forecast){
                         I2 =  c(df_dis_tabLog$I2, rep(NA, num_forecasts)),
                         I3 =  c(df_dis_tabLog$I3, rep(NA, num_forecasts)),
                         m = c(df_mat$mat, rep(mean(df_mat$mat), num_forecasts)),
-                        LD = c(df_ld$larvae, rep(mean(df_ld$larvae), num_forecasts)),
+                        LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts)))),
                         TI = c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),
-                        CO = c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts))
+                        CO = as.vector(scale(c(df_con$meanCond, rep(mean(df_con$meanCond), num_forecasts))))
                 )
         }
         return(jags.data)
@@ -121,21 +121,21 @@ ls_med <- function(ls){
 #' @examples
 ipm_plot <- function(x){
      p <- ggplot()  
-     #plot credible interval and median
+     #plot credible interval and median for process
      p <- p + geom_ribbon(aes(x = year, 
                               ymax = x$N_ci[2, 1:c(ly)], 
                               ymin = x$N_ci[1, 1:c(ly)]),
                           alpha = 0.5, fill = "grey60")
      p <- p + geom_line(aes(x = year, y = x$N_med[1:c(ly)]))
      
-     #plot prediction interval and median
+     #plot prediction interval and median for process
      p <- p + geom_ribbon(aes(x = forecast, 
                               ymax = tail(x$Pr_ci[2,], lf), 
                               ymin = tail(x$Pr_ci[1,], lf)),
                           alpha = 0.5, fill = "orange")
      p <- p + geom_line(aes(x = forecast, y = tail(x$N_med, lf)))
      
-     # plot points - observation abundance for I2 and I3
+     # plot points - observation median for I2 and I3
      p <- p + geom_point(aes(y = x$I_med, x = c(year, forecast)),
                          shape = 16, 
                          size = 1.5,
