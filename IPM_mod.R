@@ -25,17 +25,26 @@ cap.v7 = '
  
  # Likelihood 
  ## State process 
- # these values are because 1999-2003 are NA for LD and therefore, N2 cant be calculated in this model formulation. VAlues are from the data, variance is made up
-     N2[1] ~ dnorm(8.5, 20)    # Prior for initial population size - based on N2[1] above   
+ ### Initial values for N2 and N3
+   N2[1] ~ dnorm(8.5, 20)    # Prior for initial population size - based on N2[1] above   
+   N3[1] ~ dnorm(8.9, 20)    # Prior for initial population size - based on N1 above 
+ 
+ # these values are because 2000-2003 are NA for LD and therefore, N2 cant be calculated in this model formulation. VAlues are from the data, variance is made up
    for (t in 2:4){
    N2[t] ~ dnorm(8.5, 20)
    }
-   N3[1] ~ dnorm(8.9, 20)    # Prior for initial population size - based on N1 above 
+   
+
 # trying to find a way to produce N3 from N2 (based on immature N2 and survival to age 3)
    for (t in 1:(n.occasions-1)){ 
-   Nt2[t] ~ dnorm(N2[t], tau.proc)
-   Ni2[t] <- Nt2[t]*(1-m[t])
-   Nm2[t] <- Nt2[t]*(m[t])
+   Nt2[t] ~ dnorm(N2[t], tau.proc)  # so this produces total N2 from below but with process error
+   Ni2[t] <- Nt2[t]*(1-m[t])        # immature N2
+   Nm2[t] <- Nt2[t]*(m[t])          # mature N2
+
+# trying to kill off immature N2 so that not all become N3
+      sur[t] ~ dunif(0, 1)  # prior for survival rate
+      n3[t] <- Ni2[t]*sur[t] # the survival rate of N2
+    N3[t+1] ~ dnorm(n3[t], tau.proc) # the number of N3 with process error
 
    # this produces the pool of N2 that could become N3
    #  N3[t+1] ~ dnorm(X2[t], tau.proc) 
@@ -48,9 +57,6 @@ cap.v7 = '
      #sigma.sur ~ dunif(0, 10)       # Prior for sd of survival
       #sigma2.sur <- pow(sigma.sur, 2) 
       #tau.sur <- pow(sigma.sur, -2) 
-      sur[t] ~ dunif(0, 1)  # prior for survival rate
-      n3[t] <- Ni2[t]*sur[t] # the survival rate of N2
-    N3[t+1] ~ dnorm(n3[t], tau.proc) # the number of N3 with process error
    } 
 
  ## Observation process - aim to make this age disaggregated in next phase
@@ -78,13 +84,15 @@ cap.v7 = '
   alpha ~ dnorm(0, 100^-2) # int
   beta ~ dnorm(0, 100^-2) # larval abund
   #gamma ~ dunif(0, 100)  #tices-max rate of increase
-  gamma ~ dnorm(0, 100^-2) # condition
   #delta ~ dgamma(11.5, 5.7) #tice-width
+  gamma ~ dnorm(0, 100^-2) # condition # for CO
+  #epsilon ~ dnorm(0, 100^-2) # condition # for CO
   sigma ~ dunif(0, 100) 
    for (t in 5:n.occasions) {
-      #N2[t] <- alpha + LD[t]*Sld
+      #mu[t] <- alpha + beta*LD[t-2]
+      mu[t] <- alpha + beta*LD[t-2] + gamma*CO[t-1]
       #mu[t] <- alpha + beta*LD[t-2] + gamma*TI[t]*(1-TI[t]/delta)
-      mu[t] <- alpha + beta*LD[t-2] + gamma*CO[t]
+      #mu[t] <- alpha + beta*LD[t-2] + gamma*TI[t]*(1-TI[t]/delta) + epsilon*CO[t]
       N2[t] ~ dnorm(mu[t], sigma^-2)
    }
 }'
