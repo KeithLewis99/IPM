@@ -1,18 +1,17 @@
 
 # required packages
-
 library(rjags)
 library(R2jags)
 library(ggplot2)
 
-rm(list=ls())
 
+# Start----
+rm(list=ls())
 
 # Source files
 source("IPM_dat.R")
 source("IPM_fun.R")
 source("IPM_mod.R")
-
 
 
 # Model ln scale: tice N3 mortality and INdex SE and split N2----
@@ -37,26 +36,34 @@ str(raw)
 
 #extract medians, credible intervals, and prediction intervals
 calc <- ls_med(raw)
+df_calc <- do.call(rbind, calc)
+write(df_calc, "out2.csv")
 str(calc)
 cbind(N2_med, N3_med, N2_med+N3_med)
 
-## figures ----
+## figures
+# N2: observation median v process median
 plot(calc$I2_med, calc$N2_med)
+# N3: observation median v process median
 plot(calc$I3_med, calc$N3_med)
+# Observation median over time
 plot(seq(1999:2023), calc$I_med)
 
+# observation median v real data - relation is perfect - is this OK?
 plot(calc$I2_med, jd$I2)
 plot(calc$I3_med, jd$I3)
+plot(calc$N2_med, jd$I2)
+plot(calc$N3_med, jd$I3)
 
 
-# IPM plot
+## IPM plot----
 year <- 1999:2021
 ly <- length(year)
 forecast <- 2022:2023
 lf <- length(forecast)
 
-ipm_plot(calc)
-
+tmp_plot <- ipm_plot(calc)
+ggsave("tmp_plot1.pdf")
 
 # Other plots
 
