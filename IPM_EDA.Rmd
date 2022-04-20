@@ -1,36 +1,163 @@
 ---
-title: "EDA"
-output: 
+title: "LRP EDA"
+author: "Keith Lewis"
+date: "2/13/2021"
+output:
   flexdashboard::flex_dashboard:
-    orientation: columns
-    vertical_layout: fill
+    theme: yeti
 ---
 
 ```{r setup, include=FALSE}
-library(flexdashboard)
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+library(knitr)
+library(plotly)
+library(ggplot2)
+library(crosstalk)
+source("IPM_EDA.R")
 ```
 
-Column {data-width=650}
------------------------------------------------------------------------
 
-### Chart A
+# Abundance by age and strata
+
+
+```{r fig-01}
+ggplotly(p01)
+```
+
+
+# Correlation between age class and abundance
+
+Column
+-------------------------------------
+
+### I2 -> I
+
+```{r fig-02}
+ggplotly(p4)
+```
+
+Column
+-------------------------------------
+
+### I3 -> lead(I)
+
+```{r fig-03}
+ggplotly(p5)
+```
+
+### I3 -> lead(I,2)
 
 ```{r}
-
+ggplotly(p8)
 ```
 
-Column {data-width=350}
------------------------------------------------------------------------
+# Schaekell survial
 
-### Chart B
+Column
+-------------------------------------
 
-```{r}
+### I2 -> I3
 
+```{r fig-1}
+ggplotly(p1)
 ```
 
-### Chart C
+### I3 -> I4
 
-```{r}
-
+```{r fig-2}
+ggplotly(p6)
 ```
 
+Column
+-------------------------------------
+  
+### I2 -> I4
+
+```{r fig-3}
+ggplotly(p3)
+```
+
+
+
+# Abun/biomass by Age
+
+Column
+-------------------------------------
+
+### Abundance by age
+
+```{r fig-4}
+ggplotly(p21)
+```
+
+### Biomass by age
+
+```{r fig-5}
+ggplotly(p22)
+```
+
+
+# Larval Density
+
+Column
+-------------------------------------
+
+### LD -> I2
+
+```{r fig-40}
+ggplotly(p10)
+```
+
+
+### log(LD -> I2)
+
+```{r fig-41}
+ggplotly(p11)
+```
+
+Column
+-------------------------------------
+
+### L3 -> I3
+
+```{r fig-50}
+ggplotly(p12)
+```
+
+# Maturity
+
+Column
+-------------------------------------
+
+### year v maturity
+```{r fig-60}
+ggplotly(p60)
+```
+
+### I2 -> mat
+```{r fig-61}
+ggplotly(p61)
+```
+
+Column
+-------------------------------------
+
+### I3 -> mat
+```{r fig-62}
+ggplotly(p62)
+```
+
+### I -> mat
+```{r fig-63}
+ggplotly(p63)
+```
+
+
+# Maturity II
+
+Column
+-------------------------------------
+### I3 -> mat
+```{r fig-64}
+ggplotly(p64)
+```
