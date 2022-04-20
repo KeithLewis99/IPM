@@ -24,7 +24,7 @@ parms <- c("Sld", "N2",  "N3", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2",
 ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 
 # run model
-ssm26 <- jags(jags.data, parameters=parms, model.file = textConnection(cap.v7))
+ssm26 <- jags(jags.data, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(cap.v7))
 ssm26
 
 # create ouput
@@ -36,7 +36,7 @@ str(raw)
 
 #extract medians, credible intervals, and prediction intervals
 calc <- ls_med(raw)
-df_calc <- do.call(rbind, calc)
+df_calc <- do.call(rbind, calc) # this doesn't work
 write(df_calc, "out2.csv")
 str(calc)
 cbind(N2_med, N3_med, N2_med+N3_med)
@@ -63,6 +63,7 @@ forecast <- 2022:2023
 lf <- length(forecast)
 
 tmp_plot <- ipm_plot(calc)
+tmp_plot
 ggsave("tmp_plot1.pdf")
 
 # Other plots
