@@ -1,36 +1,90 @@
 ---
 title: "IPM_out"
-output: 
+author: "Keith Lewis"
+date: "21/4/2022"
+output:
   flexdashboard::flex_dashboard:
-    orientation: columns
-    vertical_layout: fill
+    theme: yeti
 ---
 
 ```{r setup, include=FALSE}
-library(flexdashboard)
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+library(knitr)
+library(plotly)
+library(ggplot2)
+library(crosstalk)
+source("IPM_out.R")
+options(scipen=999)
 ```
 
-Column {data-width=650}
------------------------------------------------------------------------
+# MCMC info
 
-### Chart A
+iterations (ni) = `r ni`  
+thining rate (nt) = `r nt`  
+burn-in (nb) = `r nb`  
+number chains (nc) = `r nc`  
+
+
+DIC = `r round(ssm26_dic, 1)`
+
+# Table- means and CIs?
+
+# Chain mixing
+
+Column {.tabset}
+-------------------------------------
+
+### forecast vars
 
 ```{r}
-
+mix1
 ```
 
-Column {data-width=350}
------------------------------------------------------------------------
-
-### Chart B
+### demographic
 
 ```{r}
-
+mix2
 ```
 
-### Chart C
+### variances
 
 ```{r}
-
+mix3
 ```
 
+
+# Autocorrelation
+
+Column {.tabset}
+-------------------------------------
+
+### forecast vars
+
+```{r}
+autocorr1
+```
+
+### demographic
+
+```{r}
+autocorr2
+```
+
+### variances
+
+```{r}
+autocorr3
+```
+
+# Overdispersion
+Is this only needed for GLM type models, i.e., when there is non-normal distributions involved?
+
+# Model validation
+
+# residuals with covariates
+
+# Results
+
+
+
+# 
