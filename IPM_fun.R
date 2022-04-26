@@ -1,14 +1,17 @@
 
 #' JAGS data format
-#'
-#' @param log 
-#' @param forecast 
-#'
-#' @return
+#' 
+#' @param log - put the capelin abundance on natural log (yes) or real scale (no)
+#' @param forecast - add 2 forecast years - yes or no
+#' 
+#' @return a list with the the various input data sets; 
 #' @export
 #'
-#' @examples
-ls_jag <- function(log, forecast){
+#' @examples see IPM_fun.R
+#' num_forecasts = 2 
+#' # 2 extra years jags.data <- ls_jag("yes", "yes")
+#' jd <- as.data.frame(jags.data)
+  ls_jag <- function(log, forecast){
         #browser()
         if(log == "yes" & forecast == "no"){
                 jags.data <- list(#year = df_dis_tab$year,
@@ -57,41 +60,49 @@ ls_jag <- function(log, forecast){
 
 
 #' ls_out
-#' The purpose here is to extract the output from the jags.data
-#' @param out 
+#' Extract a list from the jags.data list with important variables - feeds function "ls_med"
+#' @param x - the list of jags output from function ls_jag
 #'
-#' @return
+#' @return a list
 #' @export
 #'
-#' @examples
-ls_out <- function(out){
-     
-     I2 = out$sims.list$I2
-     I3 = out$sims.list$I3
-     N3 = out$sims.list$N3
-     N2 = out$sims.list$N2
-     ls_raw <- list(I2 = I2, I3=I3, N3=N3, N2=N2)
+#' @examples raw <- ls_out(out) - see IPM_out.R
+ls_out <- function(x){
+     I2 = x$sims.list$I2
+     I3 = x$sims.list$I3
+     N3 = x$sims.list$N3
+     N2 = x$sims.list$N2
+     mu = x$sims.list$mu
+     sigmaJ = x$sims.list$sigma
+     ls_raw <- list(I2 = I2, I3=I3, N3=N3, N2=N2, mu=mu, sigmaJ=sigmaJ)
      return(ls_raw)
 }
 
+
 #' ls_med
-#' The purpose here is to extract medians, credible intervals, and prediction intervals
-#' @return
+#' The purpose here is to extract medians, credible intervals, and prediction intervals - feeds function "ipm_plot"
+#' @param ls - the list of jags output from function ls_out
+#'
+#' @return A list 
 #' @export
 #'
-#' @examples
+#' @examples calc <- ls_med(raw) - see IPM_out.R
 ls_med <- function(ls){
      # convert to simplify code
      I2 <- ls$I2
      I3 <- ls$I3
      N2 <- ls$N2
      N3 <- ls$N3
+     mu <- ls$mu
      
      #summarize output as medians
+     # out$median$N2 produces the same code as below
      I2_med = apply(I2,2,'median') # median values of y_pred
      I3_med = apply(I3,2,'median') # median values of y_pred
      N3_med = apply(N3,2,'median')
      N2_med = apply(N2,2,'median')
+     mu_med = apply(mu,2,'median')
+     #log(exp(calc$I3_med)+exp(calc$I2_med)) same code except for NA values
      I_med <- log(apply(exp(I3)+exp(I2), 2, 'median'))
      N_med <- log(apply(exp(N3)+exp(N2), 2, 'median'))
      
@@ -100,7 +111,7 @@ ls_med <- function(ls){
      N_ci <- log(apply(exp(N3)+exp(N2), 2, 'quantile', c(0.025, 0.975)))
      Pr_ci <- log(apply(exp(N3)+exp(N2), 2, 'quantile', c(0.1, 0.9)))
      I = log(exp(jd$I2) + exp(jd$I3))
-     ls_med <- list(I2_med = I2_med, I3_med = I3_med, N2_med = N2_med, N3_med = N3_med, I_med = I_med, N_med = N_med, I_ci = I_ci, N_ci = N_ci, Pr_ci = Pr_ci, I = I)
+     ls_med <- list(I2_med = I2_med, I3_med = I3_med, N2_med = N2_med, N3_med = N3_med, I_med = I_med, N_med = N_med, mu_med = mu_med, I_ci = I_ci, N_ci = N_ci, Pr_ci = Pr_ci, I = I)
      return(ls_med)
 }
 
@@ -108,18 +119,21 @@ ls_med <- function(ls){
 #cbind(N2_med, N3_med, N2_med+N3_med)
 
 
-
-
-
 #' IPM plot
-#'
-#' @param x 
+#' Produce a plot of the jags output inlucding median values, credible/prediction intervals and the raw data
+#' @param x the output from function ls_med
 #'
 #' @return
 #' @export
 #'
-#' @examples
-ipm_plot <- function(x){
+#' @examples tmp_plot <- ipm_plot(calc) - see IPM_out.R
+#' requires specification of values for ly and lf 
+#' year <- 1999:2021
+#' ly <- length(year)
+#' forecast <- 2022:2023
+#' lf <- length(forecast)
+
+ipm_plot <- function(x, y){
      p <- ggplot()  
      #plot credible interval and median for process
      p <- p + geom_ribbon(aes(x = year, 
@@ -148,6 +162,10 @@ ipm_plot <- function(x){
      p <- p + geom_point(aes(y = x$I, x = c(year, forecast)),
                          shape = 16, 
                          size = 1.5)
+     p <- p + geom_point(aes(y = log(y$abundance_med*1000), x = c(year, forecast)),
+                         shape = 18, 
+                         size = 1.5,
+                         colour = "pink")
      p <- p + theme_bw() + ylab("ln(Capelin abundance x 1,000)")
      return(p)
 }
