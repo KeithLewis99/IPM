@@ -70,12 +70,47 @@ cap.v7 = '
 
    for (t in 1:n.occasions) { 
    # the estiamted index
-   I2[t] ~ dnorm(y2[t], tau.ind) 
-     I3[t] ~ dnorm(y3[t], tau.ind)
-
    y2[t] ~ dnorm(N2[t], tau.obs) 
-     y3[t] ~ dnorm(N3[t], tau.obs)
+  y3[t] ~ dnorm(N3[t], tau.obs)
+
+   I2[t] ~ dnorm(y2[t], tau.ind) 
+    I3[t] ~ dnorm(y3[t], tau.ind)
+    I[t] ~ dnorm(log(exp(I2[t]) + exp(I3[t])), tau.ind)
    }
+
+# Assessing the fit of th state-space model
+# 1. Compute fit statistics for observed data.
+# 1.1 Discrepancy meansure: mean absolute error
+   for (t in 1:n.occasions) {
+   I.exp[t] <- log(exp(N2[t]) + exp(N3[t]))
+   }
+   
+# 1.2 Test statistic: number of turns or switches - jaggedness
+for (t in 1:(n.occasions-2)){
+   Tt1.obs[t] <- step(I[t+2] - I[t+1])
+   Tt2.obs[t] <- step(I[t+1] - I[t])
+   Tt3.obs[t] <- equals(Tt1.obs[t] + Tt2.obs[t], 1)
+}
+Tturn.obs <- sum(Tt3.obs)
+
+
+# 2.1 Simulated data
+for (t in 1:n.occasions){
+   y2.rep[t] ~ dnorm(N2[t], tau.obs) 
+   y3.rep[t] ~ dnorm(N3[t], tau.obs)
+   I2.rep[t] ~ dnorm(y2.rep[t], tau.ind)
+   I3.rep[t] ~ dnorm(y3.rep[t], tau.ind)
+  I.rep[t] ~ dnorm(log(exp(I2.rep[t]) + exp(I3.rep[t])), tau.ind)
+}
+
+#Test statistic: number of turns or switches - jaggedness
+for (t in 1:(n.occasions-2)){
+   Tt1.rep[t] <- step(I.rep[t+2] - I.rep[t+1])
+   Tt2.rep[t] <- step(I.rep[t+1] - I.rep[t])
+   Tt3.rep[t] <- equals(Tt1.rep[t] + Tt2.rep[t], 1)
+}
+Tturn.rep <- sum(Tt3.rep)
+
 
  ## larval density
    # From Murphy the equation relating R = LD*S is R = 0.40x + 2.80
