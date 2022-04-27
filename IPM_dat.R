@@ -53,11 +53,12 @@ df_cap <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin-2021.csv
 str(df_cap)
 head(df_cap)
 # add extra years to end the time series
-df_tmp <- df_cap[1:2,]
+df_tmp <- df_cap[1:4,]
 df_tmp[, 1:8] <- NA
-df_tmp$year[1:2] <- c(2020,2021)
+df_tmp$year[1:2] <- c(2020:2023)
 df_tmp
 df_cap <- rbind(df_cap, df_tmp)
+
 
 
 ##disaggregated data----
