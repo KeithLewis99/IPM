@@ -13,8 +13,13 @@ library(knitr)
 library(plotly)
 library(ggplot2)
 library(crosstalk)
+library(xtable)
+library(DT)
+library(ezknitr)
+
 source("IPM_out.R")
 options(scipen=999)
+
 ```
 
 # MCMC info
@@ -29,6 +34,16 @@ DIC = `r round(ssm26_dic, 1)`
 
 # Table- means and CIs?
 
+Column
+-------------------------------------
+
+### Parameter estimates
+
+```{r tab1, eval=T,prompt=T, comment = F}
+datatable(tab1, rownames = F, class = 'cell-border stripe', height = 50,  options = list(searching = F, pageLength = 30, autoWidth = TRUE, scrollY = F)) %>% formatRound(2:4, 3)
+```
+
+  
 # Chain mixing
 
 Column {.tabset}
