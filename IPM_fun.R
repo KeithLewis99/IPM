@@ -133,24 +133,24 @@ ls_med <- function(ls){
 #' forecast <- 2022:2023
 #' lf <- length(forecast)
 
-ipm_plot <- function(x, y){
+ipm_plot <- function(df1 = x, df2 = y){
      p <- ggplot()  
      #plot credible interval and median for process
      p <- p + geom_ribbon(aes(x = year, 
-                              ymax = x$N_ci[2, 1:c(ly)], 
-                              ymin = x$N_ci[1, 1:c(ly)]),
+                              ymax = df1$N_ci[2, 1:c(ly)], 
+                              ymin = df1$N_ci[1, 1:c(ly)]),
                           alpha = 0.5, fill = "grey60")
-     p <- p + geom_line(aes(x = year, y = x$N_med[1:c(ly)]))
+     p <- p + geom_line(aes(x = year, y = df1$N_med[1:c(ly)]))
      
      #plot prediction interval and median for process
      p <- p + geom_ribbon(aes(x = forecast, 
-                              ymax = tail(x$Pr_ci[2,], lf), 
-                              ymin = tail(x$Pr_ci[1,], lf)),
+                              ymax = tail(df1$Pr_ci[2,], lf), 
+                              ymin = tail(df1$Pr_ci[1,], lf)),
                           alpha = 0.5, fill = "orange")
-     p <- p + geom_line(aes(x = forecast, y = tail(x$N_med, lf)))
-     
+     p <- p + geom_line(aes(x = forecast, y = tail(df1$N_med, lf)))
+     #browser()
      # plot points - observation median for I2 and I3
-     p <- p + geom_point(aes(y = x$I_med, x = c(year, forecast)),
+     p <- p + geom_point(aes(y = df1$I_med, x = c(year, forecast)),
                          shape = 16, 
                          size = 1.5,
                          colour = "red")
@@ -159,10 +159,11 @@ ipm_plot <- function(x, y){
      p <- p + geom_errorbar(data = df_cap[15:37,], aes(x = year, min=log(ab_lci*1000), ymax=log(ab_uci*1000)), width = 0.3, colour = "black")
      
      # plot points from disaggregated survey
-     p <- p + geom_point(aes(y = x$I, x = c(year, forecast)),
+     p <- p + geom_point(aes(y = df1$I, x = c(year, forecast)),
                          shape = 16, 
                          size = 1.5)
-     p <- p + geom_point(aes(y = log(y$abundance_med*1000), x = c(year, forecast)),
+     # points from teh aggregated survey
+     p <- p + geom_point(aes(y = log(df2$abundance_med*1000), x = c(year, forecast)),
                          shape = 18, 
                          size = 1.5,
                          colour = "pink")
