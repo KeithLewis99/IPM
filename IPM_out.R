@@ -3,8 +3,7 @@
 library(rjags)
 library(R2jags)
 library(ggplot2)
-
-
+library(lattice)
 
 # Start----
 rm(list=ls())
@@ -13,26 +12,28 @@ rm(list=ls())
 source("IPM_dat.R")
 source("IPM_fun.R")
 source("IPM_mod.R")
-
-
+source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
+source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
 # Model ln scale: tice N3 mortality and INdex SE and split N2----
 # try to fix the priors ito variance
 
 # JAGS settings
-parms <- c("Sld", "N2",  "N3", "mu", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2", "I3", "y2", "y3", "alpha", "beta", "gamma", "sigma")
+parms <- c("Sld", "N2",  "N3", "mu", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2", "I3", "I", "I2.rep", "I3.rep", "I.exp", "I.rep", "y2", "y3", "alpha", "beta", "gamma", "sigma", "Tturn.obs", "Tturn.rep")
 
 # MCMC settings
 ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 #ni <- 200000; nt <- 30; nb <- 30000; nc <- 3
 
 # run model
+source("IPM_mod.R")
 ssm26 <- jags(jags.data, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(cap.v7))
 ssm26
 
 # create ouput
 out <- ssm26$BUGSoutput 
 
+# Send DIC to dashboard
 ssm26_dic <- out$DIC
 
 ## extract raw values from chains
@@ -41,10 +42,13 @@ str(raw)
 
 #extract medians, credible intervals, and prediction intervals
 calc <- ls_med(raw)
-df_calc <- do.call(rbind, calc) # this doesn't work
-write(df_calc, "out2.csv")
 str(calc)
+#df_calc <- do.call(rbind, calc) # this doesn't work
+#write(df_calc, "out2.csv")
 #cbind(N2_med, N3_med, N2_med+N3_med)
+
+tab1 <- data.frame(cbind(year = 1999:2023, med = out$median$I, LL = calc$I_ci[1,], UL = calc$I_ci[2,]), options(digits = 3))
+
 
 ## figures
 # N2: observation median v process median
@@ -67,15 +71,8 @@ ly <- length(year)
 forecast <- 2022:2023
 lf <- length(forecast)
 
-source("IPM_fun.R")
-
-df_tmp <- df_cap[1:2,]
-df_tmp[, 1:8] <- NA
-df_tmp$year[1:2] <- c(2022,2023)
-df_tmp
-df_cap <- rbind(df_cap, df_tmp)
-
-tmp_plot <- ipm_plot(x = calc, y = df_cap[15:39,])
+#source("IPM_fun.R")
+tmp_plot <- ipm_plot(df1 = calc, df2 = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
 tmp_plot
 ggsave("tmp_plot1.pdf")
 
@@ -85,21 +82,17 @@ ggsave("tmp_plot1.pdf")
      tp_ci = apply(tp,2,'quantile', c(0.1, 0.9)) # median values of y_pred
 
 # Diagnostics----
-#Source
-source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
-source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
-library(lattice)
-
+# these are just for when figures need to be saved to folders
 filepath_gen <- "biomass_cond_ag1_2_DIC_R3" 
 filepath <- paste0(filepath_gen, "/recruitment_1")
 
-
+# print
 print(out, intervals=c(0.025, 0.975), digits = 3)
 out$mean
 
 
-
-## Mixing ----     
+## N2 ----
+### Mixing ----     
 # Asess mixing of chains to see if one MCMC goes badly Zuur et al. 2013, pg 83
 # vars for forecast model     
      source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
@@ -125,7 +118,7 @@ mix3 <- MyBUGSChains(out, vars3)
 #ggsave(MyBUGSChains(out, vars3), filename = paste0("Bayesian/", filepath, "/chains-variance.pdf"), width=10, height=8, units="in")
 
 
-##autocorrelation----
+###autocorrelation ----
 MyBUGSACF(out, var1)
 autocorr1 <- MyBUGSACF(out, var1)
 #ggsave(MyBUGSACF(out, vars1), filename = paste0("Bayesian/", filepath, "/auto_corr-forecast.pdf"), width=10, height=8, units="in")
@@ -139,7 +132,7 @@ autocorr3 <- MyBUGSACF(out, vars3)
 #ggsave(MyBUGSACF(out, vars3), filename = paste0("Bayesian/", filepath, "/auto_corr-autocorrelation.pdf"), width=10, height=8, units="in")
 
 
-## Model Validation ----
+### Model Validation ----
 #(see Zuuer et al. 2013 for options for calculating Pearson residuals) - note that I am opting to do a lot of this outside of JAGS due to run time issues.  
 # # Residual diagnostics
 
@@ -200,5 +193,86 @@ presN2_fit[3000]
 
 # need to simulate data for the New values
 mean(out$sims.list$FitNew > presN2_fit)
+
+
+# variance/mean
+
+
+## State-space ----
+
+
+### Model Validation ----
+#(see Schuab and Kery 2022, pg 272-282 - note that I am opting to do a lot of this outside of JAGS due to run time issues.  
+
+# this is mu for N2 which missed the first 4 years.
+I <- out$sims.list$I
+I.exp <- out$sims.list$I.exp
+I.rep <- out$sims.list$I.rep
+
+I.exp_median <- out$median$I
+
+#ss.exp <- I.exp[, 1:c(ly)] 
+#lcap <- length(df_cap$abundance_med) - 2
+#ss.obs <- log(df_cap$abundance_med[15:lcap]*1000)
+
+
+# Mean absolute percentage error        
+        # n = jd$n.occasions
+#Dmape.obs <- 100/jd$n.occasions[1] *sum(abs((ss.obs-ss.exp)/ss.obs), na.rm = T)
+Dmape.obs <- 100/jd$n.occasions[1] *rowSums(abs((I-I.exp)/I), na.rm = T)
+
+#ss.rep <- calc$I.rep[1:c(ly)] 
+
+#Dmape.rep <- 100/jd$n.occasions[1] *sum(abs((ss.rep-ss.exp)/ss.rep), na.rm = T)
+Dmape.rep <- 100/jd$n.occasions[1] *rowSums(abs((I.rep-I.exp)/I.rep), na.rm = T)
+
+# Bayesian p-value
+pB <- mean(Dmape.rep > Dmape.obs)
+
+p <- ggplot()
+p <- p + geom_point(aes(x = Dmape.obs, y = Dmape.rep))
+p <- p + geom_abline(intercept = 0, slope = 1)
+p <- p + xlab("Discrepancy observed data") + ylab("Discrepancy replicate data")
+p <- p + xlim(0, 60)
+p <- p + theme_bw()
+p <- p + annotate(geom = "text", x = 50, y = 2, label = bquote(p[B]), colour = "red")
+p <- p + annotate(geom = "text", x = 55, y = 2, label = paste("=", round(pB, 2)), colour = "black")
+p
+
+
+# need simulated data        
+
+# number of switches
+out$sims.list$Tturn.obs
+par(mfrow = c(1,2), mar = c(5,5,2,2))
+hist(out$sims.list$Tturn.obs)
+hist(out$sims.list$Tturn.rep)
+
+
+
+#install.packages('IPMbook')
+
+
+
+# plotGOF <- function(jagsout, obs, rep, main=NA, showP=TRUE,
+#                     ylab="Discrepancy replicate data", xlab="Discrepancy observed data",
+#                     pch=16, cex = 0.8, col=1){
+#         OBS <- jagsout$sims.list[[obs]]
+#         REP <- jagsout$sims.list[[rep]]
+#         lim <- quantile(c(OBS, REP), c(0.0001, 0.999))
+#         plot(OBS, REP, pch=pch, cex=cex, ylim=lim, xlim=lim,
+#              ylab=ylab, xlab=xlab, main=main, axes=FALSE, col=col)
+#         axis(1); axis(2)
+#         segments(lim[1], lim[1], lim[2], lim[2], lty=3)
+#         bp <- round(mean(REP > OBS),2)
+#         if(showP){
+#                 loc <- ifelse(bp < 0.5, "topleft", "bottomright")
+#                 legend(loc, legend=bquote(p[B]==.(bp)), bty="n")
+#         }
+#         return(invisible(bp))
+# }
+# 
+# plotGOF(ssm26, "Dmape.obs", "Dmape.rep", main="State-space model", col=alpha(co, 0.3))
+
 
 # End----
