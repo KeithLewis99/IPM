@@ -47,8 +47,10 @@ str(calc)
 #write(df_calc, "out2.csv")
 #cbind(N2_med, N3_med, N2_med+N3_med)
 
-tab1 <- data.frame(cbind(year = 1999:2023, med = out$median$I, LL = calc$I_ci[1,], UL = calc$I_ci[2,]), options(digits = 3))
 
+# calculations for effective sample size - n.eff should be > # of chains *100
+Neff <- nc*(ni-nb)/nt
+neff <- nc*100  #n.eff should be >nc*100
 
 ## figures
 # N2: observation median v process median
@@ -70,6 +72,7 @@ year <- 1999:2021
 ly <- length(year)
 forecast <- 2022:2023
 lf <- length(forecast)
+
 
 #source("IPM_fun.R")
 tmp_plot <- ipm_plot(df1 = calc, df2 = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
