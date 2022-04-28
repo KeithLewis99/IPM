@@ -22,6 +22,30 @@ options(scipen=999)
 
 ```
 
+# Background
+
+Column {.tabset}
+-------------------------------------
+### 2J3KL capelin
+
+### General
+
+- An integrated state-space population dynamics model  
+- Integrated  
+     - Uses as much information as possible  
+- State-space  
+     - Includes process and observation equations + error  
+     - Population processes are informed by observations from multiple sources  
+     - Process errors are necessary for realistic stochastic projections
+
+### Data inputs
+COPY FROM LRP DASHBOARD
+- spring acoustic survey  
+- Bellevue beach larval survey  
+- tice  
+- condition
+
+
 # MCMC info
 
 iterations (ni) = `r ni`  
@@ -32,19 +56,47 @@ number chains (nc) = `r nc`
 
 DIC = `r round(ssm26_dic, 1)`
 
-# Table- means and CIs?
+Independence- join probability = product of marginal probabilities
 
-Column
+Common Demography Assumption:  The assumption of the IPM is that data sets stem broadly from the same population and that data sets don't have conflicting information.  
+Different areas: To my knowledge, there is no evidence that 2J3KL is not one stock - probably OK here.
+Different time periods: The regime shift may be an issue - may need to have a time-varying component.  See S&K for references (pg. 289)
+Spatial mis-match: larval density is gathered on one beach and extrapolated to the whole stock.  S&K don't elaborate on this.  
+
+Clearly, a tradeoff between Independence and the Common Demography Assumption
+
+# Parameter estimates
+
+Column {.tabset}
 -------------------------------------
 
-### Parameter estimates
+### I
 
 ```{r tab1, eval=T,prompt=T, comment = F}
-datatable(tab1, rownames = F, class = 'cell-border stripe', height = 50,  options = list(searching = F, pageLength = 30, autoWidth = TRUE, scrollY = F)) %>% formatRound(2:4, 3)
+df_keep_rows <- keep_rows("I", 25)
+tab1 <- tabParm(out$summary, df_keep_rows)
+datatable(tab1, rownames = F, class = 'cell-border stripe', height = 50,  options = list(searching = F, pageLength = 30, autoWidth = TRUE, scrollY = F)) %>% formatRound(2:5, 3)
 ```
 
+### I2
+```{r tab2, eval=T,prompt=T, comment = F}
+df_keep_rows <- keep_rows("I2", 25)
+tab2 <- tabParm(out$summary, df_keep_rows)
+datatable(tab2, rownames = F, class = 'cell-border stripe', height = 50,  options = list(searching = F, pageLength = 30, autoWidth = TRUE, scrollY = F)) %>% formatRound(2:5, 3)
+```
+
+# Survey- SA
+
+# Trends
+
+```{r}
+tmp_plot
+```
+
+# Retro
+
   
-# Chain mixing
+# Diagnostics - Chain mixing
 
 Column {.tabset}
 -------------------------------------
@@ -68,7 +120,7 @@ mix3
 ```
 
 
-# Autocorrelation
+# Diagnostics - Autocorrelation
 
 Column {.tabset}
 -------------------------------------
