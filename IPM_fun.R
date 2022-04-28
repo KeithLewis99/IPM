@@ -60,7 +60,7 @@
 
 
 #' ls_out
-#' Extract a list from the jags.data list with important variables - feeds function "ls_med"
+#' Extract a list from the jags.data list with important variables - feeds function "ls_med" - really just simplifies by renaming
 #' @param x - the list of jags output from function ls_jag
 #'
 #' @return a list
@@ -108,10 +108,11 @@ ls_med <- function(ls){
      
      # calculate credible and prediction intervals
      I_ci <- log(apply(exp(I3)+exp(I2), 2, 'quantile', c(0.025, 0.975)))
+     I2_ci <- apply(I2, 2, 'quantile', c(0.025, 0.975))
      N_ci <- log(apply(exp(N3)+exp(N2), 2, 'quantile', c(0.025, 0.975)))
      Pr_ci <- log(apply(exp(N3)+exp(N2), 2, 'quantile', c(0.1, 0.9)))
      I = log(exp(jd$I2) + exp(jd$I3))
-     ls_med <- list(I2_med = I2_med, I3_med = I3_med, N2_med = N2_med, N3_med = N3_med, I_med = I_med, N_med = N_med, mu_med = mu_med, I_ci = I_ci, N_ci = N_ci, Pr_ci = Pr_ci, I = I)
+     ls_med <- list(I2_med = I2_med, I3_med = I3_med, N2_med = N2_med, N3_med = N3_med, I_med = I_med, N_med = N_med, mu_med = mu_med, I_ci = I_ci, N_ci = N_ci, Pr_ci = Pr_ci, I = I, I2_ci = I2_ci)
      return(ls_med)
 }
 
@@ -170,3 +171,82 @@ ipm_plot <- function(df1 = x, df2 = y){
      p <- p + theme_bw() + ylab("ln(Capelin abundance x 1,000)")
      return(p)
 }
+
+
+
+#' Title
+#'
+#' @param x 
+#' @param y 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+keep_rows <- function(x,y){
+  #browser()
+  tmp_vec <- rep(NA, y)
+  for(i in 1:y){
+    row <- paste0(x,"[",i, "]")
+    tmp_vec[i] <- row
+  }
+  return(tmp_vec)
+}
+
+
+
+
+#' Title - DEPRECATED - WENT ABOUT THIS IN THE TOTALLY WRONG WAY.  MUCH EASIER WAY BELOW.  But, I learned some valuable lessons on this including how to work with [[]] and text.
+#'
+#' #' @param df1 
+#' #' @param df2 
+#' #' @param df3 
+#' #' @param tabName 
+#' #'
+#' #' @return
+#' #' @export
+#' #'
+#' #' @examples
+#' tabParm <- function(df1 = x, df2 = y, df3 = z, tabName){
+#'   browser()
+#'   ls_tab <- rep(list(list()), length(tabName))
+#'   #if()
+#'   for(i in 1:length(tabName)){
+#'     med = df1[[tabName[i]]]
+#'     LL = paste0(df2[[tabName[i]]][1,])
+#'     UL = paste0(df2[[tabName[i]]][2,])
+#'     Rhat = df3[1:25, "Rhat"]
+#'     Neff = df3[1:25, "n.eff"]
+#'     tab <- data.frame(cbind(year = 1999:2023, med = med, LL = LL, UL = UL, Rhat = Rhat, Neff = Neff))
+#'     ls_tab[[i]] <- tab
+#'   }
+#'   return(ls_tab)
+#' }
+
+
+
+#' Title
+#' Complete the skeleton.  Perhaps loop through tabNmes would help simplify code.  
+#' @param df1 
+#' @param tabName 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+tabParm <- function(df1 = x, rows){
+  #browser()
+  tab <- data.frame(matrix(NA, nrow = 25, ncol = 5))
+  #if()
+  #for(i in 1:length(rows)){
+    tab <- df1[rownames(df1) %in% df_keep_rows, c("mean", "2.5%", "97.5%", "Rhat", "n.eff")]
+   # }
+    tab1 <- data.frame(cbind(year = 1999:2023, tab))
+  return(tab1)
+}
+
+
+# END ----
+  
+  
+  
