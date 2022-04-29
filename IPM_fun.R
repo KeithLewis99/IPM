@@ -74,7 +74,8 @@ ls_out <- function(x){
      N2 = x$sims.list$N2
      mu = x$sims.list$mu
      sigmaJ = x$sims.list$sigma
-     ls_raw <- list(I2 = I2, I3=I3, N3=N3, N2=N2, mu=mu, sigmaJ=sigmaJ)
+     I.rep = x$sims.list$I.rep
+     ls_raw <- list(I2 = I2, I3=I3, N3=N3, N2=N2, mu=mu, sigmaJ=sigmaJ, I.rep = I.rep)
      return(ls_raw)
 }
 
@@ -89,11 +90,13 @@ ls_out <- function(x){
 #' @examples calc <- ls_med(raw) - see IPM_out.R
 ls_med <- function(ls){
      # convert to simplify code
+  #browser()
      I2 <- ls$I2
      I3 <- ls$I3
      N2 <- ls$N2
      N3 <- ls$N3
      mu <- ls$mu
+     I.rep <- ls$I.rep
      
      #summarize output as medians
      # out$median$N2 produces the same code as below
@@ -107,10 +110,12 @@ ls_med <- function(ls){
      N_med <- log(apply(exp(N3)+exp(N2), 2, 'median'))
      
      # calculate credible and prediction intervals
+    
      I_ci <- log(apply(exp(I3)+exp(I2), 2, 'quantile', c(0.025, 0.975)))
      I2_ci <- apply(I2, 2, 'quantile', c(0.025, 0.975))
      N_ci <- log(apply(exp(N3)+exp(N2), 2, 'quantile', c(0.025, 0.975)))
-     Pr_ci <- log(apply(exp(N3)+exp(N2), 2, 'quantile', c(0.1, 0.9)))
+     #Pr_ci <- log(apply(exp(N3)+exp(N2), 2, 'quantile', c(0.1, 0.9)))
+     Pr_ci <- apply(I.rep, 2, 'quantile', c(0.1, 0.9))
      I = log(exp(jd$I2) + exp(jd$I3))
      ls_med <- list(I2_med = I2_med, I3_med = I3_med, N2_med = N2_med, N3_med = N3_med, I_med = I_med, N_med = N_med, mu_med = mu_med, I_ci = I_ci, N_ci = N_ci, Pr_ci = Pr_ci, I = I, I2_ci = I2_ci)
      return(ls_med)
