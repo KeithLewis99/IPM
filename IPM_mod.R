@@ -19,7 +19,8 @@ cap.v7 = '
    sigma2.ind <- pow(sigma.ind, 2) 
    tau.ind <- pow(sigma.ind, -2) 
    
-   Sld ~ dunif(0, 1)    # Prior for mean larval density - based on range of values plus extra
+ # Prior for mean larval density - based on range of values plus extra
+   #Sld ~ dunif(0, 1)    
    sigma.LD ~ dunif(0.01, 10)        # Prior for sd of larval density
    sigma2.LD <- pow(sigma.LD, 2) 
    tau.LD <- pow(sigma.LD, -2) 
@@ -28,7 +29,7 @@ cap.v7 = '
    N2[1] ~ dnorm(8.5, 1/9)    # Prior for initial population size - based on N2[1] above   
    N3[1] ~ dnorm(8.9, 1/9)    # Prior for initial population size - based on N1 above 
  
- # Values for N2[2-4]: ruquired because 2000-2003 are NA for LD and therefore, N2 cant be calculated in this model formulation. VAlues are from the data, variance is made up
+ # Values for N2[2-4]: required because 2000-2003 are NA for LD and therefore, N2 cant be calculated in this model formulation. VAlues are from the data, variance is made up
    for (t in 2:4){
    N2[t] ~ dnorm(8.5, 1/9)
    }
@@ -85,8 +86,9 @@ cap.v7 = '
       mu[t] <- alpha + beta*LD[t-2] + gamma*TI[t]*(1-TI[t]/delta)
       #mu[t] <- alpha + beta*LD[t-2] + gamma*TI[t]*(1-TI[t]/delta) + epsilon*CO[t-1]
       N2[t] ~ dnorm(mu[t], sigma^-2)
-      
-      # Assessing the fit of the state-space model
+   }     
+     
+    # Assessing the fit of the state-space model
 # 1. Compute fit statistics for observed data.
 # 1.1 Discrepancy meansure: mean absolute error
    for (t in 1:n.occasions) {
@@ -119,5 +121,5 @@ for (t in 1:(n.occasions-2)){
    Tt3.rep[t] <- equals(Tt1.rep[t] + Tt2.rep[t], 1)
 }
 Tturn.rep <- sum(Tt3.rep)
-   }
+
 }'
