@@ -19,14 +19,14 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 # try to fix the priors ito variance
 
 # JAGS settings
-parms <- c("Sld", "N2",  "N3", "mu", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2", "I3", "I", "I2.rep", "I3.rep", "I.exp", "I.rep", "y2", "y3", "alpha", "beta", "gamma", "sigma", "Tturn.obs", "Tturn.rep")
+parms <- c("N2",  "N3", "mu", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2", "I3", "I", "I2.rep", "I3.rep", "I.exp", "I.rep", "y2", "y3", "alpha", "beta", "gamma", "sigma", "Tturn.obs", "Tturn.rep")
 
 # MCMC settings
 ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 #ni <- 200000; nt <- 30; nb <- 30000; nc <- 3
 
 # run model
-source("IPM_mod.R")
+#source("IPM_mod.R")
 ssm26 <- jags(jags.data, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(cap.v7))
 ssm26
 
@@ -43,6 +43,7 @@ str(raw)
 #extract medians, credible intervals, and prediction intervals
 calc <- ls_med(raw)
 str(calc)
+
 #df_calc <- do.call(rbind, calc) # this doesn't work
 #write(df_calc, "out2.csv")
 #cbind(N2_med, N3_med, N2_med+N3_med)
@@ -51,6 +52,8 @@ str(calc)
 # calculations for effective sample size - n.eff should be > # of chains *100
 Neff <- nc*(ni-nb)/nt
 neff <- nc*100  #n.eff should be >nc*100
+tab_neff <- out$summary[rownames(out$summary), c("n.eff")][out$summary[rownames(out$summary), c("n.eff")]< 300]
+
 
 ## figures
 # N2: observation median v process median
@@ -65,6 +68,7 @@ plot(calc$I2_med, jd$I2)
 plot(calc$I3_med, jd$I3)
 plot(calc$N2_med, jd$I2)
 plot(calc$N3_med, jd$I3)
+plot(calc$N3_med, calc$I3_med)
 
 
 ## IPM plot----
@@ -79,10 +83,17 @@ tmp_plot <- ipm_plot(df1 = calc, df2 = df_cap[15:39,]) # ignore warnings - all l
 tmp_plot
 ggsave("tmp_plot1.pdf")
 
+
+# see out put for tmp_plot.
+round(cbind(I_med = calc$I_med, N_med = calc$N_med, I = calc$I, SA = log(df_cap[15:39, "abundance_med"]*1000)), 3)
+
+
+
      # Other plots
      tp = out$sims.list$tau.proc
      tp_med = apply(tp,2,'median') # median values of y_pred
      tp_ci = apply(tp,2,'quantile', c(0.1, 0.9)) # median values of y_pred
+
 
 # Diagnostics----
 # these are just for when figures need to be saved to folders
@@ -98,7 +109,7 @@ out$mean
 ### Mixing ----     
 # Asess mixing of chains to see if one MCMC goes badly Zuur et al. 2013, pg 83
 # vars for forecast model     
-     source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
+    # source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
 var1 <- c('alpha', 'beta')
 #vars1 <- c('alpha', 'beta', 'gamma', "delta", "epsilon", "sigma")
 
