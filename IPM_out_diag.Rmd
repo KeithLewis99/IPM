@@ -89,9 +89,16 @@ datatable(tab2, rownames = F, class = 'cell-border stripe', height = 50,  option
 
 # Trends
 
+Column {.tabset}
+-------------------------------------
+
+### figure
+
 ```{r}
 tmp_plot
 ```
+
+### Data table for above fig
 
 # Retro
 
