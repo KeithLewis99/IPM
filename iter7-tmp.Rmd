@@ -1,0 +1,56 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+## Variables  
+$N_{s, a,y}$ = population at age by survey and year  
+$m_{a,y}$ = percent mature at age and year  
+#$S_{a,y}$ = survival  
+#$C_{a,y}$ = Catch  
+$I_{s,a,y}$ = observed population by age, year, and survey  
+$R_{y}$ = recruits in the current year???  
+$LD_{y}$ = larval density  
+$q_{s}$ = catchability by survey  
+
+## Subscripts  
+a = age (not age 0 or 1)  
+y = year  
+s = survey  
+
+
+## State Space Model ----
+### Process equations
+
+
+
+3+ fish
+$$
+N^{3+}_{t+1} = N^2_t(1-m_t)*S^2_t + \epsilon
+$$
+Not sure if this is properly reflected in the Likelihood.  
+But it can just be a derived equation in JAGS.  
+
+
+### Observation equation
+
+I = acoustic survey abundance or biomass
+
+$$
+I_{2,t}  \sim logNormal(N^2) \\
+I_{3+,t}  \sim logNormal(N^3) \\
+$$ 
+
+
+## Recrtuitment Model ----
+Larval density at Bellevue  
+
+My reasoning here is that Larval Density (LD) is a reasonable predictor of age 2 capelin (Recruitment).  Age 1 are not well recruited to the survey.  A good point was raised the other day about how to scale this from larval density at Bellevue to the acoustic survey.
+
+$$
+N_{2_{t+2}} = LD_{a,t}S_{lar_{a}} + \epsilon_{LD_{t}} \\
+R_{y+2} \sim logNormal(LD_{a,y}, \sigma_{LD_{y}}) \\
+L_{R}(S_{lar}|LD) \\
+$$
