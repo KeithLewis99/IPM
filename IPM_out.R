@@ -11,7 +11,8 @@ rm(list=ls())
 # Source files
 source("IPM_dat.R")
 source("IPM_fun.R")
-source("IPM_mod.R")
+#source("IPM_mod.R")
+source("IPM_mod-tmp.R")
 source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
 source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
@@ -20,6 +21,8 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
 # JAGS settings
 parms <- c("N2",  "N3", "mu", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2", "I3", "I", "I2.rep", "I3.rep", "I.exp", "I.rep", "y2", "y3", "alpha", "beta", "gamma", "sigma", "Tturn.obs", "Tturn.rep")
+#parms <- c("N2",  "N3", "mu", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2", "I3", "I", "I2.rep", "I3.rep", "I.exp", "I.rep", "alpha", "beta", "gamma", "sigma", "Tturn.obs", "Tturn.rep")
+
 
 # MCMC settings
 ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
@@ -57,18 +60,17 @@ tab_neff <- out$summary[rownames(out$summary), c("n.eff")][out$summary[rownames(
 
 ## figures
 # N2: observation median v process median
-plot(calc$I2_med, calc$N2_med)
-# N3: observation median v process median
-plot(calc$I3_med, calc$N3_med)
-# Observation median over time
-plot(seq(1999:2023), calc$I_med)
-
-# observation median v real data - relation is perfect - is this OK?
-plot(calc$I2_med, jd$I2)
-plot(calc$I3_med, jd$I3)
-plot(calc$N2_med, jd$I2)
-plot(calc$N3_med, jd$I3)
-plot(calc$N3_med, calc$I3_med)
+ plot(calc$I2_med, calc$N2_med)
+# # N3: observation median v process median
+ plot(calc$I3_med, calc$N3_med)
+# # Observation median over time
+ plot(seq(1999:2023), calc$I_med)
+# 
+# # observation median v real data - relation is perfect - is this OK?
+# plot(calc$I2_med, jd$I2)
+# plot(calc$I3_med, jd$I3)
+# plot(calc$N2_med, jd$I2)
+# plot(calc$N3_med, jd$I3)
 
 
 ## IPM plot----
@@ -81,7 +83,7 @@ lf <- length(forecast)
 #source("IPM_fun.R")
 tmp_plot <- ipm_plot(df1 = calc, df2 = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
 tmp_plot
-ggsave("tmp_plot1.pdf")
+ggsave("tmp_plot4.pdf")
 
 
 # see out put for tmp_plot.
@@ -288,5 +290,34 @@ hist(out$sims.list$Tturn.rep)
 # 
 # plotGOF(ssm26, "Dmape.obs", "Dmape.rep", main="State-space model", col=alpha(co, 0.3))
 
+
+# age-structured figure ----
+# the following suggests that Adamack has a strong point about the 2010 survey missed a lot of fish as the outcome is a biological impossibility.
+# this also questions the role of ice in the modern forecast model as it seems to be there mostly to capture the 2010 year.  Condition may be the better thing to focus on.
+p <- ggplot(data = df_dis_tabLog) 
+p <- p + geom_point(aes(x = year, y = I2))
+p <- p + geom_point(aes(x = year, y = I3), colour = "red")
+p <- p + geom_point(aes(x = year, y = I4), colour = "pink")
+#1999
+df_seg1 <- data.frame(y1 = df_dis_tabLog$I2[1], y2 = df_dis_tabLog$I3[2], y3 = df_dis_tabLog$I4[3], x1 = df_dis_tabLog$year[1], x2 = df_dis_tabLog$year[2], x3 = df_dis_tabLog$year[3])
+p <- p + geom_segment(data = df_seg1, aes(x = x1, y = y1, xend = x2, yend = y2))
+p <- p + geom_segment(data = df_seg1, aes(x = x2, y = y2, xend = x3, yend = y3))
+#2010
+df_seg2 <- data.frame(y1 = df_dis_tabLog$I2[12], y2 = df_dis_tabLog$I3[13], y3 = df_dis_tabLog$I4[14], x1 = df_dis_tabLog$year[12], x2 = df_dis_tabLog$year[13], x3 = df_dis_tabLog$year[14])
+p <- p + geom_segment(data = df_seg2, aes(x = x1, y = y1, xend = x2, yend = y2))
+p <- p + geom_segment(data = df_seg2, aes(x = x2, y = y2, xend = x3, yend = y3))
+#2016
+df_seg3 <- data.frame(y1 = df_dis_tabLog$I2[19], y2 = df_dis_tabLog$I3[20], y3 = df_dis_tabLog$I4[21], x1 = df_dis_tabLog$year[19], x2 = df_dis_tabLog$year[20], x3 = df_dis_tabLog$year[21])
+p <- p + geom_segment(data = df_seg3, aes(x = x1, y = y1, xend = x2, yend = y2))
+p <- p + geom_segment(data = df_seg3, aes(x = x2, y = y2, xend = x3, yend = y3))
+p
+
+df_plot <- df_dis_summ %>%
+    filter(age != 1 & age != 5)
+
+
+p <- ggplot(data = df_plot, aes(x = year, y = log(abun), colour = age)) 
+p <- p + geom_point()
+p
 
 # End----
