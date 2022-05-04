@@ -68,14 +68,14 @@
 #'
 #' @examples raw <- ls_out(out) - see IPM_out.R
 ls_out <- function(x){
-     I2 = x$sims.list$I2
-     I3 = x$sims.list$I3
-     N3 = x$sims.list$N3
-     N2 = x$sims.list$N2
-     mu = x$sims.list$mu
-     sigmaJ = x$sims.list$sigma
-     I.rep = x$sims.list$I.rep
-     ls_raw <- list(I2 = I2, I3=I3, N3=N3, N2=N2, mu=mu, sigmaJ=sigmaJ, I.rep = I.rep)
+  #browser()
+  #ls_names <- names(x$sims.list)
+  ls_raw <- rep(list(list()), length(x$sims.list))
+    for(i in 1:length(x$sims.list)){
+      df = x$sims.list[names(x$sims.list[i])]
+      ls_raw[i] <- df
+      names(ls_raw)[i] <- names(x$sims.list[i])
+    }
      return(ls_raw)
 }
 
@@ -91,34 +91,38 @@ ls_out <- function(x){
 ls_med <- function(ls){
      # convert to simplify code
   #browser()
-     I2 <- ls$I2
-     I3 <- ls$I3
-     N2 <- ls$N2
-     N3 <- ls$N3
-     mu <- ls$mu
-     I.rep <- ls$I.rep
-     
-     #summarize output as medians
-     # out$median$N2 produces the same code as below
-     I2_med = apply(I2,2,'median') # median values of y_pred
-     I3_med = apply(I3,2,'median') # median values of y_pred
-     N3_med = apply(N3,2,'median')
-     N2_med = apply(N2,2,'median')
-     mu_med = apply(mu,2,'median')
-     #log(exp(calc$I3_med)+exp(calc$I2_med)) same code except for NA values
-     I_med <- log(apply(exp(I3)+exp(I2), 2, 'median'))
-     N_med <- log(apply(exp(N3)+exp(N2), 2, 'median'))
-     
-     # calculate credible and prediction intervals
-    
-     I_ci <- log(apply(exp(I3)+exp(I2), 2, 'quantile', c(0.025, 0.975)))
-     I2_ci <- apply(I2, 2, 'quantile', c(0.025, 0.975))
-     N_ci <- log(apply(exp(N3)+exp(N2), 2, 'quantile', c(0.025, 0.975)))
-     #Pr_ci <- log(apply(exp(N3)+exp(N2), 2, 'quantile', c(0.1, 0.9)))
-     Pr_ci <- apply(I.rep, 2, 'quantile', c(0.1, 0.9))
-     I = log(exp(jd$I2) + exp(jd$I3))
-     ls_med <- list(I2_med = I2_med, I3_med = I3_med, N2_med = N2_med, N3_med = N3_med, I_med = I_med, N_med = N_med, mu_med = mu_med, I_ci = I_ci, N_ci = N_ci, Pr_ci = Pr_ci, I = I, I2_ci = I2_ci)
-     return(ls_med)
+  ls_med <- rep(list(list()), length(ls))
+  
+  for(i in 1:length(ls)){
+    med = apply(ls[[i]],2,'median')
+    ls_med[[i]] <- med
+    names(ls_med)[i] <- names(ls)[i]
+  }
+
+  
+  ls_cri <- rep(list(list()), length(ls))
+
+  for(i in 1:length(ls)){
+    cri = apply(ls[[i]],2,'quantile', c(0.025, 0.975))
+    ls_cri[[i]] <- cri
+    names(ls_cri)[i] <- paste0(names(ls)[i], "_cri")
+  }
+
+  
+  ls_pri <- rep(list(list()), length(ls))
+
+  for(i in 1:length(ls)){
+    pri = apply(ls[[i]],2,'quantile', c(0.1, 0.9))
+    ls_pri[[i]] <- pri
+    names(ls_pri)[i] <- paste0(names(ls)[i], "_pri")
+  }
+  
+  N_med <- log(apply(exp(ls$N3)+exp(ls$N2), 2, 'median'))
+  N_ci <- apply(log(exp(ls$N3)+exp(ls$Nt2)), 2, 'quantile', c(0.025, 0.975))
+  Pr_ci <- log(apply(exp(ls$I3.rep)+exp(ls$I2.rep), 2, 'quantile', c(0.1, 0.9)))
+  
+  ls_calc <- list(ls_med = ls_med, ls_cri = ls_cri, ls_pri = ls_pri, N_med = N_med, N_ci = N_ci, Pr_ci = Pr_ci)
+     return(ls_calc)
 }
 
 
@@ -139,37 +143,38 @@ ls_med <- function(ls){
 #' forecast <- 2022:2023
 #' lf <- length(forecast)
 
-ipm_plot <- function(df1 = x, df2 = y){
+ipm_plot <- function(df_med = x, df_cri = y, df_pri = z, df_dat = w){
      p <- ggplot()  
      #plot credible interval and median for process
+     #browser()
      p <- p + geom_ribbon(aes(x = year, 
-                              ymax = df1$N_ci[2, 1:c(ly)], 
-                              ymin = df1$N_ci[1, 1:c(ly)]),
+                              ymax = df_cri[2, 1:c(ly)], 
+                              ymin = df_cri[1, 1:c(ly)]),
                           alpha = 0.5, fill = "grey60")
-     p <- p + geom_line(aes(x = year, y = df1$N_med[1:c(ly)]))
+     p <- p + geom_line(aes(x = year, y = df_med[1:c(ly)]))
      
      #plot prediction interval and median for process
      p <- p + geom_ribbon(aes(x = forecast, 
-                              ymax = tail(df1$Pr_ci[2,], lf), 
-                              ymin = tail(df1$Pr_ci[1,], lf)),
+                              ymax = tail(df_pri[2,], lf), 
+                              ymin = tail(df_pri[1,], lf)),
                           alpha = 0.5, fill = "orange")
-     p <- p + geom_line(aes(x = forecast, y = tail(df1$N_med, lf)))
+     p <- p + geom_line(aes(x = forecast, y = tail(df_med, lf)))
      #browser()
      # plot points - observation median for I2 and I3
-     p <- p + geom_point(aes(y = df1$I_med, x = c(year, forecast)),
-                         shape = 16, 
-                         size = 1.5,
-                         colour = "red")
-     
+     # p <- p + geom_point(aes(y = df1$I_med, x = c(year, forecast)),
+     #                     shape = 16, 
+     #                     size = 1.5,
+     #                     colour = "red")
+     # 
      # plot error bars from aggregated survey
-     p <- p + geom_errorbar(data = df_cap[15:37,], aes(x = year, min=log(ab_lci*1000), ymax=log(ab_uci*1000)), width = 0.3, colour = "black")
+     p <- p + geom_errorbar(data = df_dat, aes(x = year, min=log(ab_lci*1000), ymax=log(ab_uci*1000)), width = 0.3, colour = "black")
      
      # plot points from disaggregated survey
-     p <- p + geom_point(aes(y = df1$I, x = c(year, forecast)),
-                         shape = 16, 
-                         size = 1.5)
-     # points from teh aggregated survey
-     p <- p + geom_point(aes(y = log(df2$abundance_med*1000), x = c(year, forecast)),
+     # p <- p + geom_point(aes(y = df1$I, x = c(year, forecast)),
+     #                     shape = 16, 
+     #                     size = 1.5)
+     # # points from teh aggregated survey
+     p <- p + geom_point(aes(y = log(df_dat$abundance_med*1000), x = c(year, forecast)),
                          shape = 18, 
                          size = 1.5,
                          colour = "pink")
