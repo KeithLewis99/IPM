@@ -55,10 +55,11 @@ head(df_cap)
 # add extra years to end the time series
 df_tmp <- df_cap[1:4,]
 df_tmp[, 1:8] <- NA
-df_tmp$year[1:2] <- c(2020:2023)
+df_tmp$year[1:4] <- c(2020:2023)
 df_tmp
 df_cap <- rbind(df_cap, df_tmp)
 
+df_cap$var_abun <- (df_cap$abundance_med*(log(df_cap$ab_lci)-log(df_cap$abundance_med))/1.96)^2
 
 
 ##disaggregated data----
@@ -136,6 +137,50 @@ df_dis_tabLog <- df_dis_tab %>%
 df_dis_tabLog
 range(df_dis_tabLog$var)
 range(df_dis_tabLog$sd)
+
+# the below are two possible approaches to resolving the 2010 missing fish problem
+# calculate the difference between A2-A3 and A3-A4 fish make a dataframe
+df_23 <- df_dis_tabLog$I2 - lead(df_dis_tabLog$I3)
+df_34 <- df_dis_tabLog$I3 - lead(df_dis_tabLog$I4)
+
+df_tmp <- as.data.frame(cbind(year = 1999:2021, I2_3 = df_23, I3_4 = df_34))
+
+# What is the mean difference in the above table
+df_mean <- df_tmp %>%
+        filter(year != 2010) %>%
+        summarise(I23 = mean(I2_3, na.rm = T), I34 = mean(I3_4, na.rm = T))
+df_mean
+
+# extract the value for the age at year from teh above dataframe
+I2_2009 <- df_dis_tabLog$I2[11]
+I3_2011 <- df_dis_tabLog$I3[13]
+I3_2009 <- df_dis_tabLog$I3[11]
+
+# add or subtract the mean values from the above age at year to get estimate of missing fish
+I2_2010 <- as.numeric(I3_2011 + df_mean[1])
+I3_2010 <- as.numeric(I2_2009 - df_mean[1])
+I4_2010 <- as.numeric(I3_2009 - df_mean[2])
+       
+# total estimate for 2010
+I2010 <- log(exp(I3_2010) + exp(I2_2010) + exp(I4_2010))
+# create oject to compare to min values below.
+cbind(I2 = I2_2010, I3 = I3_2010, I4 = I4_2010, I = I2010)
+
+# What is the max or minimum difference in the above table.  The goal here is to mimic a really poor year bc 2010 had terrible ice and terrible condition
+df_max <- df_tmp %>%
+        filter(year != 2010 & year != 2012) %>%
+        summarise(I23 = max(I2_3, na.rm = T), I34 = max(I3_4, na.rm = T), I23min = min(I2_3, na.rm = T))
+
+# add or subtract the max/min values from the above age at year to get estimate of missing fish
+I2_2010min <- as.numeric(I3_2011 + df_max[3])  # this is really a min to make for smallest increase possible
+I3_2010min <- as.numeric(I2_2009 - df_max[1])
+I4_2010min <- as.numeric(I3_2009 - df_max[2])
+
+# total estimate for 2010
+I2010min <- log(exp(I3_2010min) + exp(I2_2010min) + exp(I4_2010min))
+# create oject to compare to min values below.
+cbind(I2m = I2_2010min, I3m = I3_2010min, I4m = I4_2010min, Im = I2010min)
+
 
 
 ## maturity ----
