@@ -12,7 +12,8 @@ rm(list=ls())
 source("IPM_dat.R")
 source("IPM_fun.R")
 #source("IPM_mod.R")
-source("IPM_mod-tmp.R")
+#source("IPM_mod-tmp.R")
+source("IPM_mod-tmp1.R")
 source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
 source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
@@ -20,13 +21,26 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 # try to fix the priors ito variance
 
 # JAGS settings
-parms <- c("N2",  "N3", "mu", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2", "I3", "I", "I2.rep", "I3.rep", "I.exp", "I.rep", "y2", "y3", "alpha", "beta", "gamma", "sigma", "Tturn.obs", "Tturn.rep")
-#parms <- c("N2",  "N3", "mu", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2", "I3", "I", "I2.rep", "I3.rep", "I.exp", "I.rep", "alpha", "beta", "gamma", "sigma", "Tturn.obs", "Tturn.rep")
+parms <- c("tau.proc", "tau.obs", "tau.LD", "tau.ind",  # variances     
+           "N2",  "N3", "y2", "y3",                     # population
+           "Ni2", "S", "Nt2",
+           "mu", "alpha", "beta", "gamma",              # N2 params      
+           "I2.rep", "I3.rep", "I.exp", "I.rep",
+           "Tturn.obs", "Tturn.rep"                     #diagnostics
+           ) 
+
+
+
+
+
+# "sigma", "I2", "I3", "I",
+#parms <- c("N2",  "N3", "mu", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2", "I3", "I", "I2.rep", "I3.rep", "I.exp", "I.rep", "alpha", "beta", "gamma",  "Tturn.obs", "Tturn.rep") #"sigma",
 
 
 # MCMC settings
 ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 #ni <- 200000; nt <- 30; nb <- 30000; nc <- 3
+#ni <- 2000000; nt <- 150; nb <- 300000; nc <- 3
 
 # run model
 #source("IPM_mod.R")
@@ -35,6 +49,9 @@ ssm26
 
 # create ouput
 out <- ssm26$BUGSoutput 
+str(out$sims.list)
+out_mcmc <- as.mcmc(out)
+plot(out_mcmc[,1:4])
 
 # Send DIC to dashboard
 ssm26_dic <- out$DIC
@@ -43,9 +60,26 @@ ssm26_dic <- out$DIC
 raw <- ls_out(out)
 str(raw)
 
+
+head(as.data.frame(cbind(raw$N3[,i], raw$N2[,i])), 100)
+
+plot(density(log(exp(raw$N3[,i]) + exp(raw$N2[,i]))))
+plot(density(raw$S[,i]))
+
+plot(density(raw$N2[,i]))
+lines(density(raw$N3[,i]), col= "red")
+
+
 #extract medians, credible intervals, and prediction intervals
-calc <- ls_med(raw)
-str(calc)
+
+ls_all <- ls_med(raw)
+calc <- ls_all$ls_med
+cri <- ls_all$ls_cri
+pri <- ls_all$ls_pri
+str(ls_all)
+str(cri, 1)
+
+cbind(1999:2023, calc$Nt2_med, jd$I2, calc$N3_med, jd$I3, calc$S)
 
 #df_calc <- do.call(rbind, calc) # this doesn't work
 #write(df_calc, "out2.csv")
@@ -53,18 +87,21 @@ str(calc)
 
 
 # calculations for effective sample size - n.eff should be > # of chains *100
-Neff <- nc*(ni-nb)/nt
+N_samples <- nc*(ni-nb)/nt
 neff <- nc*100  #n.eff should be >nc*100
 tab_neff <- out$summary[rownames(out$summary), c("n.eff")][out$summary[rownames(out$summary), c("n.eff")]< 300]
+tab_neffa <- out$summary[rownames(out$summary), c("n.eff")][out$summary[rownames(out$summary), c("n.eff")]> 300]
 
 
 ## figures
 # N2: observation median v process median
- plot(calc$I2_med, calc$N2_med)
+# plot(calc$I2_med, calc$N2_med)
+ plot(jd$I2, calc$N2_med)
 # # N3: observation median v process median
- plot(calc$I3_med, calc$N3_med)
+# plot(calc$I3_med, calc$N3_med)
+ plot(jd$I3, calc$N3_med)
 # # Observation median over time
- plot(seq(1999:2023), calc$I_med)
+ plot(seq(1999:2023), calc$N_med)
 # 
 # # observation median v real data - relation is perfect - is this OK?
 # plot(calc$I2_med, jd$I2)
@@ -80,14 +117,36 @@ forecast <- 2022:2023
 lf <- length(forecast)
 
 
-#source("IPM_fun.R")
-tmp_plot <- ipm_plot(df1 = calc, df2 = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
+source("IPM_fun.R")
+tmp_plot <- ipm_plot(df_med = ls_all$N_med, df_cri = ls_all$N_ci, df_pri = ls_all$Pr_ci, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
 tmp_plot
+
+tmpN2_plot <- ipm_plot(df_med = calc$N2, df_cri = cri$N2_cri, df_pri = pri$Nt2_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
+tmpN2_plot <- tmpN2_plot + geom_point(data = df_dis_tabLog,
+                                      aes(y = I2, x = year),
+                                      shape = 16, size = 1.5)
+tmpN2_plot
+
+tmpNt2_plot <- ipm_plot(df_med = calc$Nt2, df_cri = cri$Nt2_cri, df_pri = pri$Nt2_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
+tmpNt2_plot <- tmpNt2_plot + geom_point(data = df_dis_tabLog,
+                                      aes(y = I2, x = year),
+                                      shape = 16, size = 1.5)
+tmpNt2_plot
+
+
+tmpN3_plot <- ipm_plot(df_med = calc$N3, df_cri = cri$N3_cri, df_pri = pri$N3_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
+#tmpN3_plot <- tmpN3_plot + 
+    
+tmpN3_plot <- tmpN3_plot + geom_point(data = df_dis_tabLog,
+                                      aes(y = I3, x = year),
+                                      shape = 16, size = 1.5)
+tmpN3_plot
+
+
 ggsave("tmp_plot4.pdf")
 
 
 # see out put for tmp_plot.
-round(cbind(I_med = calc$I_med, N_med = calc$N_med, I = calc$I, SA = log(df_cap[15:39, "abundance_med"]*1000)), 3)
 
 
 
@@ -113,7 +172,7 @@ out$mean
 # vars for forecast model     
     # source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
 var1 <- c('alpha', 'beta')
-#vars1 <- c('alpha', 'beta', 'gamma', "delta", "epsilon", "sigma")
+var1 <- c('alpha', 'beta', 'gamma', "tau.LD")
 
 MyBUGSChains(out, var1)
 mix1 <- MyBUGSChains(out, var1)
@@ -121,14 +180,15 @@ mix1 <- MyBUGSChains(out, var1)
 #ggsave(MyBUGSChains(out, vars1), filename = paste0("Bayesian/", filepath, "/chains-forecast.pdf"), width=10, height=8, units="in")
 
 # vars for state space and demographic vars
-vars2 <- c("Sld")
+vars2 <- c("I[10]", "I2[10]", "N2[10]", "y2[10]")
+vars2 <- c("N2[10]", "y2[10]")
 MyBUGSChains(out, vars2)
 mix2 <- MyBUGSChains(out, vars2)
 #ggsave(MyBUGSChains(out, vars2), filename = paste0("Bayesian/", filepath, "/chains-demographic.pdf"), width=10, height=8, units="in")
 
 
 # vars for variances
-vars3 <- c("tau.proc", "tau.obs", "tau.LD", "tau.ind")
+vars3 <- c("tau.proc", "tau.obs", "tau.ind")
 MyBUGSChains(out, vars3)
 mix3 <- MyBUGSChains(out, vars3)
 #ggsave(MyBUGSChains(out, vars3), filename = paste0("Bayesian/", filepath, "/chains-variance.pdf"), width=10, height=8, units="in")
@@ -310,6 +370,7 @@ p <- p + geom_segment(data = df_seg2, aes(x = x2, y = y2, xend = x3, yend = y3))
 df_seg3 <- data.frame(y1 = df_dis_tabLog$I2[19], y2 = df_dis_tabLog$I3[20], y3 = df_dis_tabLog$I4[21], x1 = df_dis_tabLog$year[19], x2 = df_dis_tabLog$year[20], x3 = df_dis_tabLog$year[21])
 p <- p + geom_segment(data = df_seg3, aes(x = x1, y = y1, xend = x2, yend = y2))
 p <- p + geom_segment(data = df_seg3, aes(x = x2, y = y2, xend = x3, yend = y3))
+p <- p + ylab("ln abundance")
 p
 
 df_plot <- df_dis_summ %>%
