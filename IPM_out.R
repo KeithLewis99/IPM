@@ -21,17 +21,16 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 # try to fix the priors ito variance
 
 # JAGS settings
-parms <- c("tau.proc", "tau.obs", "tau.LD", "tau.ind",  # variances     
-           "N2",  "N3", "y2", "y3",                     # population
-           "Ni2", "S", "Nt2",
-           "mu", "alpha", "beta", "gamma",              # N2 params      
+parms <- c("tau.proc", "tau.obs", "tau.LD", "tau.ind",  
+           "N2",  "N3", "y2", "y3",                     
+            "S", 
+            "mu", "alpha", "beta", "gamma", "delta", 
+           "alpha1", "gamma1", "delta1", "epsilon1", 
            "I2.rep", "I3.rep", "I.exp", "I.rep",
            "Tturn.obs", "Tturn.rep"                     #diagnostics
            ) 
 
-
-
-
+# "Ni2","Nt2",
 
 # "sigma", "I2", "I3", "I",
 #parms <- c("N2",  "N3", "mu", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2", "I3", "I", "I2.rep", "I3.rep", "I.exp", "I.rep", "alpha", "beta", "gamma",  "Tturn.obs", "Tturn.rep") #"sigma",
@@ -50,8 +49,8 @@ ssm26
 # create ouput
 out <- ssm26$BUGSoutput 
 str(out$sims.list)
-out_mcmc <- as.mcmc(out)
-plot(out_mcmc[,1:4])
+#out_mcmc <- as.mcmc(out)
+#plot(out_mcmc[,1:4])
 
 # Send DIC to dashboard
 ssm26_dic <- out$DIC
@@ -60,11 +59,12 @@ ssm26_dic <- out$DIC
 raw <- ls_out(out)
 str(raw)
 
-
+i=16
 head(as.data.frame(cbind(raw$N3[,i], raw$N2[,i])), 100)
 
 plot(density(log(exp(raw$N3[,i]) + exp(raw$N2[,i]))))
 plot(density(raw$S[,i]))
+plot(density(raw$mu[,i]))
 
 plot(density(raw$N2[,i]))
 lines(density(raw$N3[,i]), col= "red")
@@ -76,10 +76,11 @@ ls_all <- ls_med(raw)
 calc <- ls_all$ls_med
 cri <- ls_all$ls_cri
 pri <- ls_all$ls_pri
-str(ls_all)
+str(ls_all,1)
+str(calc, 1)
 str(cri, 1)
 
-cbind(1999:2023, calc$Nt2_med, jd$I2, calc$N3_med, jd$I3, calc$S)
+cbind(1999:2023, calc$Nt2, jd$I2, calc$N3, jd$I3, calc$S)
 
 #df_calc <- do.call(rbind, calc) # this doesn't work
 #write(df_calc, "out2.csv")
@@ -101,7 +102,7 @@ tab_neffa <- out$summary[rownames(out$summary), c("n.eff")][out$summary[rownames
 # plot(calc$I3_med, calc$N3_med)
  plot(jd$I3, calc$N3_med)
 # # Observation median over time
- plot(seq(1999:2023), calc$N_med)
+ plot(seq(1999:2023), ls_all$N_med)
 # 
 # # observation median v real data - relation is perfect - is this OK?
 # plot(calc$I2_med, jd$I2)
@@ -116,12 +117,10 @@ ly <- length(year)
 forecast <- 2022:2023
 lf <- length(forecast)
 
-
-source("IPM_fun.R")
 tmp_plot <- ipm_plot(df_med = ls_all$N_med, df_cri = ls_all$N_ci, df_pri = ls_all$Pr_ci, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
 tmp_plot
 
-tmpN2_plot <- ipm_plot(df_med = calc$N2, df_cri = cri$N2_cri, df_pri = pri$Nt2_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
+tmpN2_plot <- ipm_plot(df_med = calc$N2, df_cri = cri$N2_cri, df_pri = pri$N2_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
 tmpN2_plot <- tmpN2_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = I2, x = year),
                                       shape = 16, size = 1.5)
@@ -146,10 +145,37 @@ tmpN3_plot
 ggsave("tmp_plot4.pdf")
 
 
+
+a <- calc$alpha
+b <- calc$beta
+c <- calc$gamma
+d <- calc$delta
+
+m <- a + b*lag(jd$LD, 2) + c*jd$TI*(1-jd$TI/d)
+cbind(1999:2023, m)
+
+a1 <- calc$alpha1
+c1 <- calc$gamma1
+d1 <- calc$delta1
+e1 <- calc$epsilon1
+
+m1 <- a1 + c1*jd$TI*(1-jd$TI/d1) + e1*lag(jd$CO, 1)
+cbind (year = 1999:2023, TI = jd$TI, CO = lag(jd$CO, 1))
+
+x <- round(cbind(year = 1999:2023, Sjags = calc$S, S_calc = m1, I2_raw = jd$I2, N2_jags = calc$N2, mat_raw = jd$m, imat_raw = 1-jd$m, Ni2_jags = calc$N2*(1-jd$m), N3_calc = m1*calc$N2*(1-jd$m), N3jags = lead(calc$N3, 1),  I3_raw = jd$I3), 3)
+
+write_csv(data.frame(x), "raw_jags_calc.csv")
+
+
+
+plot(calc$N2, calc$Nt2)
+plot(cri$N2_cri, cri$Nt2_cri)
+plot(cri$N2_cri[1,], cri$Nt2_cri[1,])
+plot(cri$N2_cri[2,], cri$Nt2_cri[2,])
+cri$N2_cri
+cri$Nt2_cri
+
 # see out put for tmp_plot.
-
-
-
      # Other plots
      tp = out$sims.list$tau.proc
      tp_med = apply(tp,2,'median') # median values of y_pred
@@ -180,8 +206,7 @@ mix1 <- MyBUGSChains(out, var1)
 #ggsave(MyBUGSChains(out, vars1), filename = paste0("Bayesian/", filepath, "/chains-forecast.pdf"), width=10, height=8, units="in")
 
 # vars for state space and demographic vars
-vars2 <- c("I[10]", "I2[10]", "N2[10]", "y2[10]")
-vars2 <- c("N2[10]", "y2[10]")
+vars2 <- c("N2[10]", "y2[10]", "N3[10]", "y3[10]")
 MyBUGSChains(out, vars2)
 mix2 <- MyBUGSChains(out, vars2)
 #ggsave(MyBUGSChains(out, vars2), filename = paste0("Bayesian/", filepath, "/chains-demographic.pdf"), width=10, height=8, units="in")
