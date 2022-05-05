@@ -78,7 +78,7 @@ df_dis_summ <- df_dis %>%
      group_by(year, age) %>%
      filter(age != "Unknown") %>%
      #summarise(mat = mean(prop_mat), biomass = sum(biomass))
-     summarise(mat = mean(prop_mat), abun = sum(abundance), biomass = sum(biomass), varA = var(abundance), varB = var(biomass))
+     summarise(mat = mean(prop_mat, na.rm = T), abun = sum(abundance), biomass = sum(biomass), varA = var(abundance, na.rm = T), varB = var(biomass, na.rm = T))
 df_dis_summ  
 str(df_dis_summ)
 
@@ -191,7 +191,7 @@ str(df_mat)
 
 #impute data - place holder
 imp <- mean(df_mat$mat, na.rm = T) 
-df_mat$mat[7] <- imp
+#df_mat$mat[7] <- imp
 df_mat$mat[8] <- imp
 df_mat$mat[18] <- imp
 df_mat$mat[22] <- imp
