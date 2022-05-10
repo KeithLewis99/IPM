@@ -1,4 +1,3 @@
-
 #' JAGS data format
 #' 
 #' @param log - put the capelin abundance on natural log (yes) or real scale (no)
