@@ -17,7 +17,9 @@ library(xtable)
 library(DT)
 library(ezknitr)
 
-source("IPM_out.R")
+#source("IPM_out.R")
+#load("mod_20K.RData")
+load("mod_2M.RData")
 options(scipen=999)
 
 ```
@@ -69,47 +71,76 @@ Clearly, a tradeoff between Independence and the Common Demography Assumption
 
 Column {.tabset}
 -------------------------------------
-
-### I
-
+     
+### N2
+     
 ```{r tab1, eval=T,prompt=T, comment = F}
-df_keep_rows <- keep_rows("I", 25)
+df_keep_rows <- keep_rows("N2", 25)
 tab1 <- tabParm(out$summary, df_keep_rows)
 datatable(tab1, rownames = F, class = 'cell-border stripe', height = 50,  options = list(searching = F, pageLength = 30, autoWidth = TRUE, scrollY = F)) %>% formatRound(2:5, 3)
 ```
 
-### I2
+### N3
 ```{r tab2, eval=T,prompt=T, comment = F}
-df_keep_rows <- keep_rows("I2", 25)
+df_keep_rows <- keep_rows("N3", 25)
 tab2 <- tabParm(out$summary, df_keep_rows)
 datatable(tab2, rownames = F, class = 'cell-border stripe', height = 50,  options = list(searching = F, pageLength = 30, autoWidth = TRUE, scrollY = F)) %>% formatRound(2:5, 3)
 ```
+
+### N4
+```{r tab3, eval=T,prompt=T, comment = F}
+df_keep_rows <- keep_rows("N4", 25)
+tab3 <- tabParm(out$summary, df_keep_rows)
+datatable(tab3, rownames = F, class = 'cell-border stripe', height = 50,  options = list(searching = F, pageLength = 30, autoWidth = TRUE, scrollY = F)) %>% formatRound(2:5, 3)
+```
+
 
 # Survey- SA
 
 # Trends
 
-Column {.tabset}
+Column
 -------------------------------------
 
-### figure
-
+### N
+     
 ```{r}
 tmp_plot
 ```
 
-### Data table for above fig
+### N2
+
+```{r}
+tmpN2_plot
+```
+
+
+Column
+-------------------------------------
+
+### N3
+     
+```{r}
+tmpN3_plot
+```
+
+### N4
+
+```{r}
+tmpN4_plot
+```
+
 
 # Retro
 
-  
+
 # Diagnostics - Chain mixing
 
 Column {.tabset}
 -------------------------------------
-
+     
 ### forecast vars
-
+     
 ```{r}
 mix1
 ```
@@ -131,9 +162,9 @@ mix3
 
 Column {.tabset}
 -------------------------------------
-
+     
 ### forecast vars
-
+     
 ```{r}
 autocorr1
 ```
@@ -152,13 +183,11 @@ autocorr3
 
 # Overdispersion
 Is this only needed for GLM type models, i.e., when there is non-normal distributions involved?
-
+     
 # Model validation
-
+     
 # residuals with covariates
-
+     
 # Results
-
-
-
-# 
+     
+   
