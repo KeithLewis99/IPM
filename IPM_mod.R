@@ -3,6 +3,7 @@
 cap.v7 = '
  model {
 #PRIORS
+      ###### Need to check that these are reasonable
  ## Prior for sd of process - N2[t] uninformative
    sigma.proc2 ~ dunif(0.01, 20)     
    sigma2.proc2 <- pow(sigma.proc2, 2) 
@@ -37,19 +38,19 @@ cap.v7 = '
    ### N2
    # From Murphy the equation relating R = LD*S is R = 0.40x + 2.80
    # priors from Lewis et al. 2019 - mostly uninformative but see TI-width - not sure here
-   alpha ~ dnorm(0, 100^-2)      # int
-   beta ~ dnorm(0, 100^-2)       # larval abund
-   gamma ~ dunif(0, 100)         # tices-max rate of increase
-   delta ~ dgamma(11.5, 5.7)     # tice-width
-   #gamma ~ dnorm(0, 100^-2)     # condition # for CO
-   #epsilon ~ dnorm(0, 100^-2)   # condition # for CO
+   alpha2 ~ dnorm(0, 100^-2)      # int
+   beta2 ~ dnorm(0, 100^-2)       # larval abund
+   gamma2 ~ dunif(0, 100)         # tices-max rate of increase
+   delta2 ~ dgamma(11.5, 5.7)     # tice-width
+   #gamma2 ~ dnorm(0, 100^-2)     # condition # for CO
+   #epsilon2 ~ dnorm(0, 100^-2)   # condition # for CO
 
    # various model formulations - keep for eventual DIC 
    for (t in 5:n.occasions) {
-      #mu2[t] <- alpha + beta*LD[t-2]
-      #mu2[t] <- alpha + beta*LD[t-2] + gamma*CO[t-1]
-      mu2[t] <- alpha + beta*LD[t-2] + gamma*TI[t]*(1-TI[t]/delta)
-      #mu2[t] <- alpha + beta*LD[t-2] + gamma*TI[t]*(1-TI[t]/delta) + epsilon*CO[t-1]
+      #mu2[t] <- alpha2 + beta2*LD[t-2]
+      #mu2[t] <- alpha2 + beta2*LD[t-2] + gamma2*CO[t-1]
+      mu2[t] <- alpha2 + beta2*LD[t-2] + gamma2*TI[t]*(1-TI[t]/delta2)
+      #mu2[t] <- alpha2 + beta2*LD[t-2] + gamma2*TI[t]*(1-TI[t]/delta2) + epsilon2*CO[t-1]
 
       N2[t] ~ dnorm(mu2[t], tau.proc2)
       
@@ -61,17 +62,17 @@ cap.v7 = '
 
    ### N3
    # Priors for killing N3
-   #alpha1 ~ dnorm(0, 100^-2)          # int
-   alpha1 ~ dunif(0, 1)                # int
-   gamma1 ~ dunif(0, 100)              #tices-max rate of increase
-   # gamma1 ~ dunif(0, 3.65)           # was uniform
-   delta1 ~ dgamma(11.5, 5.7)          #tice-width
-   epsilon1 ~ dnorm(0, 100^-2)         # condition # for CO
+   #alpha3 ~ dnorm(0, 100^-2)          # int
+   alpha3 ~ dunif(0, 1)                # int
+   gamma3 ~ dunif(0, 100)              #tices-max rate of increase
+   # gamma3 ~ dunif(0, 3.65)           # was uniform
+   delta3 ~ dgamma(11.5, 5.7)          #tice-width
+   epsilon3 ~ dnorm(0, 100^-2)         # condition # for CO
    mu3[1] ~ dunif(0,1)                 # need this for a mu3[1]
    
    # calculate a survival for N2 -> N3; mu3[2:24]
    for(t in 2:n.occasions){
-      mu3[t] <- alpha1 + gamma1*TI[t]*(1-TI[t]/delta1) +             epsilon1*CO[t-1]
+      mu3[t] <- alpha3 + gamma3*TI[t]*(1-TI[t]/delta3) +             epsilon3*CO[t-1]
     }
 
    # calculate the N3
@@ -84,15 +85,15 @@ cap.v7 = '
 
    ###N4
    # Priors for killing N4
-   alpha2 ~ dunif(0, 1)             # int
-   gamma2 ~ dunif(0, 100)           # tices-max rate of increase
-   delta2 ~ dgamma(11.5, 5.7)       # tice-width
-   epsilon2 ~ dnorm(0, 100^-2)      # condition # for CO
+   alpha4 ~ dunif(0, 1)             # int
+   gamma4 ~ dunif(0, 100)           # tices-max rate of increase
+   delta4 ~ dgamma(11.5, 5.7)       # tice-width
+   epsilon4 ~ dnorm(0, 100^-2)      # condition # for CO
    mu4[1] ~ dunif(0,1)              # need this for a mu3[1]
 
    # calculate a survival for N3 -> N4; mu4[2:24]
    for(t in 2:n.occasions){
-      mu4[t] <- alpha2 + gamma2*TI[t]*(1-TI[t]/delta2) + epsilon2*CO[t-1]
+      mu4[t] <- alpha4 + gamma4*TI[t]*(1-TI[t]/delta4) + epsilon4*CO[t-1]
           }
       
    # calculate the N4
