@@ -15,16 +15,13 @@ source("IPM_mod.R")
 source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
 source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
-# Model ln scale: tice N3 mortality and INdex SE and split N2----
-# try to fix the priors ito variance
-
-# JAGS settings
+# JAGS settings ----
 parms <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
            "N2",  "N3", "N4",
            "I2.rep", "I3.rep", "I4.rep",
-           "mu2", "alpha", "beta",  "gamma", "delta",
-           "mu3", "alpha1", "gamma1", "delta1", "epsilon1",
-           "mu4", "alpha2", "gamma2", "delta2", "epsilon2"
+           "mu2", "alpha2", "beta2",  "gamma2", "delta2",
+           "mu3", "alpha3", "gamma3", "delta3", "epsilon3",
+           "mu4", "alpha4", "gamma4", "delta4", "epsilon4"
                   #diagnostics
            ) 
 
@@ -46,7 +43,7 @@ ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 ssm26 <- jags(jags.data, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(cap.v7))
 ssm26
 
-# create ouput
+# JAGS ouput ----
 out <- ssm26$BUGSoutput 
 str(out$sims.list)
 
@@ -123,14 +120,8 @@ tmpN4_plot <- tmpN4_plot + geom_point(data = df_dis_tabLog,
                                       shape = 16, size = 1.5)
 tmpN4_plot 
 
-# ggsave("tmp_plot4.pdf")
+# ggsave("N4_plot.pdf")
 
-
-# # see out put for tmp_plot.
-#      # Other plots
-#      #tp = out$sims.list$tau.proc
-#      #tp_med = apply(tp,2,'median') # median values of y_pred
-#      #tp_ci = apply(tp,2,'quantile', c(0.1, 0.9)) # median values of y_pred
 
 
 # Diagnostics----
@@ -138,64 +129,78 @@ tmpN4_plot
 filepath_gen <- "biomass_cond_ag1_2_DIC_R3"
 filepath <- paste0(filepath_gen, "/recruitment_1")
 
-# print
-# print(out, intervals=c(0.025, 0.975), digits = 3)
-# out$mean
-
 # check convergence
 out$summary[rownames(out$summary), c("Rhat")]
-out$summary[, 8:9] # these all look really good suggesting good convergence
+out$summary[, 8:9] # these all look really good suggesting good convergence.  This line is easier to read than the one above but I wanted to know how to extract that info just in case.
 
-# calculations for effective sample size - n.eff should be > # of chains *100
+# calculations for effective sample size - n.eff should be > # of chains *100 (check on this). It seems fine with 2M runs.  But tab_neff shows the samples less than 300.
 N_samples <- nc*(ni-nb)/nt
 neff <- nc*100  #n.eff should be >nc*100
 tab_neff <- out$summary[rownames(out$summary), c("n.eff")][out$summary[rownames(out$summary), c("n.eff")]< 300]
 tab_neffa <- out$summary[rownames(out$summary), c("n.eff")][out$summary[rownames(out$summary), c("n.eff")]> 300]
 
+tab_neff
 
-## N2 ----
-### Mixing ----
+
+## Mixing ----
 # Asess mixing of chains to see if one MCMC goes badly Zuur et al. 2013, pg 83
 # vars for forecast model
     # source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
-var1 <- c('alpha', 'beta')
-var1 <- c('alpha', 'beta', 'gamma', "tau.proc2")
 
-MyBUGSChains(out, var1)
-mix1 <- MyBUGSChains(out, var1)
-
-#ggsave(MyBUGSChains(out, vars1), filename = paste0("Bayesian/", filepath, "/chains-forecast.pdf"), width=10, height=8, units="in")
+# vars for variances
+vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
+MyBUGSChains(out, vars_vAR)
+mix_var <- MyBUGSChains(out, vars_vAR)
+#ggsave(MyBUGSChains(out, vars3), filename = paste0("Bayesian/", filepath, "/chains-variance.pdf"), width=10, height=8, units="in")
 
 # vars for state space and demographic vars
-vars2 <- c("N2[10]", "N3[10]", "N4[10]")
-MyBUGSChains(out, vars2)
-mix2 <- MyBUGSChains(out, vars2)
+vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
+MyBUGSChains(out, vars_Nyear)
+mix_vars_Nyear <- MyBUGSChains(out, vars_Nyear)
 #ggsave(MyBUGSChains(out, vars2), filename = paste0("Bayesian/", filepath, "/chains-demographic.pdf"), width=10, height=8, units="in")
 
 
-# vars for variances
-vars3 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
-MyBUGSChains(out, vars3)
-mix3 <- MyBUGSChains(out, vars3)
-#ggsave(MyBUGSChains(out, vars3), filename = paste0("Bayesian/", filepath, "/chains-variance.pdf"), width=10, height=8, units="in")
+### N2 ----
+vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2")
+MyBUGSChains(out, vars_N2)
+mix_N2 <- MyBUGSChains(out, vars_N2)
+#ggsave(MyBUGSChains(out, vars1), filename = paste0("Bayesian/", filepath, "/chains-forecast.pdf"), width=10, height=8, units="in")
 
-vars4 <- c("mu2[10]", "mu3[10]", "mu4[10]")
-MyBUGSChains(out, vars4)
-mix3 <- MyBUGSChains(out, vars4)
+### N3 ----
+vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3")
+MyBUGSChains(out, vars_N3)
+mix_N3 <- MyBUGSChains(out, vars_N3)
+#ggsave(MyBUGSChains(out, vars1), filename = paste0("Bayesian/", filepath, "/chains-forecast.pdf"), width=10, height=8, units="in")
 
-###autocorrelation ----
-MyBUGSACF(out, var1)
-autocorr1 <- MyBUGSACF(out, var1)
+### N2 ----
+vars_N4 <- c("mu4[10]", "alpha4", "gamma4", "delta4", "epsilon4")
+MyBUGSChains(out, vars_N4)
+mix_N4 <- MyBUGSChains(out, vars_N4)
+#ggsave(MyBUGSChains(out, vars1), filename = paste0("Bayesian/", filepath, "/chains-forecast.pdf"), width=10, height=8, units="in")
+
+##autocorrelation ----
+MyBUGSACF(out, vars_vAR)
+autocorr_vars_vAR <- MyBUGSACF(out, vars_vAR)
 #ggsave(MyBUGSACF(out, vars1), filename = paste0("Bayesian/", filepath, "/auto_corr-forecast.pdf"), width=10, height=8, units="in")
 
-MyBUGSACF(out, vars2)
-autocorr2 <- MyBUGSACF(out, vars2)
+MyBUGSACF(out, vars_Nyear)
+autocorr_vars_Nyear <- MyBUGSACF(out, vars_Nyear)
 #ggsave(MyBUGSACF(out, vars2), filename = paste0("Bayesian/", filepath, "/auto_corr-demographic.pdf"), width=10, height=8, units="in")
 
-MyBUGSACF(out, vars3)
-autocorr3 <- MyBUGSACF(out, vars3)
+### N2 ----
+MyBUGSACF(out, vars_N2)
+autocorr_N2 <- MyBUGSACF(out, vars_N2)
 #ggsave(MyBUGSACF(out, vars3), filename = paste0("Bayesian/", filepath, "/auto_corr-autocorrelation.pdf"), width=10, height=8, units="in")
 
+### N3 ----
+MyBUGSACF(out, vars_N3)
+autocorr_N3 <- MyBUGSACF(out, vars_N3)
+#ggsave(MyBUGSACF(out, vars3), filename = paste0("Bayesian/", filepath, "/auto_corr-autocorrelation.pdf"), width=10, height=8, units="in")
+
+### N4 ----
+MyBUGSACF(out, vars_N4)
+autocorr_N4 <- MyBUGSACF(out, vars_N4)
+#ggsave(MyBUGSACF(out, vars3), filename = paste0("Bayesian/", filepath, "/auto_corr-autocorrelation.pdf"), width=10, height=8, units="in")
 
 # ### Model Validation ----
 # #(see Zuuer et al. 2013 for options for calculating Pearson residuals) - note that I am opting to do a lot of this outside of JAGS due to run time issues.  
