@@ -202,29 +202,30 @@ MyBUGSACF(out, vars_N4)
 autocorr_N4 <- MyBUGSACF(out, vars_N4)
 #ggsave(MyBUGSACF(out, vars3), filename = paste0("Bayesian/", filepath, "/auto_corr-autocorrelation.pdf"), width=10, height=8, units="in")
 
-# ### Model Validation ----
-# #(see Zuuer et al. 2013 for options for calculating Pearson residuals) - note that I am opting to do a lot of this outside of JAGS due to run time issues.  
-# # # Residual diagnostics
-# 
-# # this is mu for N2 which missed the first 4 years.
-# # resN2 <- raw$N2[, 5:25] - raw$mu
-# # sigmaJ <- raw$sigmaJ
-# # presN2 <- resN2/as.vector(sigmaJ) # I do not see why this needs as.vector but it seems to work 
-# 
-# #  pluggin in different columns and rows - results seem to be the same for the apply approach as for when these are calculated with subscripts. 
-# # resN2[,21][7500]/sigmaJ[7500]
-# # presN2[,21][7500]
-# # presN2_med = apply(presN2,2,'median')
-# 
-# # plot(calc$N2_med[5:25], presN2_med)
-# 
-# 
-# 
-# # E1 <- out$mean$PRes # Pearson resids
-# # F1 <- out$mean$expY # Expected values
-# # N2 <- out$mean$N2   # N2 - observed values? Why do these fill in the NAs of df$ln_biomass_med???
-# # D <- out$mean$D     # this is SSQ - but i'm looking for Cook'sD
-# # 
+
+## Model Validation ----
+#(see Zuur et al. 2013 for options for calculating Pearson residuals) - note that I am opting to do a lot of this outside of JAGS due to run time issues.
+# # Residual diagnostics
+
+# this is mu for N2 which missed the first 4 years.
+# resN2 <- raw$N2 - raw$mu2
+# sigmaJ <- raw$sigmaJ
+# presN2 <- resN2/as.vector(sigmaJ) # I do not see why this needs as.vector but it seems to work
+
+#  pluggin in different columns and rows - results seem to be the same for the apply approach as for when these are calculated with subscripts.
+# resN2[,21][7500]/sigmaJ[7500]
+# presN2[,21][7500]
+# presN2_med = apply(presN2,2,'median')
+
+# plot(calc$N2_med[5:25], presN2_med)
+
+
+
+# E1 <- out$mean$PRes # Pearson resids
+# F1 <- out$mean$expY # Expected values
+# N2 <- out$mean$N2   # N2 - observed values? Why do these fill in the NAs of df$ln_biomass_med???
+# D <- out$mean$D     # this is SSQ - but i'm looking for Cook'sD
+#
 # #pdf(paste0("Bayesian/", filepath, "/fit_obs.pdf"))
 # # par(mfrow = c(2,2), mar = c(5,5,2,2))
 # # plot(x=calc$N2_med[5:25], y = presN2_med, xlab = "Fitted values", ylab = "Pearson residuals")
@@ -246,32 +247,31 @@ autocorr_N4 <- MyBUGSACF(out, vars_N4)
 # # par(mfrow = c(1,1))
 # # # dev.off()
 # 
+
+# ### overdispersion - values close to 0.5 indicate a good fit pg. 77 Zuur et al. 2013 Beginners guide to GLM and GLMM
+# # But, this may not be a problem for nomral and uniform distirbutions - seems to be mostly a Poisson and perhaps binomial thing.
+# mean(out$sims.list$FitNew > out$sims.list$Fit)
+# # mean = 0.546333
+# 
+# #squared resids
+# presN2_sq <- presN2^2
+# presN2_fit <- rowSums(presN2_sq)
+# 
+# # pluggin in different rows - results seem to be the same for the rowSums approach as for when these are calculated with subscripts.
+# sum(presN2_sq[3000,])
+# presN2_fit[3000]
+# 
+# # need to simulate data for the New values
+# mean(out$sims.list$FitNew > presN2_fit)
+
+
+## variance/mean ----
 # 
 # 
-# #overdispersion - values close to 0.5 indicate a good fit pg. 77 Zuur et al. 2013 Beginners guide to GLM and GLMM
-# # But, this may not be a problem for nomral and uniform distirbutions - seems to be mostly a Poisson and perhaps binomial thing.  
-# # mean(out$sims.list$FitNew > out$sims.list$Fit)
-# # # mean = 0.546333
-# # 
-# # #squared resids
-# # presN2_sq <- presN2^2
-# # presN2_fit <- rowSums(presN2_sq)
-# # 
-# # # pluggin in different rows - results seem to be the same for the rowSums approach as for when these are calculated with subscripts. 
-# # sum(presN2_sq[3000,])
-# # presN2_fit[3000]
-# # 
-# # # need to simulate data for the New values
-# # mean(out$sims.list$FitNew > presN2_fit)
+## State-space ----
 # 
 # 
-# # variance/mean
-# 
-# 
-# ## State-space ----
-# 
-# 
-# ### Model Validation ----
+## Model Validation ----
 # #(see Schuab and Kery 2022, pg 272-282 - note that I am opting to do a lot of this outside of JAGS due to run time issues.  
 # 
 # # this is mu for N2 which missed the first 4 years.
@@ -345,34 +345,5 @@ autocorr_N4 <- MyBUGSACF(out, vars_N4)
 # # plotGOF(ssm26, "Dmape.obs", "Dmape.rep", main="State-space model", col=alpha(co, 0.3))
 # 
 # 
-# # age-structured figure ----
-# # the following suggests that Adamack has a strong point about the 2010 survey missed a lot of fish as the outcome is a biological impossibility.
-# # this also questions the role of ice in the modern forecast model as it seems to be there mostly to capture the 2010 year.  Condition may be the better thing to focus on.
-# p <- ggplot(data = df_dis_tabLog) 
-# p <- p + geom_point(aes(x = year, y = I2))
-# p <- p + geom_point(aes(x = year, y = I3), colour = "red")
-# p <- p + geom_point(aes(x = year, y = I4), colour = "pink")
-# #1999
-# df_seg1 <- data.frame(y1 = df_dis_tabLog$I2[1], y2 = df_dis_tabLog$I3[2], y3 = df_dis_tabLog$I4[3], x1 = df_dis_tabLog$year[1], x2 = df_dis_tabLog$year[2], x3 = df_dis_tabLog$year[3])
-# p <- p + geom_segment(data = df_seg1, aes(x = x1, y = y1, xend = x2, yend = y2))
-# p <- p + geom_segment(data = df_seg1, aes(x = x2, y = y2, xend = x3, yend = y3))
-# #2010
-# df_seg2 <- data.frame(y1 = df_dis_tabLog$I2[12], y2 = df_dis_tabLog$I3[13], y3 = df_dis_tabLog$I4[14], x1 = df_dis_tabLog$year[12], x2 = df_dis_tabLog$year[13], x3 = df_dis_tabLog$year[14])
-# p <- p + geom_segment(data = df_seg2, aes(x = x1, y = y1, xend = x2, yend = y2))
-# p <- p + geom_segment(data = df_seg2, aes(x = x2, y = y2, xend = x3, yend = y3))
-# #2016
-# df_seg3 <- data.frame(y1 = df_dis_tabLog$I2[19], y2 = df_dis_tabLog$I3[20], y3 = df_dis_tabLog$I4[21], x1 = df_dis_tabLog$year[19], x2 = df_dis_tabLog$year[20], x3 = df_dis_tabLog$year[21])
-# p <- p + geom_segment(data = df_seg3, aes(x = x1, y = y1, xend = x2, yend = y2))
-# p <- p + geom_segment(data = df_seg3, aes(x = x2, y = y2, xend = x3, yend = y3))
-# p <- p + ylab("ln abundance")
-# p
-# 
-# df_plot <- df_dis_summ %>%
-#     filter(age != 1 & age != 5)
-# 
-# 
-# p <- ggplot(data = df_plot, aes(x = year, y = log(abun), colour = age)) 
-# p <- p + geom_point()
-# p
-# 
-# # End----
+
+# End----
