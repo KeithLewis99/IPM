@@ -11,10 +11,7 @@ rm(list=ls())
 # Source files
 source("IPM_dat.R")
 source("IPM_fun.R")
-#source("IPM_mod.R")
-#source("IPM_mod-tmp.R")
-#source("IPM_mod-tmp1.R")
-source("IPM_mod-tmp2.R")
+source("IPM_mod.R")
 source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
 source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
@@ -40,9 +37,9 @@ parms <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs",
 
 
 # MCMC settings
-#ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
+ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 #ni <- 200000; nt <- 30; nb <- 30000; nc <- 3
-ni <- 2000000; nt <- 150; nb <- 300000; nc <- 3
+#ni <- 2000000; nt <- 150; nb <- 300000; nc <- 3
 
 # run model
 #source("IPM_mod.R")
@@ -52,10 +49,8 @@ ssm26
 # create ouput
 out <- ssm26$BUGSoutput 
 str(out$sims.list)
-#out_mcmc <- as.mcmc(out)
-#plot(out_mcmc[,1:4])
 
-# Send DIC to dashboard
+# DIC to dashboard
 ssm26_dic <- out$DIC
 
 
@@ -64,7 +59,6 @@ raw <- ls_out(out)
 str(raw)
 
 #extract medians, credible intervals, and prediction intervals
-
 ls_all <- ls_med(raw)
 calc <- ls_all$ls_med
 cri <- ls_all$ls_cri
@@ -76,67 +70,41 @@ str(pri, 1)
 
 cbind(1999:2023, calc$Nt2, jd$I2, calc$N3, jd$I3, calc$mu3)
 
-#df_calc <- do.call(rbind, calc) # this doesn't work
-#write(df_calc, "out2.csv")
-#cbind(N2_med, N3_med, N2_med+N3_med)
 
-
-# calculations for effective sample size - n.eff should be > # of chains *100
-N_samples <- nc*(ni-nb)/nt
-neff <- nc*100  #n.eff should be >nc*100
-tab_neff <- out$summary[rownames(out$summary), c("n.eff")][out$summary[rownames(out$summary), c("n.eff")]< 300]
-tab_neffa <- out$summary[rownames(out$summary), c("n.eff")][out$summary[rownames(out$summary), c("n.eff")]> 300]
-
-out$summary[rownames(out$summary), c("Rhat")]
-
-out$summary[, 8:9] # these all look really good suggesting good convergence
-
-
-## figures
+# figures ----
 # N2: observation median v process median
-# plot(calc$I2_med, calc$N2_med)
  plot(jd$I2, calc$N2)
-# # N3: observation median v process median
-# plot(calc$I3_med, calc$N3_med)
+# N3: observation median v process median
  plot(jd$I3, calc$N3)
-# plot(calc$I4_med, calc$N4_med)
+# N4: observation median v process median
  plot(jd$I4, calc$N4)
- 
-# # Observation median over time
+# Observation median over time
  plot(seq(1999:2023), ls_all$N_med)
-# 
-# # observation median v real data - relation is perfect - is this OK?
-# plot(calc$I2_med, jd$I2)
-# plot(calc$I3_med, jd$I3)
-# plot(calc$N2_med, jd$I2)
-# plot(calc$N3_med, jd$I3)
 
 
 ## IPM plot----
+# variables for IPM plots
 year <- 1999:2021
 ly <- length(year)
 forecast <- 2022:2023
 lf <- length(forecast)
 
+# combined N2-N4[t]
 tmp_plot <- ipm_plot(df_med = ls_all$N_med, df_cri = ls_all$N_ci, df_pri = ls_all$Pr_ci, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
 tmp_plot <- tmp_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = log(exp(I2) + exp(I3)), x = year),
                                       shape = 16, size = 1.5)
 tmp_plot
 
+# N2[t] - create plot, then add the capelin data
 tmpN2_plot <- ipm_plot(df_med = calc$N2, df_cri = cri$N2_cri, df_pri = pri$I2.rep_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
 tmpN2_plot <- tmpN2_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = I2, x = year),
                                       shape = 16, size = 1.5)
 tmpN2_plot
 
-# tmpNt2_plot <- ipm_plot(df_med = calc$Nt2, df_cri = cri$Nt2_cri, df_pri = pri$Nt2_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
-# tmpNt2_plot <- tmpNt2_plot + geom_point(data = df_dis_tabLog,
-#                                       aes(y = I2, x = year),
-#                                       shape = 16, size = 1.5)
-# tmpNt2_plot
 
-
+# N3[t]
 tmpN3_plot <- ipm_plot(df_med = calc$N3, df_cri = cri$N3_cri, df_pri = pri$I3.rep_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
 #tmpN3_plot <- tmpN3_plot + 
     
@@ -155,44 +123,36 @@ tmpN4_plot <- tmpN4_plot + geom_point(data = df_dis_tabLog,
                                       shape = 16, size = 1.5)
 tmpN4_plot 
 
-# tmpY3_plot <- ipm_plot(df_med = calc$y3, df_cri = cri$y3_cri, df_pri = pri$y3_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
-# #tmpN3_plot <- tmpN3_plot + 
-# 
-# tmpY3_plot <- tmpY3_plot + geom_point(data = df_dis_tabLog,
-#                                       aes(y = I3, x = year),
-#                                       shape = 16, size = 1.5)
-# tmpY3_plot
-
-
-# tmpY2_plot <- ipm_plot(df_med = calc$y2, df_cri = cri$y2_cri, df_pri = pri$y2_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
-# #tmpN3_plot <- tmpN3_plot + 
-# 
-# tmpY2_plot <- tmpY2_plot + geom_point(data = df_dis_tabLog,
-#                                       aes(y = I2, x = year),
-#                                       shape = 16, size = 1.5)
-# tmpY2_plot
 # ggsave("tmp_plot4.pdf")
-# 
-# 
-# 
-# 
+
+
 # # see out put for tmp_plot.
 #      # Other plots
 #      #tp = out$sims.list$tau.proc
 #      #tp_med = apply(tp,2,'median') # median values of y_pred
 #      #tp_ci = apply(tp,2,'quantile', c(0.1, 0.9)) # median values of y_pred
-# 
-# 
-# # Diagnostics----
-# # these are just for when figures need to be saved to folders
-# filepath_gen <- "biomass_cond_ag1_2_DIC_R3" 
-# filepath <- paste0(filepath_gen, "/recruitment_1")
-# 
-# # print
+
+
+# Diagnostics----
+# these are just for when figures need to be saved to folders
+filepath_gen <- "biomass_cond_ag1_2_DIC_R3"
+filepath <- paste0(filepath_gen, "/recruitment_1")
+
+# print
 # print(out, intervals=c(0.025, 0.975), digits = 3)
 # out$mean
-# 
-# 
+
+# check convergence
+out$summary[rownames(out$summary), c("Rhat")]
+out$summary[, 8:9] # these all look really good suggesting good convergence
+
+# calculations for effective sample size - n.eff should be > # of chains *100
+N_samples <- nc*(ni-nb)/nt
+neff <- nc*100  #n.eff should be >nc*100
+tab_neff <- out$summary[rownames(out$summary), c("n.eff")][out$summary[rownames(out$summary), c("n.eff")]< 300]
+tab_neffa <- out$summary[rownames(out$summary), c("n.eff")][out$summary[rownames(out$summary), c("n.eff")]> 300]
+
+
 ## N2 ----
 ### Mixing ----
 # Asess mixing of chains to see if one MCMC goes badly Zuur et al. 2013, pg 83
