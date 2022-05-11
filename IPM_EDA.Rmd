@@ -17,13 +17,43 @@ source("IPM_EDA.R")
 ```
 
 
-# Abundance by age and strata
+# Abundance by age
 
+Column {.tabset}
+-------------------------------------
+
+### abundance by age and strata
 
 ```{r fig-01}
 ggplotly(p01)
 ```
 
+### abundance by age and year
+
+```{r}
+# age-structured figure ----
+# the following suggests that Adamack has a strong point about the 2010 survey missed a lot of fish as the outcome is a biological impossibility.
+# this also questions the role of ice in the modern forecast model as it seems to be there mostly to capture the 2010 year.  Condition may be the better thing to focus on.
+p <- ggplot(data = df_dis_tabLog)
+p <- p + geom_point(aes(x = year, y = I2))
+p <- p + geom_point(aes(x = year, y = I3), colour = "red")
+p <- p + geom_point(aes(x = year, y = I4), colour = "pink")
+#1999
+df_seg1 <- data.frame(y1 = df_dis_tabLog$I2[1], y2 = df_dis_tabLog$I3[2], y3 = df_dis_tabLog$I4[3], x1 = df_dis_tabLog$year[1], x2 = df_dis_tabLog$year[2], x3 = df_dis_tabLog$year[3])
+p <- p + geom_segment(data = df_seg1, aes(x = x1, y = y1, xend = x2, yend = y2))
+p <- p + geom_segment(data = df_seg1, aes(x = x2, y = y2, xend = x3, yend = y3))
+#2010
+df_seg2 <- data.frame(y1 = df_dis_tabLog$I2[12], y2 = df_dis_tabLog$I3[13], y3 = df_dis_tabLog$I4[14], x1 = df_dis_tabLog$year[12], x2 = df_dis_tabLog$year[13], x3 = df_dis_tabLog$year[14])
+p <- p + geom_segment(data = df_seg2, aes(x = x1, y = y1, xend = x2, yend = y2))
+p <- p + geom_segment(data = df_seg2, aes(x = x2, y = y2, xend = x3, yend = y3))
+#2016
+df_seg3 <- data.frame(y1 = df_dis_tabLog$I2[19], y2 = df_dis_tabLog$I3[20], y3 = df_dis_tabLog$I4[21], x1 = df_dis_tabLog$year[19], x2 = df_dis_tabLog$year[20], x3 = df_dis_tabLog$year[21])
+p <- p + geom_segment(data = df_seg3, aes(x = x1, y = y1, xend = x2, yend = y2))
+p <- p + geom_segment(data = df_seg3, aes(x = x2, y = y2, xend = x3, yend = y3))
+p <- p + ylab("ln abundance")
+p
+
+```
 
 # Correlation between age class and abundance
 
