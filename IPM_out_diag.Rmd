@@ -17,9 +17,9 @@ library(xtable)
 library(DT)
 library(ezknitr)
 
-#source("IPM_out.R")
+source("IPM_out.R")
 #load("mod_20K.RData")
-load("mod_2M.RData")
+#load("mod_2M.RData")
 options(scipen=999)
 
 ```
@@ -139,22 +139,34 @@ tmpN4_plot
 Column {.tabset}
 -------------------------------------
      
-### forecast vars
+### Process and observation
      
 ```{r}
-mix1
+mix_var
 ```
 
 ### demographic
 
 ```{r}
-mix2
+mix_vars_Nyear
 ```
 
-### variances
+### N2
 
 ```{r}
-mix3
+mix_N2
+```
+
+### N3
+
+```{r}
+mix_N3
+```
+
+### N4
+
+```{r}
+mix_N4
 ```
 
 
@@ -163,23 +175,36 @@ mix3
 Column {.tabset}
 -------------------------------------
      
-### forecast vars
+### Process and observation
      
 ```{r}
-autocorr1
+autocorr_vars_vAR
 ```
 
 ### demographic
 
 ```{r}
-autocorr2
+autocorr_vars_Nyear
 ```
 
-### variances
+### N2
 
 ```{r}
-autocorr3
+autocorr_N2
 ```
+
+### N3
+
+```{r}
+autocorr_N3
+```
+
+### N4
+
+```{r}
+autocorr_N4
+```
+
 
 # Overdispersion
 Is this only needed for GLM type models, i.e., when there is non-normal distributions involved?
