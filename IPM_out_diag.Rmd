@@ -24,11 +24,11 @@ options(scipen=999)
 
 ```
 
-# Background
+Background {data-navmenu="Background"}
+=====
 
 Column {.tabset}
 -------------------------------------
-### 2J3KL capelin
 
 ### General
 
@@ -40,12 +40,77 @@ Column {.tabset}
      - Population processes are informed by observations from multiple sources  
      - Process errors are necessary for realistic stochastic projections
 
-### Data inputs
-COPY FROM LRP DASHBOARD
-- spring acoustic survey  
-- Bellevue beach larval survey  
-- tice  
-- condition
+### 2J3KL capelin
+
+Column {.tabset}
+-------------------------------------
+
+```{r}
+knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/lifeCycle_plus_Data.png")
+```
+
+
+```{r}
+knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/lifeCycle_dataTimeSeries.png")
+```
+
+Study area and Data {data-navmenu="Background"}
+=====
+
+Column
+-------------------------------------
+
+### Study Area
+
+```{r}
+knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/images/map_inset.png")
+```
+
+### The data: temporal relationships
+
+```{r}
+
+knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/images/variables_plus_fish.png")
+
+```
+
+Column {.tabset}
+-------------------------------------
+
+### Dome model
+
+```{r}
+
+knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/images/Buren2015fig5_dome.png")
+
+```
+
+
+### Larval density and recruitment
+
+```{r}
+
+knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/images/Murphy2018FishRes_fig2.png")
+
+```
+
+
+### Condition
+
+```{r}
+
+knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/images/Buren_fig6-cond.png")
+
+```
+
+### The forecast model
+
+```{r}
+
+knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/images/credInt.png")
+
+```
+
 
 
 # MCMC info
