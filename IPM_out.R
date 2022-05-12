@@ -18,20 +18,16 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 # JAGS settings ----
 parms <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
            "N2",  "N3", "N4",
-           "I2.rep", "I3.rep", "I4.rep",
            "mu2", "alpha2", "beta2",  "gamma2", "delta2",
            "mu3", "alpha3", "gamma3", "delta3", "epsilon3",
-           "mu4", "alpha4", "gamma4", "delta4", "epsilon4"
-                  #diagnostics
+           "mu4", "alpha4", "gamma4", "delta4", "epsilon4",
+           "Dssm.obs", "Dmape.obs",  "Tturn.obs", 
+           "Dssm.rep", "Dmape.rep",  "Tturn.rep",
+           "I2.rep", "I3.rep", "I4.rep", "I.rep"
            ) 
-
-# "Ni2","Nt2","gamma", "delta",  "I.exp", "I.rep",
-# "Tturn.obs", "Tturn.rep"      
 #  , "pe3", "pe2",
-
-# "sigma", "I2", "I3", "I",
-#parms <- c("N2",  "N3", "mu", "tau.proc", "tau.obs", "tau.LD", "tau.ind", "I2", "I3", "I", "I2.rep", "I3.rep", "I.exp", "I.rep", "alpha", "beta", "gamma",  "Tturn.obs", "Tturn.rep") #"sigma",
-
+# "I.exp", "I2.rep", "I3.rep", "I4.rep", "I.rep","I2", "I3", "I4", "I",
+# "Tt1.obs", "Tt2.obs", "Tt3.obs", "Tt1.rep", "Tt2.rep", "Tt3.rep",
 
 # MCMC settings
 ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
@@ -172,7 +168,7 @@ MyBUGSChains(out, vars_N3)
 mix_N3 <- MyBUGSChains(out, vars_N3)
 #ggsave(MyBUGSChains(out, vars1), filename = paste0("Bayesian/", filepath, "/chains-forecast.pdf"), width=10, height=8, units="in")
 
-### N2 ----
+### N4 ----
 vars_N4 <- c("mu4[10]", "alpha4", "gamma4", "delta4", "epsilon4")
 MyBUGSChains(out, vars_N4)
 mix_N4 <- MyBUGSChains(out, vars_N4)
@@ -226,29 +222,31 @@ autocorr_N4 <- MyBUGSACF(out, vars_N4)
 # N2 <- out$mean$N2   # N2 - observed values? Why do these fill in the NAs of df$ln_biomass_med???
 # D <- out$mean$D     # this is SSQ - but i'm looking for Cook'sD
 #
-# #pdf(paste0("Bayesian/", filepath, "/fit_obs.pdf"))
-# # par(mfrow = c(2,2), mar = c(5,5,2,2))
-# # plot(x=calc$N2_med[5:25], y = presN2_med, xlab = "Fitted values", ylab = "Pearson residuals")
-# # abline(h = 0, lty = 2)
-# # # see notes in Mortality model
-# # plot(y = calc$I2_med[5:25], x = calc$N2_med[5:25], xlab = "Fitted values", ylab = "Observed data") # should follow the line
-# # abline(coef = c(0,1), lty = 2)
-# # par(mfrow = c(1,1))
+#pdf(paste0("Bayesian/", filepath, "/fit_obs.pdf"))
+# par(mfrow = c(2,2), mar = c(5,5,2,2))
+# plot(x=calc$N2_med[5:25], y = presN2_med, xlab = "Fitted values", ylab = "Pearson residuals")
+# abline(h = 0, lty = 2)
+# # see notes in Mortality model
+# plot(y = calc$I2_med[5:25], x = calc$N2_med[5:25], xlab = "Fitted values", ylab = "Observed data") # should follow the line
+# abline(coef = c(0,1), lty = 2)
+# par(mfrow = c(1,1))
+# dev.off()
+# #
+# # # Residuals v covariates Zuur et al. 2013, pg 59-60: look for no patterns; patterns may indicated non-linear
+# # pdf(paste0("Bayesian/", filepath, "/resid_covar.pdf"))
+# par(mfrow = c(2,2), mar = c(5,5,2,2))
+# #MyVar <- c("tice.std", "meandCond_lag.std")
+# #df_diag <- as.data.frame(model_data)
+# #df_diag <- cbind(df_diag, E1)
+# plot(jags.data$LD[3:23], presN2_med, xlab = "Larval Density", ylab = "Pearson resids")
+# plot(jags.data$TI[5:25], presN2_med, xlab = "Ice retreat", ylab = "Pearson resids")
+# par(mfrow = c(1,1))
 # # dev.off()
-# # # 
-# # # # Residuals v covariates Zuur et al. 2013, pg 59-60: look for no patterns; patterns may indicated non-linear
-# # # pdf(paste0("Bayesian/", filepath, "/resid_covar.pdf"))
-# # par(mfrow = c(2,2), mar = c(5,5,2,2))
-# # #MyVar <- c("tice.std", "meandCond_lag.std")
-# # #df_diag <- as.data.frame(model_data)
-# # #df_diag <- cbind(df_diag, E1)
-# # plot(jags.data$LD[3:23], presN2_med, xlab = "Larval Density", ylab = "Pearson resids")
-# # plot(jags.data$TI[5:25], presN2_med, xlab = "Ice retreat", ylab = "Pearson resids")
-# # par(mfrow = c(1,1))
-# # # dev.off()
-# 
 
-# ### overdispersion - values close to 0.5 indicate a good fit pg. 77 Zuur et al. 2013 Beginners guide to GLM and GLMM
+
+### overdispersion ----
+# I don't think I need this code as there are no distributions that can be overdispersed in the current model (only Guassian and gamma)
+# - values close to 0.5 indicate a good fit pg. 77 Zuur et al. 2013 Beginners guide to GLM and GLMM
 # # But, this may not be a problem for nomral and uniform distirbutions - seems to be mostly a Poisson and perhaps binomial thing.
 # mean(out$sims.list$FitNew > out$sims.list$Fit)
 # # mean = 0.546333
@@ -273,53 +271,57 @@ autocorr_N4 <- MyBUGSACF(out, vars_N4)
 # 
 ## Model Validation ----
 # #(see Schuab and Kery 2022, pg 272-282 - note that I am opting to do a lot of this outside of JAGS due to run time issues.  
-# 
-# # this is mu for N2 which missed the first 4 years.
-# # I <- out$sims.list$I
-# # I.exp <- out$sims.list$I.exp
-# # I.rep <- out$sims.list$I.rep
-# # 
-# # I.exp_median <- out$median$I
-# # 
-# # #ss.exp <- I.exp[, 1:c(ly)] 
-# # #lcap <- length(df_cap$abundance_med) - 2
-# # #ss.obs <- log(df_cap$abundance_med[15:lcap]*1000)
-# # 
-# # 
-# # # Mean absolute percentage error        
-# #         # n = jd$n.occasions
-# # #Dmape.obs <- 100/jd$n.occasions[1] *sum(abs((ss.obs-ss.exp)/ss.obs), na.rm = T)
-# # Dmape.obs <- 100/jd$n.occasions[1] *rowSums(abs((I-I.exp)/I), na.rm = T)
-# # 
-# # #ss.rep <- calc$I.rep[1:c(ly)] 
-# # 
-# # #Dmape.rep <- 100/jd$n.occasions[1] *sum(abs((ss.rep-ss.exp)/ss.rep), na.rm = T)
-# # Dmape.rep <- 100/jd$n.occasions[1] *rowSums(abs((I.rep-I.exp)/I.rep), na.rm = T)
-# # 
-# # # Bayesian p-value
-# # pB <- mean(Dmape.rep > Dmape.obs)
-# # 
-# # p <- ggplot()
-# # p <- p + geom_point(aes(x = Dmape.obs, y = Dmape.rep))
-# # p <- p + geom_abline(intercept = 0, slope = 1)
-# # p <- p + xlab("Discrepancy observed data") + ylab("Discrepancy replicate data")
-# # p <- p + xlim(0, 60)
-# # p <- p + theme_bw()
-# # p <- p + annotate(geom = "text", x = 50, y = 2, label = bquote(p[B]), colour = "red")
-# # p <- p + annotate(geom = "text", x = 55, y = 2, label = paste("=", round(pB, 2)), colour = "black")
-# # p
-# # 
-# # 
-# # # need simulated data        
-# # 
-# # # number of switches
-# # out$sims.list$Tturn.obs
-# # par(mfrow = c(1,2), mar = c(5,5,2,2))
-# # hist(out$sims.list$Tturn.obs)
-# # hist(out$sims.list$Tturn.rep)
+#####BUT i CAN'T GET IT TO WORK SO DOING IT IN JAGS FOR NOW
+
+# this is mu for N2 which missed the first 4 years.
+
+# I.exp <- out$sims.list$I.exp  # expected value of I based on sum of Ns
+# I.rep <- out$sims.list$I.rep  # simulated value of I based on sum of simulated I values
 # 
 # 
+# ss.exp <- I.exp[, 1:c(ly)] # don't want predicted values
+# lcap <- length(df_cap$abundance_med) - 2 # get length of capelin series but subtract the NAs that were added for the prediction
+# ss.obs <- log(df_cap$abundance_med[15:lcap]*1000) # put appropriate years on log scale and appropriate scale
 # 
+# ### Mean absolute percentage error see formula in S&K pg. 274.
+#  n = jd$n.occasions
+#  Dmape.obs <- 100/jd$n.occasions[1] *sum(abs((ss.obs-ss.exp)/ss.obs), na.rm = T)
+#  Dmape.obs.t <- 100/jd$n.occasions[1] *rowSums(abs((ss.obs-ss.exp)/ss.obs), na.rm = T)
+# # sum(Dmape.obs)
+# # 
+
+# ss.rep <- I.rep[1:c(ly)]
+# Dmape.rep <- 100/jd$n.occasions[1] *sum(abs((ss.rep-ss.exp)/ss.rep), na.rm = T)
+# Dmape.rep.t <- 100/jd$n.occasions[1] *colSums(abs((ss.rep-ss.exp)/ss.rep), na.rm = T)
+# 
+# Bayesian p-value
+Dmape.obs <- out$sims.list$Dmape.obs
+Dmape.rep <- out$sims.list$Dmape.rep
+
+pB <- mean(Dmape.rep > Dmape.obs)
+pB
+
+p <- ggplot()
+p <- p + geom_point(aes(x = Dmape.obs, y = Dmape.rep))
+p <- p + geom_abline(intercept = 0, slope = 1)
+p <- p + xlab("Discrepancy observed data") + ylab("Discrepancy replicate data")
+p <- p + xlim(0, max(Dmape.obs))
+p <- p + theme_bw()
+p <- p + annotate(geom = "text", x = 50, y = 2, label = bquote(p[B]), colour = "red")
+p <- p + annotate(geom = "text", x = 55, y = 2, label = paste("=", round(pB, 2)), colour = "black")
+p
+
+
+# need simulated data
+
+# number of switches
+out$sims.list$Tturn.obs
+par(mfrow = c(1,2), mar = c(5,5,2,2))
+hist(out$sims.list$Tturn.obs)
+hist(out$sims.list$Tturn.rep)
+graphics.off()
+
+
 # #install.packages('IPMbook')
 # 
 # 
