@@ -117,9 +117,9 @@ ls_med <- function(ls){
     names(ls_pri)[i] <- paste0(names(ls)[i], "_pri")
   }
   
-  N_med <- log(apply(exp(ls$N3)+exp(ls$N2), 2, 'median'))
-  N_ci <- apply(log(exp(ls$N3)+exp(ls$N2)), 2, 'quantile', c(0.025, 0.975))
-  Pr_ci <- log(apply(exp(ls$I3.rep)+exp(ls$I2.rep), 2, 'quantile', c(0.1, 0.9)))
+  N_med <- log(apply(exp(ls$N3)+exp(ls$N2) + exp(ls$N4), 2, 'median'))
+  N_ci <- apply(log(exp(ls$N3)+exp(ls$N2) + exp(ls$N4)), 2, 'quantile', c(0.025, 0.975))
+  Pr_ci <- log(apply(exp(ls$I3.rep)+exp(ls$I2.rep) + exp(ls$N4), 2, 'quantile', c(0.1, 0.9)))
   
   ls_calc <- list(ls_med = ls_med, ls_cri = ls_cri, ls_pri = ls_pri, N_med = N_med, N_ci = N_ci, Pr_ci = Pr_ci)
      return(ls_calc)
