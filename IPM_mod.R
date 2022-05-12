@@ -110,49 +110,52 @@ cap.v7 = '
       I2[t] ~ dnorm(N2[t], tau.obs)       # sampled observation
       I3[t] ~ dnorm(N3[t], tau.obs)
       I4[t] ~ dnorm(N4[t], tau.obs)
-      I[t] <- log(exp(I2[t]) + exp(I3[t]) + exp(I4[t]))
+      I[t] ~ dnorm(log(exp(I2[t]) + exp(I3[t]) + exp(I4[t])), tau.obs)
    }
 
-
 # Assessing the fit of the state-space model
-   ## 1. Compute fit statistics for observed data.
-   ## 1.1 Discrepancy meansure: mean absolute error
-   # for (t in 1:n.occasions) {
-   # I.exp[t] <- log(exp(N2[t]) + exp(N3[t]))
-   # }
-   # 
+ ## 1. Compute fit statistics for observed data.
+  ### 1.1 Discrepancy meansure: mean absolute error
+   for (t in 1:n.occasions) {
+   I.exp[t] <- log(exp(N2[t]) + exp(N3[t]) + exp(N4[t]))
+   Dssm.obs[t] <- abs((I[t] - I.exp[t])/I[t])
+   }
+   Dmape.obs <- sum(Dssm.obs)
+   
    # ## 1.2 Test statistic: number of turns or switches - jaggedness
-   # for (t in 1:(n.occasions-2)){
-   #    Tt1.obs[t] <- step(I[t+2] - I[t+1])
-   #    Tt2.obs[t] <- step(I[t+1] - I[t])
-   #    # Tt12.obs[t] <- step(I2[t+2] - I2[t+1])
-   #    # Tt13.obs[t] <- step(I3[t+2] - I3[t+1])
-   #    # Tt22.obs[t] <- step(I2[t+1] - I2[t])
-   #    # Tt23.obs[t] <- step(I3[t+1] - I3[t])
-   #    # Tt1.obs[t] <- log(exp(Tt12.obs[t]) + exp(Tt13.obs[t]))
-   #    # Tt2.obs[t] <- log(exp(Tt22.obs[t]) + exp(Tt23.obs[t]))
-   #    Tt3.obs[t] <- equals(Tt1.obs[t] + Tt2.obs[t], 1)
-   # }
-   # Tturn.obs <- sum(Tt3.obs)
-   # 
-   # 
-   # ## 2.1 Simulated data
+   for (t in 1:(n.occasions-2)){
+      Tt1.obs[t] <- step(I[t+2] - I[t+1])
+      Tt2.obs[t] <- step(I[t+1] - I[t])
+      # Tt12.obs[t] <- step(I2[t+2] - I2[t+1])
+      # Tt13.obs[t] <- step(I3[t+2] - I3[t+1])
+      # Tt22.obs[t] <- step(I2[t+1] - I2[t])
+      # Tt23.obs[t] <- step(I3[t+1] - I3[t])
+      # Tt1.obs[t] <- log(exp(Tt12.obs[t]) + exp(Tt13.obs[t]))
+      # Tt2.obs[t] <- log(exp(Tt22.obs[t]) + exp(Tt23.obs[t]))
+      Tt3.obs[t] <- equals(Tt1.obs[t] + Tt2.obs[t], 1)
+   }
+   Tturn.obs <- sum(Tt3.obs)
+
+
+ ## 2.1 Simulated data
     for (t in 1:n.occasions){
    #    y2.rep[t] ~ dnorm(N2[t], tau.obs) 
    #    y3.rep[t] ~ dnorm(N3[t], tau.obs)
-       I2.rep[t] ~ dnorm(N2[t], tau.obs)
-       I3.rep[t] ~ dnorm(N3[t], tau.obs)
-       I4.rep[t] ~ dnorm(N4[t], tau.obs)
-   #   I.rep[t] ~ dnorm(log(exp(I2.rep[t]) + exp(I3.rep[t]) + exp(I4.rep[t])), tau.ind)
+   I2.rep[t] ~ dnorm(N2[t], tau.obs)
+   I3.rep[t] ~ dnorm(N3[t], tau.obs)
+   I4.rep[t] ~ dnorm(N4[t], tau.obs)
+   I.rep[t] ~ dnorm(log(exp(I2.rep[t]) + exp(I3.rep[t]) + exp(I4.rep[t])), tau.obs)
+   Dssm.rep[t] <- abs((I.rep[t] - I.exp[t])/I.rep[t])
     }
-   # 
-   # 
-   # ##Test statistic: number of turns or switches - jaggedness
-   # for (t in 1:(n.occasions-2)){
-   #    Tt1.rep[t] <- step(I.rep[t+2] - I.rep[t+1])
-   #    Tt2.rep[t] <- step(I.rep[t+1] - I.rep[t])
-   #    Tt3.rep[t] <- equals(Tt1.rep[t] + Tt2.rep[t], 1)
-   # }
-   # Tturn.rep <- sum(Tt3.rep)
+   Dmape.rep <- sum(Dssm.rep)
+
+     
+##Test statistic: number of turns or switches - jaggedness
+   for (t in 1:(n.occasions-2)){
+      Tt1.rep[t] <- step(I.rep[t+2] - I.rep[t+1])
+      Tt2.rep[t] <- step(I.rep[t+1] - I.rep[t])
+      Tt3.rep[t] <- equals(Tt1.rep[t] + Tt2.rep[t], 1)
+   }
+   Tturn.rep <- sum(Tt3.rep)
 
 }'
