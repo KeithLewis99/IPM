@@ -32,6 +32,11 @@ Column {.tabset}
 
 ### General
 
+- capelin (Mallotus villosus)
+- Nafo division 2J3KL
+- keystone forage fish in NA Atlantic
+- LRP required
+
 - An integrated state-space population dynamics model  
 - Integrated  
      - Uses as much information as possible  
@@ -40,15 +45,14 @@ Column {.tabset}
      - Population processes are informed by observations from multiple sources  
      - Process errors are necessary for realistic stochastic projections
 
-### 2J3KL capelin
 
-Column {.tabset}
--------------------------------------
+### capelin Life cycle
 
 ```{r}
 knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/lifeCycle_plus_Data.png")
 ```
 
+### Data time series
 
 ```{r}
 knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/lifeCycle_dataTimeSeries.png")
@@ -162,6 +166,22 @@ datatable(tab3, rownames = F, class = 'cell-border stripe', height = 50,  option
 
 # Survey- SA
 
+Column {.tabset}
+-------------------------------------
+
+### Age disaggregated index by year (LN)
+     
+```{r tab4, eval=T,prompt=T, comment = F}
+datatable(df_dis_tabLog, rownames = F, class = 'cell-border stripe', height = 50,  options = list(searching = F, pageLength = 30, autoWidth = TRUE, scrollY = F)) %>% formatRound(2:5, 3)
+```
+
+### Age disaggregated index by year (real)
+     
+```{r tab5, eval=T,prompt=T, comment = F}
+datatable(df_dis_tab, rownames = F, class = 'cell-border stripe', height = 50,  options = list(searching = F, pageLength = 30, autoWidth = TRUE, scrollY = F)) %>% formatRound(2:5, 3)
+```
+
+
 # Trends
 
 Column
@@ -272,7 +292,8 @@ autocorr_N4
 
 
 # Overdispersion
-Is this only needed for GLM type models, i.e., when there is non-normal distributions involved?
+I think that this is only needed for distributions that can be overdispersed like Poisson.  Gamma has a dispersion parameter and normal assumes constant variance.  
+But confirm with PDR.
      
 # Model validation
      
