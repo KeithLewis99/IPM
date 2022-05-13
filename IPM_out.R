@@ -246,51 +246,131 @@ autocorr_N4 <- MyBUGSACF(out, vars_N4)
 
 
 ## Model Validation ----
-#(see Zuur et al. 2013 for options for calculating Pearson residuals) - note that I am opting to do a lot of this outside of JAGS due to run time issues.
-# # Residual diagnostics
+# #(see Schuab and Kery 2022, pg 272-282 - note I tried to do a lot of this in R but abandonded it as I wasn't getting proper results - not sure how to do the algebra in R
 
-# this is mu for N2 which missed the first 4 years.
-# resN2 <- raw$N2 - raw$mu2
-# sigmaJ <- raw$sigmaJ
-# presN2 <- resN2/as.vector(sigmaJ) # I do not see why this needs as.vector but it seems to work
+### Posterior Predictive Checks (PPC) ----
+#### Mean absolute percentage error see formula
+Dmape.obs <- out$sims.list$Dmape.obs # this is a GOF but i'm 
+Dmape.rep <- out$sims.list$Dmape.rep
+# Dmape.GOF <- 100/7000*sum(Dmape.obs) # no idea if this is "right"
 
-#  pluggin in different columns and rows - results seem to be the same for the apply approach as for when these are calculated with subscripts.
-# resN2[,21][7500]/sigmaJ[7500]
-# presN2[,21][7500]
-# presN2_med = apply(presN2,2,'median')
+#### Bayesian p-value
+pB <- mean(Dmape.rep > Dmape.obs)
+pB # this shoudl be ~ 0.5 but not near 0 or 1
 
-# plot(calc$N2_med[5:25], presN2_med)
+##### plot of PPC
+p <- ggplot()
+p <- p + geom_point(aes(x = Dmape.obs, y = Dmape.rep))
+p <- p + geom_abline(intercept = 0, slope = 1)
+p <- p + xlab("Discrepancy observed data") + ylab("Discrepancy replicate data")
+p <- p + xlim(0, max(Dmape.obs))
+p <- p + theme_bw()
+p <- p + annotate(geom = "text", x = 4, y = 0.5, label = bquote(p[B]), colour = "red")
+p <- p + annotate(geom = "text", x = 4.6, y = 0.5, label = paste("=", round(pB, 2)), colour = "black")
+p
+obs_v_rep <- p
+
+# number of switches, i.e., jaggedness pg 274 & 279 in S&K
+hist(out$sims.list$Tturn.rep, xlim = c(7, 22), xlab = "Number of switches \n (replicated data)")
+abline(v= out$mean$Tturn.obs, col = "red")
+
+# need simulated data----
+
+### - Residuals for Covariates----
+#### (see Zuur et al. 2013 for options for calculating Pearson residuals) - note that I am opting to do a lot of this outside of JAGS due to run time issues.
+#### Residual diagnostics
+
+##### raw residuals - I reason that the N2 is the process which is what the linear model is predicting and the mu is the fitted value
+##### this is mu for N2 which missed the first 4 years.
+resN2 <- raw$N2[5:25] - raw$mu2
+resN3 <- raw$N3 - raw$mu3
+resN4 <- raw$N4 - raw$mu4
+
+#### Pearson residuals
+presN2 <- sweep(resN2, 1, raw$tau.obs, "/")  # I do not understand why the "1" works as this indicates rowwise division but it seems to work based on the work below, i.e. change values of z and w to manually get same results as presN2 
+presN3 <- sweep(resN3, 1, raw$tau.obs, "/")
+presN4 <- sweep(resN4, 1, raw$tau.obs, "/")
 
 
+str(resN2)
+str(raw$tau.obs)
+str(as.vector(raw$tau.obs))
+str(presN2)
+z <- 7500 # row
+w<- 21 # column
+    
+x <- resN2[z,w]
+y <- raw$tau.obs[z]
+x/y
+presN2[z,w]
 
-# E1 <- out$mean$PRes # Pearson resids
-# F1 <- out$mean$expY # Expected values
-# N2 <- out$mean$N2   # N2 - observed values? Why do these fill in the NAs of df$ln_biomass_med???
-# D <- out$mean$D     # this is SSQ - but i'm looking for Cook'sD
-#
+
+# get median values
+# raw resids
+resN2_mean <- apply(resN2, 2, 'mean')
+mean(presN2[,21])
+resN3_mean <- apply(resN3, 2, 'mean')
+resN4_mean <- apply(resN4, 2, 'mean')
+
+# Pearson resids but I don't think we need these
+presN2_mean <- apply(presN2, 2, 'mean')
+mean(presN2[,21])
+presN3_mean <- apply(presN3, 2, 'mean')
+presN4_mean <- apply(presN4, 2, 'mean')
+
+# Cooks' D - Zuur pg 58 is a leave-one-observation-out measure of influence
+
+dN2 <- presN2_mean^2
+x<- 21
+dN2
+presN2_mean[x]^2
+
 #pdf(paste0("Bayesian/", filepath, "/fit_obs.pdf"))
-# par(mfrow = c(2,2), mar = c(5,5,2,2))
-# plot(x=calc$N2_med[5:25], y = presN2_med, xlab = "Fitted values", ylab = "Pearson residuals")
-# abline(h = 0, lty = 2)
+par(mfrow = c(2,2), mar = c(5,5,2,2))
+plot(x=calc$N2[5:25], y = resN2_mean, xlab = "Fitted values", ylab = "Raw residuals")
+abline(h = 0, lty = 2)
 # # see notes in Mortality model
-# plot(y = calc$I2_med[5:25], x = calc$N2_med[5:25], xlab = "Fitted values", ylab = "Observed data") # should follow the line
-# abline(coef = c(0,1), lty = 2)
-# par(mfrow = c(1,1))
-# dev.off()
-# #
-# # # Residuals v covariates Zuur et al. 2013, pg 59-60: look for no patterns; patterns may indicated non-linear
-# # pdf(paste0("Bayesian/", filepath, "/resid_covar.pdf"))
-# par(mfrow = c(2,2), mar = c(5,5,2,2))
-# #MyVar <- c("tice.std", "meandCond_lag.std")
-# #df_diag <- as.data.frame(model_data)
-# #df_diag <- cbind(df_diag, E1)
-# plot(jags.data$LD[3:23], presN2_med, xlab = "Larval Density", ylab = "Pearson resids")
-# plot(jags.data$TI[5:25], presN2_med, xlab = "Ice retreat", ylab = "Pearson resids")
-# par(mfrow = c(1,1))
-# # dev.off()
+plot(y = jd$I2, x = calc$N2, xlab = "Fitted values", ylab = "Observed data") # should follow the line
+abline(coef = c(0,1), lty = 2)
+#normality
+histogram(resN2_mean)
+# Cook's D
+plot(y = dN2, x = 1:21, xlab = "Observation", ylab = "Cook's D") # should follow the line
+
+par(mfrow = c(1,1))
+dev.off()
+
+# Residuals v covariates Zuur et al. 2013, pg 59-60: look for no patterns; patterns may indicated non-linear
+#pdf(paste0("Bayesian/", filepath, "/resid_covar.pdf"))
+par(mfrow = c(2,2), mar = c(5,5,2,2))
+plot(jags.data$LD[3:23], resN2_mean, xlab = "Larval Density", ylab = "Pearson resids")
+plot(jags.data$TI[5:25], resN2_mean, xlab = "Ice retreat", ylab = "Pearson resids")
+par(mfrow = c(1,1))
+dev.off()
 
 
-### overdispersion ----
+# Posteriors & Priors ----
+priormean <- 0
+priorsd <- 100
+alpha <- out$sims.list$alpha2
+prior <- rnorm(n = 10000, mean = priormean, sd = priorsd)
+limits <- c(min(alpha)-0.3, max(alpha) + 0.3)
+x_label <- "Intercept"
+bin_1 <- mean(alpha)/100
+
+df_quant <- quantile(alpha, c(0.025, 0.975))
+df_cred <- subset(alpha, alpha > df_quant[1] & alpha < df_quant[2])
+
+
+p1 <- postPriors(df = alpha, df2 = prior, df3 =df_cred, limits, x_label, priormean, priorsd, by_bin = bin_1)
+
+p1
+
+
+# End----
+
+### archived code-----
+### overdispersion
 # I don't think I need this code as there are no distributions that can be overdispersed in the current model (only Guassian and gamma)
 # - values close to 0.5 indicate a good fit pg. 77 Zuur et al. 2013 Beginners guide to GLM and GLMM
 # # But, this may not be a problem for nomral and uniform distirbutions - seems to be mostly a Poisson and perhaps binomial thing.
@@ -309,15 +389,12 @@ autocorr_N4 <- MyBUGSACF(out, vars_N4)
 # mean(out$sims.list$FitNew > presN2_fit)
 
 
-## variance/mean ----
+## variance/mean
+# I don't think I need this either and S&K just do it for the Poisson model 
 # 
-# 
-## State-space ----
-# 
-# 
-## Model Validation ----
-# #(see Schuab and Kery 2022, pg 272-282 - note that I am opting to do a lot of this outside of JAGS due to run time issues.  
-#####BUT i CAN'T GET IT TO WORK SO DOING IT IN JAGS FOR NOW
+
+
+#####My attempt to do mean absolute percentage error in R BUT i CAN'T GET IT TO WORK SO DOING IT IN JAGS FOR NOW
 
 # this is mu for N2 which missed the first 4 years.
 
@@ -340,57 +417,3 @@ autocorr_N4 <- MyBUGSACF(out, vars_N4)
 # Dmape.rep <- 100/jd$n.occasions[1] *sum(abs((ss.rep-ss.exp)/ss.rep), na.rm = T)
 # Dmape.rep.t <- 100/jd$n.occasions[1] *colSums(abs((ss.rep-ss.exp)/ss.rep), na.rm = T)
 # 
-# Bayesian p-value
-Dmape.obs <- out$sims.list$Dmape.obs
-Dmape.rep <- out$sims.list$Dmape.rep
-
-pB <- mean(Dmape.rep > Dmape.obs)
-pB
-
-p <- ggplot()
-p <- p + geom_point(aes(x = Dmape.obs, y = Dmape.rep))
-p <- p + geom_abline(intercept = 0, slope = 1)
-p <- p + xlab("Discrepancy observed data") + ylab("Discrepancy replicate data")
-p <- p + xlim(0, max(Dmape.obs))
-p <- p + theme_bw()
-p <- p + annotate(geom = "text", x = 50, y = 2, label = bquote(p[B]), colour = "red")
-p <- p + annotate(geom = "text", x = 55, y = 2, label = paste("=", round(pB, 2)), colour = "black")
-p
-obs_v_rep <- p
-
-# need simulated data
-
-# number of switches, i.e., jaggedness
-out$sims.list$Tturn.obs
-par(mfrow = c(1,2), mar = c(5,5,2,2))
-hist(out$sims.list$Tturn.obs, xlim = c(7, 22))
-hist(out$sims.list$Tturn.rep, xlim = c(7, 22))
-graphics.off()
-
-
-# #install.packages('IPMbook')
-
-# 
-# # plotGOF <- function(jagsout, obs, rep, main=NA, showP=TRUE,
-# #                     ylab="Discrepancy replicate data", xlab="Discrepancy observed data",
-# #                     pch=16, cex = 0.8, col=1){
-# #         OBS <- jagsout$sims.list[[obs]]
-# #         REP <- jagsout$sims.list[[rep]]
-# #         lim <- quantile(c(OBS, REP), c(0.0001, 0.999))
-# #         plot(OBS, REP, pch=pch, cex=cex, ylim=lim, xlim=lim,
-# #              ylab=ylab, xlab=xlab, main=main, axes=FALSE, col=col)
-# #         axis(1); axis(2)
-# #         segments(lim[1], lim[1], lim[2], lim[2], lty=3)
-# #         bp <- round(mean(REP > OBS),2)
-# #         if(showP){
-# #                 loc <- ifelse(bp < 0.5, "topleft", "bottomright")
-# #                 legend(loc, legend=bquote(p[B]==.(bp)), bty="n")
-# #         }
-# #         return(invisible(bp))
-# # }
-# # 
-# # plotGOF(ssm26, "Dmape.obs", "Dmape.rep", main="State-space model", col=alpha(co, 0.3))
-# 
-# 
-
-# End----
