@@ -17,6 +17,8 @@ library(xtable)
 library(DT)
 library(ezknitr)
 
+#ezknit(file = "IPM_out_diag.Rmd", out_dir = "output", fig_dir = "figs")
+
 source("IPM_out.R")
 #load("mod_20K.RData")
 #load("mod_2M.RData")
@@ -119,11 +121,12 @@ knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelin
 
 # MCMC info
 
+Model = `r tC.txt`  
 iterations (ni) = `r ni`  
 thining rate (nt) = `r nt`  
 burn-in (nb) = `r nb`  
 number chains (nc) = `r nc`  
-
+parameters = `r parms`
 
 DIC = `r round(ssm26_dic, 1)`
 
@@ -219,7 +222,7 @@ tmpN4_plot
 # Retro
 
 
-# Diagnostics - Chain mixing
+# Chain mixing - Diagnostics
 
 Column {.tabset}
 -------------------------------------
@@ -255,7 +258,7 @@ mix_N4
 ```
 
 
-# Diagnostics - Autocorrelation
+# Autocorrelation - Diagnostics
 
 Column {.tabset}
 -------------------------------------
@@ -291,14 +294,28 @@ autocorr_N4
 ```
 
 
+# Model validation - Diagnostics
+
+Column {.tabset}
+-------------------------------------
+
+### Posterior predictive checks
+
+```{r}
+obs_v_rep
+```
+
+### Jaggedness
+```{r}
+par(mfrow = c(1,2), mar = c(5,5,2,2))
+hist(out$sims.list$Tturn.obs, xlim = c(7, 22))
+hist(out$sims.list$Tturn.rep, xlim = c(7, 22))
+```
+     
+# Residuals with covariates - Diagnostics
+     
 # Overdispersion
 I think that this is only needed for distributions that can be overdispersed like Poisson.  Gamma has a dispersion parameter and normal assumes constant variance.  
 But confirm with PDR.
-     
-# Model validation
-     
-# residuals with covariates
-     
-# Results
-     
+
    
