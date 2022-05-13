@@ -256,6 +256,38 @@ tabParm <- function(df1 = x, rows){
 }
 
 
+#' postPriors()----
+#'
+#' @param df - the chain of values of the parameter
+#' @param df2 - the distribution of the prior based on randomly generated data
+#' @param df3 - the chain values within the credible intervals of the parameter
+#' @param limits - an ojbect to set the limits on the grid 
+#' @param x_label - label the graph with the name of the parm
+#' @param priormean -  the mean value of the prior
+#' @param priorsd - the SD of the prior
+#' @param by_bin - 
+#'
+#' @return - figure of the posterior distribution, the prior distribution and the 95% credible interval as a rug.  Abline = 0
+#' @export
+#'
+#' @example p1 <- postPriors(df = alpha$df, df2 = prior, df3 = alpha$df_cred, limits, x_label, priormean, priorsd, by_bin = bin_1)
+postPriors <- function(df, df2, df3, limits = limits, x_label = x_label, priormean, priorsd, by_bin = 1, vline="yes"){
+  #browser()
+  p <- ggplot() + theme_bw(base_size = 20)
+  p <- p + coord_cartesian(xlim = c(limits[1], limits[2])) 
+  p <- p + geom_histogram(data = as.data.frame(df), 
+                          aes(x = V1, y=..density..), 
+                          col="grey", fill="grey",
+                          #alpha=.6,
+                          breaks = seq(limits[1], limits[2], by=by_bin)) + xlab(x_label) + ylab("Density")
+  p <- p + geom_density(data = as.data.frame(df2), aes(x=df2), size = 1, alpha = 0.3) 
+  p <- p + geom_rug(data=data.frame(y=df3), aes(x=y), colour = "red", size=3, alpha=1) 
+  if(vline == "yes"){
+    p <- p + geom_vline(aes(xintercept = 0), colour = "red", size = 2)
+  }
+  return(p)
+}
+
 # END ----
   
   
