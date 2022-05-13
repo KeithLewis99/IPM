@@ -8,6 +8,7 @@ library(lattice)
 # Start----
 rm(list=ls())
 
+
 # Source files
 source("IPM_dat.R")
 source("IPM_fun.R")
@@ -16,7 +17,8 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
 source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
 # JAGS settings ----
-parms <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
+
+parms1 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
            "N2",  "N3", "N4",
            "mu2", "alpha2", "beta2",  "gamma2", "delta2",
            "mu3", "alpha3", "gamma3", "delta3", "epsilon3",
@@ -25,9 +27,58 @@ parms <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs",
            "Dssm.rep", "Dmape.rep",  "Tturn.rep",
            "I2.rep", "I3.rep", "I4.rep", "I.rep"
            ) 
+
+parms2 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
+            "N2",  "N3", "N4",
+            "mu2", "alpha2", "beta2",  "gamma2", "delta2",
+            "mu3", "alpha3", "gamma3", "delta3", "epsilon3",
+            "mu4", 
+            "Dssm.obs", "Dmape.obs",  "Tturn.obs", 
+            "Dssm.rep", "Dmape.rep",  "Tturn.rep",
+            "I2.rep", "I3.rep", "I4.rep", "I.rep"
+) 
+
+parms3 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
+            "N2",  "N3", "N4",
+            "mu2", "alpha2", "beta2",  "gamma2", "delta2",
+            "Dssm.obs", "Dmape.obs",  "Tturn.obs", 
+            "Dssm.rep", "Dmape.rep",  "Tturn.rep",
+            "I2.rep", "I3.rep", "I4.rep", "I.rep"
+) 
+
 #  , "pe3", "pe2",
 # "I.exp", "I2.rep", "I3.rep", "I4.rep", "I.rep","I2", "I3", "I4", "I",
 # "Tt1.obs", "Tt2.obs", "Tt3.obs", "Tt1.rep", "Tt2.rep", "Tt3.rep",
+
+y <- 1
+if (y==1){ # model with separate parms for each age 
+    parms = parms1
+    tC = cap.v7
+    tC.txt = "cap.v7"
+    vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
+    vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
+    vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2")
+    vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3")
+    vars_N4 <- c("mu4[10]", "alpha4", "gamma4", "delta4", "epsilon4")
+    
+} else if (y==2) { # model separate parms for N2 and N3:N4
+    parms = parms2
+    tC = cap.v8
+    vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
+    vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
+    vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2")
+    vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3", "mu4[10]")
+    vars_N4 <- c(NA)
+} else if (y==3) { # demographic model - no forecast for N3:N4
+    parms = parms3
+    tC = cap.v9
+    vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
+    vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
+    vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2")
+    vars_N3 <- c("mu3[10]", "mu4[10]")
+    vars_N4 <- c(NA)
+    
+}
 
 # MCMC settings
 ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
@@ -36,7 +87,7 @@ ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 
 # run model
 #source("IPM_mod.R")
-ssm26 <- jags(jags.data, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(cap.v7))
+ssm26 <- jags(jags.data, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
 ssm26
 
 # JAGS ouput ----
@@ -144,32 +195,27 @@ tab_neff
     # source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
 
 # vars for variances
-vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
 MyBUGSChains(out, vars_vAR)
 mix_var <- MyBUGSChains(out, vars_vAR)
 #ggsave(MyBUGSChains(out, vars3), filename = paste0("Bayesian/", filepath, "/chains-variance.pdf"), width=10, height=8, units="in")
 
 # vars for state space and demographic vars
-vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
 MyBUGSChains(out, vars_Nyear)
 mix_vars_Nyear <- MyBUGSChains(out, vars_Nyear)
 #ggsave(MyBUGSChains(out, vars2), filename = paste0("Bayesian/", filepath, "/chains-demographic.pdf"), width=10, height=8, units="in")
 
 
 ### N2 ----
-vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2")
 MyBUGSChains(out, vars_N2)
 mix_N2 <- MyBUGSChains(out, vars_N2)
 #ggsave(MyBUGSChains(out, vars1), filename = paste0("Bayesian/", filepath, "/chains-forecast.pdf"), width=10, height=8, units="in")
 
 ### N3 ----
-vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3")
 MyBUGSChains(out, vars_N3)
 mix_N3 <- MyBUGSChains(out, vars_N3)
 #ggsave(MyBUGSChains(out, vars1), filename = paste0("Bayesian/", filepath, "/chains-forecast.pdf"), width=10, height=8, units="in")
 
 ### N4 ----
-vars_N4 <- c("mu4[10]", "alpha4", "gamma4", "delta4", "epsilon4")
 MyBUGSChains(out, vars_N4)
 mix_N4 <- MyBUGSChains(out, vars_N4)
 #ggsave(MyBUGSChains(out, vars1), filename = paste0("Bayesian/", filepath, "/chains-forecast.pdf"), width=10, height=8, units="in")
@@ -310,21 +356,20 @@ p <- p + theme_bw()
 p <- p + annotate(geom = "text", x = 50, y = 2, label = bquote(p[B]), colour = "red")
 p <- p + annotate(geom = "text", x = 55, y = 2, label = paste("=", round(pB, 2)), colour = "black")
 p
-
+obs_v_rep <- p
 
 # need simulated data
 
-# number of switches
+# number of switches, i.e., jaggedness
 out$sims.list$Tturn.obs
 par(mfrow = c(1,2), mar = c(5,5,2,2))
-hist(out$sims.list$Tturn.obs)
-hist(out$sims.list$Tturn.rep)
+hist(out$sims.list$Tturn.obs, xlim = c(7, 22))
+hist(out$sims.list$Tturn.rep, xlim = c(7, 22))
 graphics.off()
 
 
 # #install.packages('IPMbook')
-# 
-# 
+
 # 
 # # plotGOF <- function(jagsout, obs, rep, main=NA, showP=TRUE,
 # #                     ylab="Discrepancy replicate data", xlab="Discrepancy observed data",
