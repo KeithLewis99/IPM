@@ -300,20 +300,118 @@ Column {.tabset}
 -------------------------------------
 
 ### Posterior predictive checks
-
+The spread should be good and the Bayesian p-value should ~ 0.5 but not near 0 or 1
 ```{r}
 obs_v_rep
 ```
 
 ### Jaggedness
+See S&K pg 274 and 279 for explanation
 ```{r}
-par(mfrow = c(1,2), mar = c(5,5,2,2))
-hist(out$sims.list$Tturn.obs, xlim = c(7, 22))
-hist(out$sims.list$Tturn.rep, xlim = c(7, 22))
+hist(out$sims.list$Tturn.rep, xlim = c(7, 22), xlab = "Number of switches \n (replicated data)")
+abline(v= out$mean$Tturn.obs, col = "red")
 ```
      
+# Residuals - Diagnostics
+
+Column {.tabset}
+-------------------------------------
+
+### N2
+
+Column
+-------------------------------------
+
+```{r}
+plot(x=calc$N2[5:25], y = resN2_mean, xlab = "Fitted values", ylab = "Raw residuals")
+abline(h = 0, lty = 2)
+```
+
+```{r}
+# # see notes in Mortality model
+plot(y = jd$I2, x = calc$N2, xlab = "Fitted values", ylab = "Observed data") # should follow the line
+abline(coef = c(0,1), lty = 2)
+```
+
+Column
+-------------------------------------
+
+```{r}
+#normality
+histogram(resN2_mean)
+```
+
+```{r}
+# Cook's D
+plot(y = dN2, x = 1:21, xlab = "Observation", ylab = "Cook's D") # should follow the line
+```
+
+
+### N3
+
+### N4
+
 # Residuals with covariates - Diagnostics
-     
+
+Column {.tabset}
+-------------------------------------
+
+### N2
+
+Column 
+-------------------------------------
+
+```{r}
+plot(jags.data$LD[3:23], resN2_mean, xlab = "Larval Density", ylab = "Pearson resids")
+```
+
+Column {.tabset}
+-------------------------------------
+
+```{r}
+plot(jags.data$TI[5:25], resN2_mean, xlab = "Ice retreat", ylab = "Pearson resids")
+```
+
+### N3
+
+### N4
+
+# Posteriors with priors
+
+Column {.tabset}
+-------------------------------------
+
+### N2
+
+Column
+-------------------------------------
+
+```{r}
+p1
+```
+
+```{r}
+# # see notes in Mortality model
+```
+
+Column
+-------------------------------------
+
+```{r}
+#normality
+
+```
+
+```{r}
+# Cook's D
+ # should follow the line
+```
+
+
+### N3
+
+### N4
+
 # Overdispersion
 I think that this is only needed for distributions that can be overdispersed like Poisson.  Gamma has a dispersion parameter and normal assumes constant variance.  
 But confirm with PDR.
