@@ -1,7 +1,7 @@
 ---
 title: "LRP EDA"
 author: "Keith Lewis"
-date: "2/13/2021"
+date: "`r Sys.Date()`"
 output:
   flexdashboard::flex_dashboard:
     theme: yeti
