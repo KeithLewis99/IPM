@@ -36,7 +36,7 @@ library(purrr)
 
 
 
-rm(list=ls())
+#rm(list=ls())
 
 options(dplyr.print_max = 1e9)
 
