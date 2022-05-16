@@ -21,6 +21,7 @@ nullModel.R
 cpueAVG.jags
 function-genealize.R
 scratch_pad.R
+scratch_*
 
 *.o
 *.dll
