@@ -6,7 +6,7 @@ library(ggplot2)
 library(lattice)
 
 # Start----
-rm(list=ls())
+#rm(list=ls())
 
 
 # Source files
@@ -50,8 +50,9 @@ parms3 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs",
 # "I.exp", "I2.rep", "I3.rep", "I4.rep", "I.rep","I2", "I3", "I4", "I",
 # "Tt1.obs", "Tt2.obs", "Tt3.obs", "Tt1.rep", "Tt2.rep", "Tt3.rep",
 
-y <- 1
-if (y==1){ # model with separate parms for each age 
+# model----
+b <- 2
+if (b==1){ # model with separate parms for each age
     parms = parms1
     tC = cap.v7
     tC.txt = "cap.v7"
@@ -60,24 +61,26 @@ if (y==1){ # model with separate parms for each age
     vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2")
     vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3")
     vars_N4 <- c("mu4[10]", "alpha4", "gamma4", "delta4", "epsilon4")
-    
-} else if (y==2) { # model separate parms for N2 and N3:N4
+
+} else if (b==2) { # model separate parms for N2 and N3:N4
     parms = parms2
     tC = cap.v8
+    tC.txt = "cap.v8"
     vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
     vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
     vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2")
     vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3", "mu4[10]")
     vars_N4 <- c(NA)
-} else if (y==3) { # demographic model - no forecast for N3:N4
+} else if (b==3) { # demographic model - no forecast for N3:N4
     parms = parms3
     tC = cap.v9
+    tC.txt = "cap.v9"
     vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
     vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
     vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2")
-    vars_N3 <- c("mu3[10]", "mu4[10]")
+    vars_N3 <- c(NA)
     vars_N4 <- c(NA)
-    
+
 }
 
 # MCMC settings
@@ -195,53 +198,65 @@ tab_neff
     # source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
 
 # vars for variances
-MyBUGSChains(out, vars_vAR)
+#MyBUGSChains(out, vars_vAR)
 mix_var <- MyBUGSChains(out, vars_vAR)
 #ggsave(MyBUGSChains(out, vars3), filename = paste0("Bayesian/", filepath, "/chains-variance.pdf"), width=10, height=8, units="in")
 
 # vars for state space and demographic vars
-MyBUGSChains(out, vars_Nyear)
+#MyBUGSChains(out, vars_Nyear)
 mix_vars_Nyear <- MyBUGSChains(out, vars_Nyear)
 #ggsave(MyBUGSChains(out, vars2), filename = paste0("Bayesian/", filepath, "/chains-demographic.pdf"), width=10, height=8, units="in")
 
 
 ### N2 ----
-MyBUGSChains(out, vars_N2)
+#MyBUGSChains(out, vars_N2)
 mix_N2 <- MyBUGSChains(out, vars_N2)
 #ggsave(MyBUGSChains(out, vars1), filename = paste0("Bayesian/", filepath, "/chains-forecast.pdf"), width=10, height=8, units="in")
 
 ### N3 ----
-MyBUGSChains(out, vars_N3)
-mix_N3 <- MyBUGSChains(out, vars_N3)
+#MyBUGSChains(out, vars_N3)
+if(b ==1 | b==2){
+    mix_N3 <- MyBUGSChains(out, vars_N3)    
+}
+
 #ggsave(MyBUGSChains(out, vars1), filename = paste0("Bayesian/", filepath, "/chains-forecast.pdf"), width=10, height=8, units="in")
 
 ### N4 ----
-MyBUGSChains(out, vars_N4)
-mix_N4 <- MyBUGSChains(out, vars_N4)
+#MyBUGSChains(out, vars_N4)
+if(b == 1){
+    mix_N4 <- MyBUGSChains(out, vars_N4)    
+}
+
 #ggsave(MyBUGSChains(out, vars1), filename = paste0("Bayesian/", filepath, "/chains-forecast.pdf"), width=10, height=8, units="in")
 
 ##autocorrelation ----
-MyBUGSACF(out, vars_vAR)
+#MyBUGSACF(out, vars_vAR)
 autocorr_vars_vAR <- MyBUGSACF(out, vars_vAR)
 #ggsave(MyBUGSACF(out, vars1), filename = paste0("Bayesian/", filepath, "/auto_corr-forecast.pdf"), width=10, height=8, units="in")
 
-MyBUGSACF(out, vars_Nyear)
+#MyBUGSACF(out, vars_Nyear)
 autocorr_vars_Nyear <- MyBUGSACF(out, vars_Nyear)
 #ggsave(MyBUGSACF(out, vars2), filename = paste0("Bayesian/", filepath, "/auto_corr-demographic.pdf"), width=10, height=8, units="in")
 
 ### N2 ----
-MyBUGSACF(out, vars_N2)
+#MyBUGSACF(out, vars_N2)
 autocorr_N2 <- MyBUGSACF(out, vars_N2)
 #ggsave(MyBUGSACF(out, vars3), filename = paste0("Bayesian/", filepath, "/auto_corr-autocorrelation.pdf"), width=10, height=8, units="in")
 
 ### N3 ----
-MyBUGSACF(out, vars_N3)
-autocorr_N3 <- MyBUGSACF(out, vars_N3)
+#MyBUGSACF(out, vars_N3)
+if(b ==1 | b ==2){
+    autocorr_N3 <- MyBUGSACF(out, vars_N3)    
+}
+
 #ggsave(MyBUGSACF(out, vars3), filename = paste0("Bayesian/", filepath, "/auto_corr-autocorrelation.pdf"), width=10, height=8, units="in")
 
 ### N4 ----
-MyBUGSACF(out, vars_N4)
-autocorr_N4 <- MyBUGSACF(out, vars_N4)
+#MyBUGSACF(out, vars_N4)
+if (b==1){
+    autocorr_N4 <- MyBUGSACF(out, vars_N4)    
+}
+
 #ggsave(MyBUGSACF(out, vars3), filename = paste0("Bayesian/", filepath, "/auto_corr-autocorrelation.pdf"), width=10, height=8, units="in")
 
 
@@ -282,48 +297,76 @@ abline(v= out$mean$Tturn.obs, col = "red")
 
 ##### raw residuals - I reason that the N2 is the process which is what the linear model is predicting and the mu is the fitted value
 ##### this is mu for N2 which missed the first 4 years.
-resN2 <- raw$N2[5:25] - raw$mu2
-resN3 <- raw$N3 - raw$mu3
-resN4 <- raw$N4 - raw$mu4
+if (b ==1 ){
+    resN2 <- raw$N2[5:25] - raw$mu2
+    resN3 <- raw$N3 - raw$mu3
+    resN4 <- raw$N4 - raw$mu4
+} else if (b == 2){
+    resN2 <- raw$N2[5:25] - raw$mu2
+    resN3 <- raw$N3 - raw$mu3
+} else if (b == 3){
+    resN2 <- raw$N2[5:25] - raw$mu2
+}
 
 #### Pearson residuals
 presN2 <- sweep(resN2, 1, raw$tau.obs, "/")  # I do not understand why the "1" works as this indicates rowwise division but it seems to work based on the work below, i.e. change values of z and w to manually get same results as presN2 
-presN3 <- sweep(resN3, 1, raw$tau.obs, "/")
-presN4 <- sweep(resN4, 1, raw$tau.obs, "/")
+if (b ==1|b==2){
+    presN3 <- sweep(resN3, 1, raw$tau.obs, "/")    
+}
+
+if (b==1){
+    presN4 <- sweep(resN4, 1, raw$tau.obs, "/")    
+}
+
 
 
 str(resN2)
 str(raw$tau.obs)
 str(as.vector(raw$tau.obs))
 str(presN2)
-z <- 7500 # row
-w<- 21 # column
-    
-x <- resN2[z,w]
-y <- raw$tau.obs[z]
-x/y
-presN2[z,w]
+# z <- 7500 # row
+# w<- 21 # column
+#     
+# x <- resN2[z,w]
+# y <- raw$tau.obs[z]
+# x/y
+# presN2[z,w]
 
 
 # get median values
-# raw resids
-resN2_mean <- apply(resN2, 2, 'mean')
-mean(presN2[,21])
-resN3_mean <- apply(resN3, 2, 'mean')
-resN4_mean <- apply(resN4, 2, 'mean')
 
-# Pearson resids but I don't think we need these
-presN2_mean <- apply(presN2, 2, 'mean')
-mean(presN2[,21])
-presN3_mean <- apply(presN3, 2, 'mean')
-presN4_mean <- apply(presN4, 2, 'mean')
+if(b ==1){
+    # raw resids
+    resN2_mean <- apply(resN2, 2, 'mean')
+    resN3_mean <- apply(resN3, 2, 'mean')
+    resN4_mean <- apply(resN4, 2, 'mean')
+    
+    # Pearson resids but I don't think we need these
+    presN2_mean <- apply(presN2, 2, 'mean')
+    presN3_mean <- apply(presN3, 2, 'mean')
+    presN4_mean <- apply(presN4, 2, 'mean')
+} else if (b ==2 ){
+    # raw resids
+    resN2_mean <- apply(resN2, 2, 'mean')
+    resN3_mean <- apply(resN3, 2, 'mean')
+
+    # Pearson resids but I don't think we need these
+    presN2_mean <- apply(presN2, 2, 'mean')
+    presN3_mean <- apply(presN3, 2, 'mean')
+} else if (b ==3){
+    # raw resids
+    resN2_mean <- apply(resN2, 2, 'mean')
+
+    # Pearson resids but I don't think we need these
+    presN2_mean <- apply(presN2, 2, 'mean')
+}
 
 # Cooks' D - Zuur pg 58 is a leave-one-observation-out measure of influence
 
 dN2 <- presN2_mean^2
-x<- 21
-dN2
-presN2_mean[x]^2
+# x<- 21
+# dN2
+# presN2_mean[x]^2
 
 #pdf(paste0("Bayesian/", filepath, "/fit_obs.pdf"))
 par(mfrow = c(2,2), mar = c(5,5,2,2))
@@ -373,6 +416,9 @@ p1
 ### overdispersion
 # I don't think I need this code as there are no distributions that can be overdispersed in the current model (only Guassian and gamma)
 # - values close to 0.5 indicate a good fit pg. 77 Zuur et al. 2013 Beginners guide to GLM and GLMM
+# I think that this is only needed for distributions that can be overdispersed like Poisson.  Gamma has a dispersion parameter and normal assumes constant variance.
+# But confirm with PDR.
+
 # # But, this may not be a problem for nomral and uniform distirbutions - seems to be mostly a Poisson and perhaps binomial thing.
 # mean(out$sims.list$FitNew > out$sims.list$Fit)
 # # mean = 0.546333
