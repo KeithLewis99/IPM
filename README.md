@@ -1,7 +1,10 @@
 # IPM
 This project contains the code and data required to develop an Integrated Population Model (IPM) in support of a Limit Reference Point (LRP) for 2J3KL capelin (Mallotus villosus).  
 
-Integrated Population models are defined as a model with a state-space model as a sub-component.....see Schuab and Kerry (pg).
+Integrated Population models are defined as:  
+- Demographic population model (e.g., a matrix population model) embedded in several sub-models to simultaneously estimate parameters and analyze the population model itself
+- Are demographic state-space models coupled with separate (sub)models for the demographic data).  Links population and individual.  Schuab and Kerry (pg XX)
+
 
 Data
 For complete metadata and details on the various data components, see the 2K3KL Data Dictionary (in development).  The current iteration of the model contains 
@@ -22,6 +25,6 @@ There are three models in the current iteration.
 Project Information
 The current project is organized in two streams, both starting with the data file, IPM_dat.R.  The first branch is for exploratory data analysis (EDA).  The file IPM_EDA creates figures from the data and these are presented in a dashboard.  The second branch is for the IPM.  The IPM_out.R file sources the data file, the model file with the JAGS code (IPM_mod.R), some Zuur code for the model diagnostics.  These are then presented in a dashboard.
 
-Finally, there is a "scratch pad" where I develop new code and try things out.
+For the latter branch, there is an IPM_master file that can run a given model and store the dashboard and assocaited files in a different folder within the "output" folder.
 
 
