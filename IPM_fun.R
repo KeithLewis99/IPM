@@ -176,9 +176,10 @@ ipm_plot <- function(df_med = x, df_cri = y, df_pri = z, df_dat = w){
      # # points from teh aggregated survey
      p <- p + geom_point(aes(y = log(df_dat$abundance_med*1000), x = c(year, forecast)),
                          shape = 18, 
-                         size = 1.5,
-                         colour = "pink")
-     p <- p + theme_bw() + ylab("ln(Capelin abundance x 1,000)")
+                         size = 2,
+                         colour = "red")
+     p <- p + ylab("ln(Capelin abundance x 1,000)") + xlab("Year")
+     p <- p + theme(axis.text.x = element_text(size = 25), axis.text.y = element_text(size = 25)) + theme_bw() 
      return(p)
 }
 
