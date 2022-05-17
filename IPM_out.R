@@ -51,7 +51,7 @@ parms3 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs",
 # "Tt1.obs", "Tt2.obs", "Tt3.obs", "Tt1.rep", "Tt2.rep", "Tt3.rep",
 
 # model----
-b <- 2
+b <- 1
 if (b==1){ # model with separate parms for each age
     parms = parms1
     tC = cap.v7
@@ -136,18 +136,20 @@ ly <- length(year)
 forecast <- 2022:2023
 lf <- length(forecast)
 
+#source("IPM_fun.R")
+
 # combined N2-N4[t]
 tmp_plot <- ipm_plot(df_med = ls_all$N_med, df_cri = ls_all$N_ci, df_pri = ls_all$Pr_ci, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
 tmp_plot <- tmp_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = log(exp(I2) + exp(I3)), x = year),
-                                      shape = 16, size = 1.5)
+                                      shape = 16, size = 2)
 tmp_plot
 
 # N2[t] - create plot, then add the capelin data
 tmpN2_plot <- ipm_plot(df_med = calc$N2, df_cri = cri$N2_cri, df_pri = pri$I2.rep_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
 tmpN2_plot <- tmpN2_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = I2, x = year),
-                                      shape = 16, size = 1.5)
+                                      shape = 16, size = 2)
 tmpN2_plot
 
 
@@ -157,7 +159,7 @@ tmpN3_plot <- ipm_plot(df_med = calc$N3, df_cri = cri$N3_cri, df_pri = pri$I3.re
     
 tmpN3_plot <- tmpN3_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = I3, x = year),
-                                      shape = 16, size = 1.5)
+                                      shape = 16, size = 2)
 tmpN3_plot 
 
 
@@ -167,7 +169,7 @@ tmpN4_plot <- ipm_plot(df_med = calc$N4, df_cri = cri$N4_cri, df_pri = pri$I4.re
 
 tmpN4_plot <- tmpN4_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = I4, x = year),
-                                      shape = 16, size = 1.5)
+                                      shape = 16, size = 2)
 tmpN4_plot 
 
 # ggsave("N4_plot.pdf")
