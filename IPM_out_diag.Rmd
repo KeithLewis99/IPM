@@ -5,6 +5,7 @@ date: "`r Sys.Date()`"
 output:
   flexdashboard::flex_dashboard:
     theme: yeti
+    vertical_layout: fill
 ---
 
 ```{r setup, include=FALSE}
@@ -226,7 +227,7 @@ tmpN4_plot
 
 # Retro
 
-# Chain mixing - Diagnostics
+# Chain mixing
 
 Column {.tabset}
 -------------------------------------
@@ -265,7 +266,7 @@ if (b ==1){
 }
 ```
 
-# Autocorrelation - Diagnostics
+# Autocorrelation
 
 Column {.tabset}
 -------------------------------------
@@ -305,7 +306,7 @@ if(b ==1){
 }
 ```
 
-# Model validation - Diagnostics
+# Model validation
 
 Column {.tabset}
 -------------------------------------
@@ -324,10 +325,8 @@ abline(v= out$mean$Tturn.obs, col = "red")
 ```
 
 
-# Residuals - Diagnostics {data-navmenu="Residuals - Diagnostics"}
+N2 - Residuals {data-navmenu="Residuals"}
 =====================
-     
-N2
 
 Column 
 -------------------------------------
@@ -359,17 +358,89 @@ plot(y = dN2, x = 1:21, xlab = "Observation", ylab = "Cook's D") # should follow
 ```
 
 
-N3- Residuals - Diagnostics {data-navmenu="Residuals - Diagnostics"}
-=====================
-     
-N4 - Residuals - Diagnostics {data-navmenu="Residuals - Diagnostics"}
+N3- Residuals {data-navmenu="Residuals"}
 =====================
 
-
-# Covariates - Diagnostics {data-navmenu="Covariates - Diagnostics"}
-=====================
+Column 
+-------------------------------------
      
-N2
+```{r}
+if(b==1|b==2){
+par(mfrow = c(2,2), mar = c(5,5,2,2))
+plot(x=calc$N3, y = resN3_mean, xlab = "Fitted values", ylab = "Raw residuals")
+abline(h = 0, lty = 2)
+}
+```
+
+```{r}
+# # see notes in Mortality model
+if(b==1|b==2){
+plot(y = jd$I3, x = calc$N3, xlab = "Fitted values", ylab = "Observed data") # should follow the line
+abline(coef = c(0,1), lty = 2)
+}
+```
+
+Column
+-------------------------------------
+     
+```{r}
+#normality
+if(b==1|b==2){
+histogram(resN3_mean)
+}
+```
+
+```{r}
+# Cook's D
+if(b==1|b==2){
+plot(y = dN3, x = 1:25, xlab = "Observation", ylab = "Cook's D") # should follow the line
+}
+```
+
+     
+N4 - Residuals {data-navmenu="Residuals"}
+=====================
+
+Column 
+-------------------------------------
+     
+```{r}
+if(b==1){
+par(mfrow = c(2,2), mar = c(5,5,2,2))
+plot(x=calc$N4, y = resN4_mean, xlab = "Fitted values", ylab = "Raw residuals")
+abline(h = 0, lty = 2)
+}
+```
+
+```{r}
+# # see notes in Mortality model
+if(b==1){
+plot(y = jd$I4, x = calc$N4, xlab = "Fitted values", ylab = "Observed data") # should follow the line
+abline(coef = c(0,1), lty = 2)
+}
+```
+
+Column
+-------------------------------------
+     
+```{r}
+#normality
+if(b==1){
+histogram(resN4_mean)
+}
+```
+
+```{r}
+# Cook's D
+if(b==1){
+plot(y = dN4, x = 1:25, xlab = "Observation", ylab = "Cook's D") # should follow the line
+}
+```
+
+
+N2 - Covariates {data-navmenu="Covariates"}
+=====================
+
 
 Column 
 -------------------------------------
@@ -386,21 +457,58 @@ Column
 plot(jags.data$TI[5:25], resN2_mean, xlab = "Ice retreat", ylab = "Pearson resids")
 ```
 
-N3 - Covariates - Diagnostics {data-navmenu="Covariates - Diagnostics"}
+N3 - Covariates {data-navmenu="Covariates"}
 =====================
 
+Column 
+-------------------------------------
+     
 ```{r}
-if (b==1|b==2){
-mix_N3 <- MyBUGSChains(out, vars_N3)   
+if(b==1|b==2){
+plot(jags.data$LD[3:23], resN3_mean[3:23], xlab = "Larval Density", ylab = "Pearson resids")
 }
-
 ```
 
 
-N4 - Covariates - Diagnostics {data-navmenu="Covariates - Diagnostics"}
+Column
+-------------------------------------
+     
+```{r}
+if(b==1|b==2){
+plot(jags.data$TI, resN3_mean, xlab = "Ice retreat", ylab = "Pearson resids")
+}
+```
+
+
+N4 - Covariates {data-navmenu="Covariates"}
 =====================
 
+Column 
+-------------------------------------
+     
 ```{r}
-plot(jags.data$TI[5:25], resN2_mean, xlab = "Ice retreat", ylab = "Pearson resids")
+if(b==1){
+plot(jags.data$LD[3:23], resN4_mean[3:23], xlab = "Larval Density", ylab = "Pearson resids")
+}
+```
+
+
+Column
+-------------------------------------
+     
+```{r}
+if(b==1){
+plot(jags.data$TI, resN4_mean, xlab = "Ice retreat", ylab = "Pearson resids")
+}
+```
+
+N2 Posteriors {data-navmenu="Posteriors"}
+=====================
+
+Column 
+-------------------------------------
+     
+```{r}
+p1
 ```
 
