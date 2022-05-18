@@ -336,7 +336,7 @@ str(presN2)
 
 
 # get median values
-
+# Cooks' D - Zuur pg 58 is a leave-one-observation-out measure of influence
 if(b ==1){
     # raw resids
     resN2_mean <- apply(resN2, 2, 'mean')
@@ -347,6 +347,11 @@ if(b ==1){
     presN2_mean <- apply(presN2, 2, 'mean')
     presN3_mean <- apply(presN3, 2, 'mean')
     presN4_mean <- apply(presN4, 2, 'mean')
+    
+    dN2 <- presN2_mean^2
+    dN3 <- presN3_mean^2
+    dN4 <- presN4_mean^2
+    
 } else if (b ==2 ){
     # raw resids
     resN2_mean <- apply(resN2, 2, 'mean')
@@ -355,17 +360,20 @@ if(b ==1){
     # Pearson resids but I don't think we need these
     presN2_mean <- apply(presN2, 2, 'mean')
     presN3_mean <- apply(presN3, 2, 'mean')
+    
+    dN2 <- presN2_mean^2
+    dN3 <- presN3_mean^2
+
 } else if (b ==3){
     # raw resids
     resN2_mean <- apply(resN2, 2, 'mean')
-
     # Pearson resids but I don't think we need these
     presN2_mean <- apply(presN2, 2, 'mean')
+    dN2 <- presN2_mean^2
 }
 
-# Cooks' D - Zuur pg 58 is a leave-one-observation-out measure of influence
 
-dN2 <- presN2_mean^2
+
 # x<- 21
 # dN2
 # presN2_mean[x]^2
