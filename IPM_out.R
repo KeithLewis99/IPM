@@ -403,23 +403,34 @@ dev.off()
 
 
 # Posteriors & Priors ----
-priormean <- 0
-priorsd <- 100
-alpha <- out$sims.list$alpha2
-prior <- rnorm(n = 10000, mean = priormean, sd = priorsd)
-limits <- c(min(alpha)-0.3, max(alpha) + 0.3)
-x_label <- "Intercept"
-bin_1 <- mean(alpha)/100
+#alpha
 
-df_quant <- quantile(alpha, c(0.025, 0.975))
-df_cred <- subset(alpha, alpha > df_quant[1] & alpha < df_quant[2])
+source("IPM_fun.R")
+a2 <- post_param(param = "alpha", priormean = 0, priorsd = 100, jags = out$sims.list$alpha2, x_label = "Intercept") 
 
+pa2 <- postPriors(df = a2$jags, df2 = a2$prior, df3 = a2$df_cred, limits, x_label=a2$x_label, priormean=a2$priormean, priorsd=a2$priorsd, by_bin = a2$bin_1)
 
-p1 <- postPriors(df = alpha, df2 = prior, df3 =df_cred, limits, x_label, priormean, priorsd, by_bin = bin_1)
+pa2
 
-p1
+#beta
+b2 <- post_param(param = "beta", priormean = 0, priorsd = 100, jags = out$sims.list$beta2, x_label = "Larval Density") 
 
+pb2 <- postPriors(df = b2$jags, df2 = b2$prior, df3 = b2$df_cred, limits, x_label=b2$x_label, priormean=b2$priormean, priorsd=b2$priorsd, by_bin = a2$bin_1)
 
+#gamma - MRI
+source("IPM_fun.R")
+g2 <- post_param(param = "gamma", jags = out$sims.list$gamma2, x_label = "Tice - MRI") # max rate of increase
+
+pg2 <- postPriors(df = g2$jags, df2 = g2$prior, df3 = g2$df_cred, limits, x_label=g2$x_label, by_bin = g2$bin_1)
+
+pg2
+
+#delta - width
+d2 <- post_param(param = "delta", priormean = 11.5, priorsd = 5.7, jags = out$sims.list$delta2, x_label = d2$x_label) 
+
+pd2 <- postPriors(df = d2$jags, df2 = d2$prior, df3 = d2$df_cred, limits, x_label=d2$x_label, priormean=d2$priormean, priorsd=d2$priorsd, by_bin = d2$bin_1)
+
+pd2
 # End----
 
 ### archived code-----

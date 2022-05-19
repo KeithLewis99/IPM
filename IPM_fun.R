@@ -285,10 +285,56 @@ postPriors <- function(df, df2, df3, limits = limits, x_label = x_label, priorme
   p <- p + geom_rug(data=data.frame(y=df3), aes(x=y), colour = "red", size=3, alpha=1) 
   if(vline == "yes"){
     p <- p + geom_vline(aes(xintercept = 0), colour = "red", size = 2)
+  #  p <- p + annotate(geom = "text", x = 4.6, y = 0.5, label = paste("=", round(pB, 2)), colour = "black")
   }
   return(p)
 }
 
+
+#' Title
+#'
+#' @return
+#' @export
+#'
+#' @examples
+post_param <- function(param = w, priormean = NULL, priorsd = NULL, jags = z, x_label = NULL){
+  #browser()
+if(param == "alpha"|param == "beta"){
+  param = param
+  priormean <- priormean
+  priorsd <- priorsd
+  jags <- jags
+  prior <- rnorm(n = 10000, mean = priormean, sd = priorsd)
+  limits <- c(min(jags)-0.3, max(jags) + 0.3)
+  x_label <- x_label
+  bin_1 <- mean(jags)/100
+  df_quant <- quantile(jags, c(0.025, 0.975))
+  df_cred <- subset(jags, jags > df_quant[1] & jags < df_quant[2])
+  list(param=param,priormean = priormean, priorsd=priorsd, jags=jags, prior=prior, limits=limits, x_label=x_label, bin_1=bin_1, df_quant = df_quant, df_cred=df_cred)
+  
+} else if (param == "gamma"){
+  #browser()
+  param = param
+  jags <- jags
+  prior <- runif(n = 10000, min = 0, max = 100)/100
+  limits <- c(0, max(jags) + 0.1)
+  x_label <- expression(paste(t[italic(ice)], "-MRI"))
+  bin_1 <- mean(jags)/100
+  df_quant <- quantile(jags, c(0.025, 0.975))
+  df_cred <- subset(jags, jags > df_quant[1] & jags < df_quant[2])
+} else if (param == "delta"){
+  #browser()
+  param = param
+  jags <- jags
+  prior <- rgamma(n = 10000, shape = priormean, rate = priorsd)*100
+  limits <- c(min(jags)-0.3, max(jags) + 0.3)
+  x_label <- expression(paste(t[italic(ice)], "width"))
+  bin_1 <- mean(jags)/100
+  df_quant <- quantile(jags, c(0.025, 0.975))
+  df_cred <- subset(jags, jags > df_quant[1] & jags < df_quant[2])
+} 
+  list(param=param,priormean = priormean, priorsd=priorsd, jags=jags, prior=prior, limits=limits, x_label=x_label, bin_1=bin_1, df_quant = df_quant, df_cred=df_cred)
+}
 # END ----
   
   
