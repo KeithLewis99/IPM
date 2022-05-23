@@ -510,14 +510,14 @@ Column
 
 ```{r}
 # alpha2
-pa2 <- postPriors(df = a2$jags, df2 = a2$prior, df3 = a2$df_cred, limits, x_label=a2$x_label, priormean=a2$priormean, priorsd=a2$priorsd, by_bin = a2$bin_1)
+pa2 <- postPriors(df = a2$jags, df2 = a2$prior, df3 = a2$df_cred, limits=a2$limits, x_label=a2$x_label, priormean=a2$priormean, priorsd=a2$priorsd, by_bin = a2$bin_1)
 
 pa2
 ```
 
 ```{r}
 #beta2
-pb2 <- postPriors(df = b2$jags, df2 = b2$prior, df3 = b2$df_cred, limits, x_label=b2$x_label, priormean=b2$priormean, priorsd=b2$priorsd, by_bin = a2$bin_1)
+pb2 <- postPriors(df = b2$jags, df2 = b2$prior, df3 = b2$df_cred, limits = b2$limits, x_label=b2$x_label, priormean=b2$priormean, priorsd=b2$priorsd, by_bin = a2$bin_1)
 
 pb2
 ```
@@ -527,7 +527,7 @@ Column
 
 ```{r}
 # gamma2 - # max rate of increase
-pg2 <- postPriors(df = g2$jags, df2 = g2$prior, df3 = g2$df_cred, limits, x_label=g2$x_label, priormean=g2$priormean, priorsd=g2$priorsd, by_bin = g2$bin_1)
+pg2 <- postPriors(df = g2$jags, df2 = g2$prior, df3 = g2$df_cred, limits=g2$limits, x_label=g2$x_label, by_bin = g2$bin_1)
 
 pg2
 ```
@@ -535,7 +535,7 @@ pg2
 
 ```{r}
 #delta2
-pd2 <- postPriors(df = d2$jags, df2 = d2$prior, df3 = d2$df_cred, limits, x_label=d2$x_label, priormean=d2$priormean, priorsd=d2$priorsd, by_bin = d2$bin_1)
+pd2 <- postPriors(df = d2$jags, df2 = d2$prior, df3 = d2$df_cred, limits=d2$limits, x_label=d2$x_label,priormean=d2$priormean, priorsd=d2$priorsd, by_bin = d2$bin_1)
 
 pd2
 ```
