@@ -291,8 +291,8 @@ postPriors <- function(df, df2, df3, limits = limits, x_label = x_label, priorme
 }
 
 
-#' Title
-#'
+#' post_param
+#' The purpose is to bundle up all the variables that go into the postPriors figures.
 #' @return
 #' @export
 #'
@@ -310,25 +310,25 @@ if(param == "alpha"|param == "beta"){
   bin_1 <- mean(jags)/100
   df_quant <- quantile(jags, c(0.025, 0.975))
   df_cred <- subset(jags, jags > df_quant[1] & jags < df_quant[2])
-  list(param=param,priormean = priormean, priorsd=priorsd, jags=jags, prior=prior, limits=limits, x_label=x_label, bin_1=bin_1, df_quant = df_quant, df_cred=df_cred)
-  
+
 } else if (param == "gamma"){
   #browser()
   param = param
   jags <- jags
-  prior <- runif(n = 10000, min = 0, max = 100)/100
+  prior <- runif(n = 10000, min = 0, max = 100)
   limits <- c(0, max(jags) + 0.1)
-  x_label <- expression(paste(t[italic(ice)], "-MRI"))
+  x_label <- expression(paste(t[italic(ice)], "-MRI-gamma"))
   bin_1 <- mean(jags)/100
   df_quant <- quantile(jags, c(0.025, 0.975))
   df_cred <- subset(jags, jags > df_quant[1] & jags < df_quant[2])
+
 } else if (param == "delta"){
   #browser()
   param = param
   jags <- jags
   prior <- rgamma(n = 10000, shape = priormean, rate = priorsd)*100
   limits <- c(min(jags)-0.3, max(jags) + 0.3)
-  x_label <- expression(paste(t[italic(ice)], "width"))
+  x_label <- expression(paste(t[italic(ice)], "width - delta"))
   bin_1 <- mean(jags)/100
   df_quant <- quantile(jags, c(0.025, 0.975))
   df_cred <- subset(jags, jags > df_quant[1] & jags < df_quant[2])
