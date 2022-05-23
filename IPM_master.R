@@ -3,7 +3,7 @@
 
 # IPM_out_diag----
 b <- c(1:3)
-b = 1
+b = 2
 
 for (i in b){
      outfile <- paste0("IPM_out_diag", i, ".html")
@@ -11,7 +11,7 @@ for (i in b){
      outDir2 <- paste0("output/output_ez", i)
      #if(!dir.exists(paste0("output/", outDir)))dir.create(outDir)
      rmarkdown::render("IPM_out_diag.Rmd", output_file = outfile, output_dir = outDir1) # makes a dashboard
-     #ezknitr::ezknit(file = "IPM_out_diag.Rmd", out_dir = outDir2, keep_md = F) # saves all graphs as png in folder.
+     ezknitr::ezknit(file = "IPM_out_diag.Rmd", out_dir = outDir2, keep_md = F) # saves all graphs as png in folder.
 }
 
 
