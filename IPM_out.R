@@ -6,7 +6,7 @@ library(ggplot2)
 library(lattice)
 
 # Start----
-#rm(list=ls())
+rm(list=ls())
 
 
 # Source files
@@ -46,6 +46,25 @@ parms3 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs",
             "I2.rep", "I3.rep", "I4.rep", "I.rep"
 ) 
 
+parms4 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
+            "N2",  "N3", "N4", "u",
+            "mu3", "alpha3", "gamma3", "delta3", "epsilon3",
+            "mu4", 
+            "Dssm.obs", "Dmape.obs",  "Tturn.obs", 
+            "Dssm.rep", "Dmape.rep",  "Tturn.rep",
+            "I2.rep", "I3.rep", "I4.rep", "I.rep"
+) 
+parms5 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
+            "N2",  "N3", "N4",
+            "mu2", "alpha2", "beta2",  "gamma2", "delta2", "u",
+            "mu3", "alpha3", "gamma3", "delta3", "epsilon3",
+            "mu4", 
+            "Dssm.obs", "Dmape.obs",  "Tturn.obs", 
+            "Dssm.rep", "Dmape.rep",  "Tturn.rep",
+            "I2.rep", "I3.rep", "I4.rep", "I.rep"
+) 
+
+
 #  , "pe3", "pe2",
 # "I.exp", "I2.rep", "I3.rep", "I4.rep", "I.rep","I2", "I3", "I4", "I",
 # "Tt1.obs", "Tt2.obs", "Tt3.obs", "Tt1.rep", "Tt2.rep", "Tt3.rep",
@@ -80,13 +99,30 @@ if (b==1){ # model with separate parms for each age
     vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2")
     vars_N3 <- c(NA)
     vars_N4 <- c(NA)
-
+} else if (b==4) { # model separate parms for N2 and N3:N4
+    parms = parms4
+    tC = cap.v10
+    tC.txt = "cap.v10"
+    vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
+    vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
+    vars_N2 <- c("u")
+    vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3", "mu4[10]")
+    vars_N4 <- c(NA)
+} else if (b==5) { # model separate parms for N2 and N3:N4
+    parms = parms2
+    tC = cap.v8
+    tC.txt = "cap.v8"
+    vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
+    vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
+    vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2", "u")
+    vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3", "mu4[10]")
+    vars_N4 <- c(NA)
 }
 
 # MCMC settings
 ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 #ni <- 200000; nt <- 30; nb <- 30000; nc <- 3
-#ni <- 2000000; nt <- 150; nb <- 300000; nc <- 3
+#ni <- 2000000; nt <- 300; nb <- 300000; nc <- 3
 
 # run model
 #source("IPM_mod.R")
@@ -405,32 +441,31 @@ dev.off()
 # Posteriors & Priors ----
 #alpha
 
-source("IPM_fun.R")
-a2 <- post_param(param = "alpha", priormean = 0, priorsd = 100, jags = out$sims.list$alpha2, x_label = "Intercept") 
+a2 <- post_param(param = "alpha", priormean = 0, priorsd = 100, jags = out$sims.list$alpha2, x_label = "Intercept - alpha") 
 
-pa2 <- postPriors(df = a2$jags, df2 = a2$prior, df3 = a2$df_cred, limits, x_label=a2$x_label, priormean=a2$priormean, priorsd=a2$priorsd, by_bin = a2$bin_1)
-
-pa2
+# pa2 <- postPriors(df = a2$jags, df2 = a2$prior, df3 = a2$df_cred, limits=a2$limits, x_label=a2$x_label, priormean=a2$priormean, priorsd=a2$priorsd, by_bin = a2$bin_1)
+# 
+# pa2
 
 #beta
-b2 <- post_param(param = "beta", priormean = 0, priorsd = 100, jags = out$sims.list$beta2, x_label = "Larval Density") 
+b2 <- post_param(param = "beta", priormean = 0, priorsd = 100, jags = out$sims.list$beta2, x_label = "Larval Density - beta") 
 
-pb2 <- postPriors(df = b2$jags, df2 = b2$prior, df3 = b2$df_cred, limits, x_label=b2$x_label, priormean=b2$priormean, priorsd=b2$priorsd, by_bin = a2$bin_1)
+# pb2 <- postPriors(df = b2$jags, df2 = b2$prior, df3 = b2$df_cred, limits = b2$limits, x_label=b2$x_label, priormean=b2$priormean, priorsd=b2$priorsd, by_bin = a2$bin_1)
 
 #gamma - MRI
-source("IPM_fun.R")
-g2 <- post_param(param = "gamma", jags = out$sims.list$gamma2, x_label = "Tice - MRI") # max rate of increase
+#source("IPM_fun.R")
+g2 <- post_param(param = "gamma", jags = out$sims.list$gamma2) # max rate of increase
 
-pg2 <- postPriors(df = g2$jags, df2 = g2$prior, df3 = g2$df_cred, limits, x_label=g2$x_label, by_bin = g2$bin_1)
-
-pg2
+ pg2 <- postPriors(df = g2$jags, df2 = g2$prior, df3 = g2$df_cred, limits=g2$limits, x_label=g2$x_label, by_bin = g2$bin_1)
+# 
+ pg2
 
 #delta - width
-d2 <- post_param(param = "delta", priormean = 11.5, priorsd = 5.7, jags = out$sims.list$delta2, x_label = d2$x_label) 
+d2 <- post_param(param = "delta", priormean = 11.5, priorsd = 5.7, jags = out$sims.list$delta2) 
 
-pd2 <- postPriors(df = d2$jags, df2 = d2$prior, df3 = d2$df_cred, limits, x_label=d2$x_label, priormean=d2$priormean, priorsd=d2$priorsd, by_bin = d2$bin_1)
-
-pd2
+# pd2 <- postPriors(df = d2$jags, df2 = d2$prior, df3 = d2$df_cred, limits=d2$limits, x_label=d2$x_label, priormean=d2$priormean, priorsd=d2$priorsd, by_bin = d2$bin_1)
+# 
+# pd2
 # End----
 
 ### archived code-----
