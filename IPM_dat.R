@@ -35,15 +35,17 @@ library(plotly)
 library(purrr)
 
 
-
 #rm(list=ls())
-
 options(dplyr.print_max = 1e9)
 
 
 # Source files
 source("IPM_fun.R")
+
+# variables
 #save <- "no"
+disaggregated <- "1985-present" # "1999-present"
+# disaggregated <- "1999-present"
 
 # load data----
 
@@ -67,6 +69,12 @@ df_cap$var_abun <- (df_cap$abundance_med*(log(df_cap$ab_lci)-log(df_cap$abundanc
 df_dis <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/age-disaggregated-2022.csv")
 str(df_dis)
 
+# bring in the historical data - ideally, this should all be in one step
+df_dis_all <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin_age_disaggregate_abundance.csv")
+str(df_dis_all)
+
+# Manipulate 1999-2021 data first, then 1985-2021
+
 # this is just to get a breakdown by age and stratum
 df_dis_strata <- df_dis %>%
      group_by(year, age) %>%
@@ -79,6 +87,7 @@ df_dis_summ <- df_dis %>%
      filter(age != "Unknown") %>%
      #summarise(mat = mean(prop_mat), biomass = sum(biomass))
      summarise(mat = mean(prop_mat, na.rm = T), abun = sum(abundance), biomass = sum(biomass), varA = var(abundance, na.rm = T), varB = var(biomass, na.rm = T))
+
 df_dis_summ  
 str(df_dis_summ)
 
@@ -91,9 +100,6 @@ df_tmp
 # bind summarized data with missing data
 df_dis_summ <- bind_rows(df_tmp, df_dis_summ) %>% 
      arrange(year)
-df_dis_summ
-df_dis_summ$year
-
 
 
 # pivot the data - longer to wider with the disaggregated abundance as columns
@@ -111,7 +117,7 @@ df_dis_tab <- df_dis_summ[, c(1:2,4)] %>%
      mutate(sd = sd(c_across(starts_with("I")), na.rm = T))
 df_dis_tab
 
-#incredibly, I can't figure out how to get pivot wider to fill in the missing years with NA!!!  
+#incredibly, I can't figure out how to get pivot wider to fill in the missing years with NA!!!  So using this crude but proven method
 df_tmp <- df_dis_tab[1:3,]
 df_tmp[, 1:4] <- NA
 df_tmp$year[1:3] <- c(2006, 2016, 2020)
@@ -120,9 +126,28 @@ df_tmp
 # bind the blank years (NAs) with the data
 df_dis_tab <- bind_rows(df_tmp, df_dis_tab) %>% 
      arrange(year)
-df_dis_tab
-df_dis_tab$year
 
+df_dis_1998 <- df_dis_all[1:14, c(1, 3:6, 8:9)] #remove age 1 and age 6
+
+# rename the columns and multiply by 1000 to match the scale of the earlier data set
+df_dis_1998 <- df_dis_1998 %>%
+        rename("mature" = "age2PerMat", "I2" = "age2", "I3" = "age3", "I4" = "age4", "I5" = "age5") %>%
+        mutate(I2 = I2*1000) %>%
+        mutate(I3 = I3*1000) %>%
+        mutate(I4 = I4*1000) %>%
+        mutate(I5 = I5*1000)
+
+# create a total I column and blanks for variance and SD        
+df_dis_1998$I <- rowSums(df_dis_1998[, 2:5], na.rm = T)
+df_dis_1998$var <- NA
+df_dis_1998$sd <- NA
+
+# combine the data sets as needed.
+if(disaggregated == "1985-present") {
+        df_dis_tab <- rbind(df_dis_1998[, c(1:5, 8:10)], df_dis_tab)
+} else {
+        df_dis_tab
+} 
 
 # pivot the data - longer to wider with the disaggregated abundance as columns
 # abundance value in natural logarithms
@@ -135,13 +160,15 @@ df_dis_tabLog <- df_dis_tab %>%
      select(year, I2, I3, I4, I, var, sd)
 
 df_dis_tabLog
-range(df_dis_tabLog$var)
-range(df_dis_tabLog$sd)
+range(df_dis_tabLog$var, na.rm = T)
+range(df_dis_tabLog$sd, na.rm = T)
 
-# the below are two possible approaches to resolving the 2010 missing fish problem
+
+# imputation ----
+## the below are two possible approaches to resolving the 2010 missing fish problem
 # calculate the difference between A2-A3 and A3-A4 fish make a dataframe
-df_23 <- df_dis_tabLog$I2 - lead(df_dis_tabLog$I3)
-df_34 <- df_dis_tabLog$I3 - lead(df_dis_tabLog$I4)
+df_23 <- df_dis_tabLog$I2[15:37] - lead(df_dis_tabLog$I3[15:37])
+df_34 <- df_dis_tabLog$I3[15:37] - lead(df_dis_tabLog$I4[15:37])
 
 df_tmp <- as.data.frame(cbind(year = 1999:2021, I2_3 = df_23, I3_4 = df_34))
 
@@ -182,11 +209,10 @@ I2010min <- log(exp(I3_2010min) + exp(I2_2010min) + exp(I4_2010min))
 cbind(I2m = I2_2010min, I3m = I3_2010min, I4m = I4_2010min, Im = I2010min)
 
 
-
 ## maturity ----
 df_mat <- df_dis_summ %>%
      filter(age == 2 | is.na(age))
-df_mat$mat[19] <- 0.3 # this is just a place holder until we figure out what is going on.
+#df_mat$mat[19] <- 0.3 # this is just a place holder until we figure out what is going on.
 str(df_mat)
 
 #impute data - place holder
@@ -203,6 +229,25 @@ tmp <- df_mat %>%
      summarise(meanMat = mean(mat, na.rm=T))
 tmp 
 
+# create an identical data frame to df_mat for years 1985:1998 and append them to more recent data.  
+
+
+if(disaggregated == "1985-present") {
+        df_tmp <- df_mat[1:14,]
+        df_tmp[, c(1, 3:7)] <- NA
+        df_tmp$year <- c(1985:1998)
+        df_tmp$mat <- df_dis_1998$perAge2/100
+        df_mat <- rbind(df_tmp, df_mat)
+        # get a mean maturity form 1991:1999
+        imp90 <- mean(df_mat$mat[7:15], na.rm = T) 
+        #df_mat$mat[7] <- imp
+        df_mat$mat[c(9:11, 13:14)] <- imp90
+        
+} else {
+        df_mat
+} 
+
+
 
 ## larval density ----
 df_ld  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/larvae2001_2021.csv"
@@ -210,19 +255,24 @@ df_ld  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/larvae2001_2021.
 str(df_ld)
 
 # add extra years to start the time series
-df_tmp <- df_ld[1:2,]
-df_tmp[, 1:3] <- NA
-df_tmp$SurveyYear[1:2] <- c(1999,2000)
-df_tmp
-df_ld <- rbind(df_tmp, df_ld)
+if(disaggregated == "1985-present") {
+        df_tmp <- as.data.frame(matrix(NA, 16, 3))
+        df_tmp[, 1] <- c(1985:2000)
+        names(df_tmp) <- names(df_ld)
+        df_ld <- rbind(df_tmp, df_ld)
+} else {
+        df_tmp <- df_ld[1:2,]
+        df_tmp[, 1:3] <- NA
+        df_tmp$SurveyYear[1:2] <- c(1999,2000)
+        df_tmp
+        df_ld <- rbind(df_tmp, df_ld)
+} 
 
 # change column names
 df_ld <- df_ld %>% rename(year = SurveyYear,
                           larvae = `Bellevue_larvae_m-3`,
                           log_larvae = `log_Bellevue_larvae_m-3`) 
 df_ld$lnlarvae <- log(df_ld$larvae)
-#df_ld$lnlarvae[1] <- 6.6
-#df_ld$lnlarvae[2] <- 6.6
 
 
 ## ice ----
@@ -231,9 +281,14 @@ df_ice  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/ice-m1-2020.csv
 )
 str(df_ice)
 
-# get rid of years 1969-1998
-df_ice <- df_ice %>%
-     slice(31:54)
+if(disaggregated == "1985-present") {
+        df_ice <- df_ice %>% # get rid of years 1969-1984
+            slice(17:54)
+} else {
+        df_ice <- df_ice %>% # get rid of years 1969-1998
+        slice(31:54)
+} 
+
 
 
 ## condition ----
@@ -241,8 +296,6 @@ df_ice <- df_ice %>%
 df_con <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/data/condition_ag1_2_MF_out.csv"
 )
 str(df_con)
-df_con <- df_con %>%
-        slice(5:24)
 
 df_tmp <- df_con[1:3,]
 df_tmp[, 1:2] <- NA
@@ -252,18 +305,46 @@ imp <- mean(df_con$meanCond, na.rm = T)
 df_tmp$meanCond[1:3] <- imp
 df_con <- rbind(df_con, df_tmp)
 
+if(disaggregated == "1985-present") {
+        df_tmp <- as.data.frame(matrix(NA, 10, 2))
+        df_tmp[, 1] <- c(1985:1994)
+        names(df_tmp) <- names(df_con)
+        df_con <- rbind(df_tmp, df_con)
+} else {
+        df_con <- df_con %>%
+                slice(5:27)
+        } 
+
+
+
+
 # Bundle data----
 num_forecasts = 2 # 2 extra years
 jags.data <- ls_jag("yes", "yes")
+str(jags.data)
 jd <- as.data.frame(jags.data)
 
+# get lengths of jags.data
+leng_jd <- rep(NA, 8)
+for (i in 1:length(jags.data)){
+        len_jd <- length(jags.data[[i]])
+        leng_jd[i] <- len_jd
+}
+leng_jd
 
 # add years for convenience of graphing later
+if(disaggregated == "1985-present") {
+        yearF <- 1985:2023
+        year <- 1985:2021
+} else {
+        yearF <- 1999:2023
+        year <- 1999:2021
+}
 
-jdy <- cbind(year = 1999:2023, jd)
+jdy <- cbind(year = yearF, jd)
 str(jdy)
 
 jd_raw <- ls_jag("no", "no")
 jd_raw <- as.data.frame(jd_raw)
-jd_raw <- cbind(year = 1999:2021, jd_raw)
+jd_raw <- cbind(year = year, jd_raw)
 
