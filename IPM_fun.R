@@ -52,7 +52,7 @@
             m = c(df_mat$mat, rep(mean(df_mat$mat), num_forecasts)),
             LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts)),10)),
             TI = as.vector(scale(c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),10)),
-            CO = as.vector(scale(c(df_con$meanCond, rep(mean(df_con$meanCond), num_forecasts))))
+            CO = as.vector(scale(c(df_con$meanCond, rep(mean(df_con$meanCond, na.rm = T), num_forecasts))))
                 )
         }
         return(jags.data)
@@ -335,6 +335,33 @@ if(param == "alpha"|param == "beta"){
 } 
   list(param=param,priormean = priormean, priorsd=priorsd, jags=jags, prior=prior, limits=limits, x_label=x_label, bin_1=bin_1, df_quant = df_quant, df_cred=df_cred)
 }
+
+#' rsq_bayes()----
+#'
+#' @param ypred - vector values of y from Bayesian chain 
+#' @param out - list of output values from Bayesian analysis
+#'
+#' @return - Bayesian R-squared
+#' @export
+#'
+#' @examples R1_r2 <- rsq_bayes(ypred = y_pred, out = run_recruit)
+# see jags_bayes_R2 for proof that this matches the Gelmen code
+rsq_bayes <- function(ypred = ypred, out=out){
+  #browser()
+  # variance of predicted values
+  y_var = apply(ypred, 1, 'var')
+  
+  # variance of residuals
+  res_pred = out$BUGSoutput$sims.list$Res
+  #res_med = apply(res_pred,2,'median')
+  res_var = apply(res_pred,1,'var')
+  
+  # Distribution of Bayesian R-squared
+  bay_rsq <- y_var/(res_var + y_var)
+  return(bay_rsq)
+}
+
+
 # END ----
   
   
