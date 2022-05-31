@@ -17,7 +17,6 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
 source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
 # JAGS settings ----
-
 parms1 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
            "N2",  "N3", "N4",
            "mu2", "alpha2", "beta2",  "gamma2", "delta2",
@@ -70,7 +69,7 @@ parms5 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs",
 # "Tt1.obs", "Tt2.obs", "Tt3.obs", "Tt1.rep", "Tt2.rep", "Tt3.rep",
 
 # model----
-b <- 1
+b <- 2
 if (b==1){ # model with separate parms for each age
     parms = parms1
     tC = cap.v7
@@ -81,16 +80,18 @@ if (b==1){ # model with separate parms for each age
     vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3")
     vars_N4 <- c("mu4[10]", "alpha4", "gamma4", "delta4", "epsilon4")
 
-} else if (b==2) { # model separate parms for N2 and N3:N4
+} else if (b==2) { # model separate parms for N2 and N3:N4  - EXT
     parms = parms2
-    tC = cap.v8
-    tC.txt = "cap.v8"
+    # tC = cap.v8
+    # tC.txt = "cap.v8"
+    tC = cap.v22
+    tC.txt = "cap.v22"
     vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
     vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
     vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2")
     vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3", "mu4[10]")
     vars_N4 <- c(NA)
-} else if (b==3) { # demographic model - no forecast for N3:N4
+} else if (b==3) { # demographic model - no forecast for N4
     parms = parms3
     tC = cap.v9
     tC.txt = "cap.v9"
@@ -121,8 +122,24 @@ if (b==1){ # model with separate parms for each age
 
 # MCMC settings
 ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
-#ni <- 200000; nt <- 30; nb <- 30000; nc <- 3
-#ni <- 2000000; nt <- 300; nb <- 300000; nc <- 3
+#ni <- 200000; nt <- 60; nb <- 30000; nc <- 3
+# ni <- 2000000; nt <- 600; nb <- 300000; nc <- 3
+# ni <- 5000000; nt <- 1000; nb <- 300000; nc <- 3 # this produces really nice ACFs!!!!
+
+jags.data$p <- 2
+jags.data$q <- 2
+
+if(disaggregated == "1985-present"){
+    jags.data$N2end <- 18
+    jags.data$N2start <- 19
+    jags.data$N3end <- 11
+    jags.data$N3start <- 12
+} else {
+    jags.data$N2end <- 4
+    jags.data$N2start <- 5
+    jags.data$N3end <- jags.data$n.occasions
+    jags.data$N3start <- 11
+}
 
 # run model
 #source("IPM_mod.R")
@@ -132,9 +149,6 @@ ssm26
 # JAGS ouput ----
 out <- ssm26$BUGSoutput 
 str(out$sims.list)
-
-# DIC to dashboard
-ssm26_dic <- out$DIC
 
 
 ## extract raw values from chains
@@ -151,38 +165,59 @@ str(calc, 1)
 str(cri, 1)
 str(pri, 1)
 
-cbind(1999:2023, calc$Nt2, jd$I2, calc$N3, jd$I3, calc$mu3)
+if(disaggregated == "1985-present") {
+    cbind(1985:2023, calc$Nt2, jd$I2, calc$N3, jd$I3, calc$mu3)
+} else {
+    cbind(1999:2023, calc$Nt2, jd$I2, calc$N3, jd$I3, calc$mu3)
+} 
+
+
+# DIC to dashboard
+ssm26_dic <- out$DIC
+
+# Bayesian R-squared - see scratch pad
+
 
 
 # figures ----
-# N2: observation median v process median
- plot(jd$I2, calc$N2)
-# N3: observation median v process median
- plot(jd$I3, calc$N3)
-# N4: observation median v process median
- plot(jd$I4, calc$N4)
-# Observation median over time
- plot(seq(1999:2023), ls_all$N_med)
 
+if(disaggregated == "1985-present") {
+    year <- 1985:2021
+ } else {
+     year <- 1999:2021
+ } 
 
-## IPM plot----
-# variables for IPM plots
-year <- 1999:2021
 ly <- length(year)
 forecast <- 2022:2023
 lf <- length(forecast)
 
-#source("IPM_fun.R")
+# N2: observation median v process median
+plot(jd$I2, calc$N2)
+# N3: observation median v process median
+plot(jd$I3, calc$N3)
+# N4: observation median v process median
+plot(jd$I4, calc$N4)
+# Observation median over time
+plot(c(year,forecast), ls_all$N_med)
 
+## IPM plot----
+# variables for IPM plots
+
+# set capelin years
+if(disaggregated == "1985-present") {
+    cap <- df_cap 
+} else {
+    cap <- df_cap[15:39,]
+} 
 # combined N2-N4[t]
-tmp_plot <- ipm_plot(df_med = ls_all$N_med, df_cri = ls_all$N_ci, df_pri = ls_all$Pr_ci, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
+tmp_plot <- ipm_plot(df_med = ls_all$N_med, df_cri = ls_all$N_ci, df_pri = ls_all$Pr_ci, df_dat = cap) # ignore warnings - all legit NAs although df_cap needs to be updated. 
 tmp_plot <- tmp_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = log(exp(I2) + exp(I3)), x = year),
                                       shape = 16, size = 2)
 tmp_plot
 
 # N2[t] - create plot, then add the capelin data
-tmpN2_plot <- ipm_plot(df_med = calc$N2, df_cri = cri$N2_cri, df_pri = pri$I2.rep_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
+tmpN2_plot <- ipm_plot(df_med = calc$N2, df_cri = cri$N2_cri, df_pri = pri$I2.rep_pri, df_dat = cap) # ignore warnings - all legit NAs although df_cap needs to be updated.
 tmpN2_plot <- tmpN2_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = I2, x = year),
                                       shape = 16, size = 2)
@@ -190,7 +225,8 @@ tmpN2_plot
 
 
 # N3[t]
-tmpN3_plot <- ipm_plot(df_med = calc$N3, df_cri = cri$N3_cri, df_pri = pri$I3.rep_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
+#source("IPM_fun.R")
+tmpN3_plot <- ipm_plot(df_med = calc$N3, df_cri = cri$N3_cri, df_pri = pri$I3.rep_pri, df_dat = cap) # ignore warnings - all legit NAs although df_cap needs to be updated.
 #tmpN3_plot <- tmpN3_plot + 
     
 tmpN3_plot <- tmpN3_plot + geom_point(data = df_dis_tabLog,
@@ -200,7 +236,7 @@ tmpN3_plot
 
 
 
-tmpN4_plot <- ipm_plot(df_med = calc$N4, df_cri = cri$N4_cri, df_pri = pri$I4.rep_pri, df_dat = df_cap[15:39,]) # ignore warnings - all legit NAs although df_cap needs to be updated.
+tmpN4_plot <- ipm_plot(df_med = calc$N4, df_cri = cri$N4_cri, df_pri = pri$I4.rep_pri, df_dat = cap) # ignore warnings - all legit NAs although df_cap needs to be updated.
 #tmpN3_plot <- tmpN3_plot + 
 
 tmpN4_plot <- tmpN4_plot + geom_point(data = df_dis_tabLog,
@@ -323,8 +359,10 @@ p <- p + annotate(geom = "text", x = 4.6, y = 0.5, label = paste("=", round(pB, 
 p
 obs_v_rep <- p
 
+low <- min(out$sims.list$Tturn.rep)
+high <- max(out$sims.list$Tturn.rep)
 # number of switches, i.e., jaggedness pg 274 & 279 in S&K
-hist(out$sims.list$Tturn.rep, xlim = c(7, 22), xlab = "Number of switches \n (replicated data)")
+hist(out$sims.list$Tturn.rep, xlim = c(low, high), xlab = "Number of switches \n (replicated data)")
 abline(v= out$mean$Tturn.obs, col = "red")
 
 # need simulated data----
@@ -333,17 +371,23 @@ abline(v= out$mean$Tturn.obs, col = "red")
 #### (see Zuur et al. 2013 for options for calculating Pearson residuals) - note that I am opting to do a lot of this outside of JAGS due to run time issues.
 #### Residual diagnostics
 
+if(disaggregated == "1985-present") {
+    i <- 1:39
+} else {
+    i <- 1:25
+} 
+
 ##### raw residuals - I reason that the N2 is the process which is what the linear model is predicting and the mu is the fitted value
 ##### this is mu for N2 which missed the first 4 years.
-if (b ==1 ){
-    resN2 <- raw$N2[5:25] - raw$mu2
-    resN3 <- raw$N3 - raw$mu3
-    resN4 <- raw$N4 - raw$mu4
+if (b == 1){
+    resN2 <- raw$N2[,i] - raw$mu2
+    resN3 <- raw$N3[,i] - raw$mu3
+    resN4 <- raw$N4[,i] - raw$mu4
 } else if (b == 2){
-    resN2 <- raw$N2[5:25] - raw$mu2
-    resN3 <- raw$N3 - raw$mu3
+    resN2 <- raw$N2[,i] - raw$mu2
+    resN3 <- raw$N3[,i] - raw$mu3
 } else if (b == 3){
-    resN2 <- raw$N2[5:25] - raw$mu2
+    resN2 <- raw$N2[i] - raw$mu2
 }
 
 #### Pearson residuals
@@ -416,24 +460,43 @@ if(b ==1){
 
 #pdf(paste0("Bayesian/", filepath, "/fit_obs.pdf"))
 par(mfrow = c(2,2), mar = c(5,5,2,2))
-plot(x=calc$N2[5:25], y = resN2_mean, xlab = "Fitted values", ylab = "Raw residuals")
+plot(x=calc$N2[i], y = resN2_mean, xlab = "Fitted values", ylab = "Raw residuals")
 abline(h = 0, lty = 2)
 # # see notes in Mortality model
 plot(y = jd$I2, x = calc$N2, xlab = "Fitted values", ylab = "Observed data") # should follow the line
 abline(coef = c(0,1), lty = 2)
 #normality
 histogram(resN2_mean)
+
+if(disaggregated == "1985-present"){
+    N2xaxis <- 1:39
+    N3xaxis <- 1:39
+    N4xaxis <- 1:39
+} else {
+    N2xaxis <- 1:25
+    N3xaxis <- 1:25
+    N4xaxis <- 1:25
+}
 # Cook's D
-plot(y = dN2, x = 1:21, xlab = "Observation", ylab = "Cook's D") # should follow the line
+plot(y = dN2, x = N2xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
 
 par(mfrow = c(1,1))
 dev.off()
 
+
+if(disaggregated == "1985-present"){ # set resN2_mean
+    LDxaxis <- 17:37
+    TIxaxis <- 1:39
+} else {
+    LDxaxis <- 3:23
+    TIxaxis <- 5:25
+}
+
 # Residuals v covariates Zuur et al. 2013, pg 59-60: look for no patterns; patterns may indicated non-linear
 #pdf(paste0("Bayesian/", filepath, "/resid_covar.pdf"))
 par(mfrow = c(2,2), mar = c(5,5,2,2))
-plot(jags.data$LD[3:23], resN2_mean, xlab = "Larval Density", ylab = "Pearson resids")
-plot(jags.data$TI[5:25], resN2_mean, xlab = "Ice retreat", ylab = "Pearson resids")
+plot(jags.data$LD[LDxaxis], resN2_mean[LDxaxis], xlab = "Larval Density", ylab = "Pearson resids")
+plot(jags.data$TI[TIxaxis], resN2_mean[TIxaxis], xlab = "Ice retreat", ylab = "Pearson resids")
 par(mfrow = c(1,1))
 dev.off()
 
