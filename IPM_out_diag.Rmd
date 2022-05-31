@@ -333,7 +333,7 @@ Column
      
 ```{r}
 par(mfrow = c(2,2), mar = c(5,5,2,2))
-plot(x=calc$N2[5:25], y = resN2_mean, xlab = "Fitted values", ylab = "Raw residuals")
+plot(x=calc$N2[i], y = resN2_mean, xlab = "Fitted values", ylab = "Raw residuals")
 abline(h = 0, lty = 2)
 ```
 
@@ -354,7 +354,7 @@ histogram(resN2_mean)
 
 ```{r}
 # Cook's D
-plot(y = dN2, x = 1:21, xlab = "Observation", ylab = "Cook's D") # should follow the line
+plot(y = dN2, x = N2xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
 ```
 
 
@@ -393,7 +393,7 @@ histogram(resN3_mean)
 ```{r}
 # Cook's D
 if(b==1|b==2){
-plot(y = dN3, x = 1:25, xlab = "Observation", ylab = "Cook's D") # should follow the line
+plot(y = dN3, x = N3xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
 }
 ```
 
@@ -433,7 +433,7 @@ histogram(resN4_mean)
 ```{r}
 # Cook's D
 if(b==1){
-plot(y = dN4, x = 1:25, xlab = "Observation", ylab = "Cook's D") # should follow the line
+plot(y = dN4, x = N4xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
 }
 ```
 
@@ -446,7 +446,7 @@ Column
 -------------------------------------
      
 ```{r}
-plot(jags.data$LD[3:23], resN2_mean, xlab = "Larval Density", ylab = "Pearson resids")
+plot(jags.data$LD[LDxaxis], resN2_mean[LDxaxis], xlab = "Larval Density", ylab = "Pearson resids")
 ```
 
 
@@ -454,7 +454,7 @@ Column
 -------------------------------------
      
 ```{r}
-plot(jags.data$TI[5:25], resN2_mean, xlab = "Ice retreat", ylab = "Pearson resids")
+plot(jags.data$TI[TIxaxis], resN2_mean[TIxaxis], xlab = "Ice retreat", ylab = "Pearson resids")
 ```
 
 N3 - Covariates {data-navmenu="Covariates"}
@@ -465,7 +465,7 @@ Column
      
 ```{r}
 if(b==1|b==2){
-plot(jags.data$LD[3:23], resN3_mean[3:23], xlab = "Larval Density", ylab = "Pearson resids")
+plot(jags.data$LD[LDxaxis], resN3_mean[LDxaxis], xlab = "Larval Density", ylab = "Pearson resids")
 }
 ```
 
@@ -475,7 +475,7 @@ Column
      
 ```{r}
 if(b==1|b==2){
-plot(jags.data$TI, resN3_mean, xlab = "Ice retreat", ylab = "Pearson resids")
+plot(jags.data$TI[TIxaxis], resN3_mean[TIxaxis], xlab = "Ice retreat", ylab = "Pearson resids")
 }
 ```
 
@@ -488,7 +488,7 @@ Column
      
 ```{r}
 if(b==1){
-plot(jags.data$LD[3:23], resN4_mean[3:23], xlab = "Larval Density", ylab = "Pearson resids")
+plot(jags.data$LD[LDxaxis], resN4_mean[LDxaxis], xlab = "Larval Density", ylab = "Pearson resids")
 }
 ```
 
@@ -498,7 +498,7 @@ Column
      
 ```{r}
 if(b==1){
-plot(jags.data$TI, resN4_mean, xlab = "Ice retreat", ylab = "Pearson resids")
+plot(jags.data$TI[TIxaxis], resN4_mean[TIxaxis], xlab = "Ice retreat", ylab = "Pearson resids")
 }
 ```
 
