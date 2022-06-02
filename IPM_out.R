@@ -27,11 +27,21 @@ parms1 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs",
            "I2.rep", "I3.rep", "I4.rep", "I.rep"
            ) 
 
+# parms2 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
+#             "N2",  "N3", "N4", "eta", "zeta", "eps", 
+#             "mu2", "alpha2", "beta2",  "gamma2", "delta2",
+#             "mu3", "alpha3", "gamma3", "delta3", "epsilon3",
+#             "mu4", 
+#             "Dssm.obs", "Dmape.obs",  "Tturn.obs", 
+#             "Dssm.rep", "Dmape.rep",  "Tturn.rep",
+#             "I2.rep", "I3.rep", "I4.rep", "I.rep"
+# ) 
+
 parms2 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
-            "N2",  "N3", "N4",
+            "N2",  "N3", "N4", "eta", "zeta", "eps", "ar_mean", "ma_mean",
             "mu2", "alpha2", "beta2",  "gamma2", "delta2",
             "mu3", "alpha3", "gamma3", "delta3", "epsilon3",
-            "mu4", 
+            "mu4",
             "Dssm.obs", "Dmape.obs",  "Tturn.obs", 
             "Dssm.rep", "Dmape.rep",  "Tturn.rep",
             "I2.rep", "I3.rep", "I4.rep", "I.rep"
@@ -126,7 +136,7 @@ ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 # ni <- 2000000; nt <- 600; nb <- 300000; nc <- 3
 # ni <- 5000000; nt <- 1000; nb <- 300000; nc <- 3 # this produces really nice ACFs!!!!
 
-jags.data$p <- 2
+jags.data$p <- 1
 jags.data$q <- 2
 
 if(disaggregated == "1985-present"){
