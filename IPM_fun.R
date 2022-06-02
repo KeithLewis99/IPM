@@ -116,6 +116,7 @@ ls_med <- function(ls){
     ls_pri[[i]] <- pri
     names(ls_pri)[i] <- paste0(names(ls)[i], "_pri")
   }
+  #browser()
   
   N_med <- log(apply(exp(ls$N3)+exp(ls$N2) + exp(ls$N4), 2, 'median'))
   N_ci <- apply(log(exp(ls$N3)+exp(ls$N2) + exp(ls$N4)), 2, 'quantile', c(0.025, 0.975))
