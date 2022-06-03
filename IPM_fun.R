@@ -118,8 +118,11 @@ ls_med <- function(ls){
   }
   #browser()
   
+  # calculate the median value for all ages by year
   N_med <- log(apply(exp(ls$N3)+exp(ls$N2) + exp(ls$N4), 2, 'median'))
+  # calculate the credible interval for all ages by year
   N_ci <- apply(log(exp(ls$N3)+exp(ls$N2) + exp(ls$N4)), 2, 'quantile', c(0.025, 0.975))
+  # calculate the prediction interval based on simulated data using the approach in Schuab and Kerry
   Pr_ci <- log(apply(exp(ls$I3.rep)+exp(ls$I2.rep) + exp(ls$N4), 2, 'quantile', c(0.1, 0.9)))
   
   ls_calc <- list(ls_med = ls_med, ls_cri = ls_cri, ls_pri = ls_pri, N_med = N_med, N_ci = N_ci, Pr_ci = Pr_ci)
