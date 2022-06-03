@@ -325,7 +325,7 @@ cap.v8 = '
 
 
 # Model ln scale: N2-N4 + forecast for each age----
-# N2 and N3 have seperate parameters.  The forecst model is not applied to N4
+# This is a demographic model.  The forecast is applied only to N2 but only demographic values are applied to N3.
 
 cap.v9 = '
  model {
