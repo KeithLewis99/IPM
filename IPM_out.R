@@ -17,118 +17,11 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
 source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
 # JAGS settings ----
-parms1 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
-           "N2",  "N3", "N4",
-           "mu2", "alpha2", "beta2",  "gamma2", "delta2",
-           "mu3", "alpha3", "gamma3", "delta3", "epsilon3",
-           "mu4", "alpha4", "gamma4", "delta4", "epsilon4",
-           "Dssm.obs", "Dmape.obs",  "Tturn.obs", 
-           "Dssm.rep", "Dmape.rep",  "Tturn.rep",
-           "I2.rep", "I3.rep", "I4.rep", "I.rep"
-           ) 
+source("IPM_JAGS-settings.R")
 
-# parms2 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
-#             "N2",  "N3", "N4", "eta", "zeta", "eps", 
-#             "mu2", "alpha2", "beta2",  "gamma2", "delta2",
-#             "mu3", "alpha3", "gamma3", "delta3", "epsilon3",
-#             "mu4", 
-#             "Dssm.obs", "Dmape.obs",  "Tturn.obs", 
-#             "Dssm.rep", "Dmape.rep",  "Tturn.rep",
-#             "I2.rep", "I3.rep", "I4.rep", "I.rep"
-# ) 
-
-parms2 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
-            "N2",  "N3", "N4", "eta", "zeta", "eps", "ar_mean", "ma_mean",
-            "mu2", "alpha2", "beta2",  "gamma2", "delta2",
-            "mu3", "alpha3", "gamma3", "delta3", "epsilon3",
-            "mu4",
-            "Dssm.obs", "Dmape.obs",  "Tturn.obs", 
-            "Dssm.rep", "Dmape.rep",  "Tturn.rep",
-            "I2.rep", "I3.rep", "I4.rep", "I.rep"
-) 
-
-parms3 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
-            "N2",  "N3", "N4",
-            "mu2", "alpha2", "beta2",  "gamma2", "delta2",
-            "Dssm.obs", "Dmape.obs",  "Tturn.obs", 
-            "Dssm.rep", "Dmape.rep",  "Tturn.rep",
-            "I2.rep", "I3.rep", "I4.rep", "I.rep"
-) 
-
-parms4 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
-            "N2",  "N3", "N4", "u",
-            "mu3", "alpha3", "gamma3", "delta3", "epsilon3",
-            "mu4", 
-            "Dssm.obs", "Dmape.obs",  "Tturn.obs", 
-            "Dssm.rep", "Dmape.rep",  "Tturn.rep",
-            "I2.rep", "I3.rep", "I4.rep", "I.rep"
-) 
-parms5 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs", 
-            "N2",  "N3", "N4",
-            "mu2", "alpha2", "beta2",  "gamma2", "delta2", "u",
-            "mu3", "alpha3", "gamma3", "delta3", "epsilon3",
-            "mu4", 
-            "Dssm.obs", "Dmape.obs",  "Tturn.obs", 
-            "Dssm.rep", "Dmape.rep",  "Tturn.rep",
-            "I2.rep", "I3.rep", "I4.rep", "I.rep"
-) 
-
-
-#  , "pe3", "pe2",
-# "I.exp", "I2.rep", "I3.rep", "I4.rep", "I.rep","I2", "I3", "I4", "I",
-# "Tt1.obs", "Tt2.obs", "Tt3.obs", "Tt1.rep", "Tt2.rep", "Tt3.rep",
-
-# model----
+# model - this will 
 b <- 2
-if (b==1){ # model with separate parms for each age
-    parms = parms1
-    tC = cap.v7
-    tC.txt = "cap.v7"
-    vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
-    vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
-    vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2")
-    vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3")
-    vars_N4 <- c("mu4[10]", "alpha4", "gamma4", "delta4", "epsilon4")
 
-} else if (b==2) { # model separate parms for N2 and N3:N4  - EXT
-    parms = parms2
-    # tC = cap.v8
-    # tC.txt = "cap.v8"
-    tC = cap.v22
-    tC.txt = "cap.v22"
-    vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
-    vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
-    vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2")
-    vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3", "mu4[10]")
-    vars_N4 <- c(NA)
-} else if (b==3) { # demographic model - no forecast for N4
-    parms = parms3
-    tC = cap.v9
-    tC.txt = "cap.v9"
-    vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
-    vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
-    vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2")
-    vars_N3 <- c(NA)
-    vars_N4 <- c(NA)
-} else if (b==4) { # model separate parms for N2 and N3:N4
-    parms = parms4
-    tC = cap.v10
-    tC.txt = "cap.v10"
-    vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
-    vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
-    vars_N2 <- c("u")
-    vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3", "mu4[10]")
-    vars_N4 <- c(NA)
-} else if (b==5) { # model separate parms for N2 and N3:N4
-    parms = parms2
-    tC = cap.v8
-    tC.txt = "cap.v8"
-    vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
-    vars_Nyear <- c("N2[10]", "N3[10]", "N4[10]")
-    vars_N2 <- c("mu2[10]","alpha2", "beta2",  "gamma2", "delta2", "u")
-    vars_N3 <- c("mu3[10]", "alpha3", "gamma3", "delta3", "epsilon3", "mu4[10]")
-    vars_N4 <- c(NA)
-}
 
 # MCMC settings
 ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
@@ -136,8 +29,12 @@ ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 # ni <- 2000000; nt <- 600; nb <- 300000; nc <- 3
 # ni <- 5000000; nt <- 1000; nb <- 300000; nc <- 3 # this produces really nice ACFs!!!!
 
+# these are just preliminary values for p (auto-regression: AR) and q (MA: moving average)
 jags.data$p <- 1
 jags.data$q <- 2
+
+
+# these are values to make the JAGS code more generalized, i.e., that the indices are not hard coded.  Currently applies only to cap.v20.
 
 if(disaggregated == "1985-present"){
     jags.data$N2end <- 18
