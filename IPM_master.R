@@ -7,7 +7,7 @@ b = 2
 
 for (i in b){
      outfile <- paste0("IPM_out_diag", i, ".html")
-     outDir1 <- paste0("output/outputTEST_1999", i)
+     outDir1 <- paste0("output/output_1985_ARMA", i)
      outDir2 <- paste0("output/output_ez", i)
      #if(!dir.exists(paste0("output/", outDir)))dir.create(outDir)
      rmarkdown::render("IPM_out_diag.Rmd", output_file = outfile, output_dir = outDir1) # makes a dashboard

@@ -17,10 +17,9 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
 source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
 # JAGS settings ----
-source("IPM_JAGS-settings.R")
-
-# model - this will 
+# model - the value of b will determine what model and parameters from IPM_JAGS-settings.R
 b <- 2
+source("IPM_JAGS-settings.R")
 
 
 # MCMC settings
@@ -53,7 +52,7 @@ if(disaggregated == "1985-present"){
 ssm26 <- jags(jags.data, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
 ssm26
 
-# JAGS ouput ----
+# JAGS output ----
 out <- ssm26$BUGSoutput 
 str(out$sims.list)
 
