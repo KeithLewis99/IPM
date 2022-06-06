@@ -509,7 +509,7 @@ Column
 -------------------------------------
 
 ```{r}
-# alpha2
+#alpha2
 pa2 <- postPriors(df = a2$jags, df2 = a2$prior, df3 = a2$df_cred, limits=a2$limits, x_label=a2$x_label, priormean=a2$priormean, priorsd=a2$priorsd, by_bin = a2$bin_1)
 
 pa2
