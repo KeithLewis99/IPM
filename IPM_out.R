@@ -18,7 +18,7 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
 # JAGS settings ----
 # model - the value of b will determine what model and parameters from IPM_JAGS-settings.R
-b <- 2
+b <- 7
 source("IPM_JAGS-settings.R")
 
 
@@ -31,7 +31,7 @@ ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 # these are just preliminary values for p (auto-regression: AR) and q (MA: moving average)
 jags.data$p <- 1
 jags.data$q <- 2
-
+jags.data.m$Ni <- 3
 
 # these are values to make the JAGS code more generalized, i.e., that the indices are not hard coded.  Currently applies only to cap.v20.
 
@@ -49,13 +49,24 @@ if(disaggregated == "1985-present"){
 
 # run model
 #source("IPM_mod.R")
-ssm26 <- jags(jags.data, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
-ssm26
+# ssm26 <- jags(jags.data, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
+# ssm26
+
+
+ssm27 <- jags(jags.data.m, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
+ssm27
 
 # JAGS output ----
-out <- ssm26$BUGSoutput 
+out <- ssm27$BUGSoutput 
 str(out$sims.list)
 
+out$sims.list$N2 <- out$sims.list$N[,,1]
+out$sims.list$N3 <- out$sims.list$N[,,2]
+out$sims.list$N4 <- out$sims.list$N[,,3]
+out$sims.list$N <- NULL
+out$sims.list$mu2 <- out$sims.list$mu[,,1]
+out$sims.list$mu3 <- out$sims.list$mu[,,2]
+out$sims.list$mu4 <- out$sims.list$mu[,,3]
 
 ## extract raw values from chains
 raw <- ls_out(out)

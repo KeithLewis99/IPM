@@ -344,7 +344,7 @@ if(disaggregated == "1985-present") {
 
 # Bundle data----
 num_forecasts = 2 # 2 extra years
-jags.data <- ls_jag("yes", "yes")
+jags.data <- ls_jag("yes", "yes", "no")
 str(jags.data)
 jd <- as.data.frame(jags.data)
 
@@ -372,3 +372,6 @@ jd_raw <- ls_jag("no", "no")
 jd_raw <- as.data.frame(jd_raw)
 jd_raw <- cbind(year = year, jd_raw)
 
+#source("IPM_fun.R")
+jags.data.m <- ls_jag("yes", "yes", "yes")
+str(jags.data.m)
