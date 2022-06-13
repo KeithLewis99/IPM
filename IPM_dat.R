@@ -233,6 +233,11 @@ if(disaggregated == "1985-present") {
         
 }
 
+
+
+# USSR data 1981-1992----
+
+
 ## maturity ----
 df_mat <- df_dis_summ %>%
      filter(age == 2 | is.na(age))

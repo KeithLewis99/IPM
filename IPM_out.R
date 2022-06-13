@@ -49,8 +49,8 @@ if(disaggregated == "1985-present"){
 
 # run model
 #source("IPM_mod.R")
-# ssm26 <- jags(jags.data, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
-# ssm26
+ ssm26 <- jags(jags.data, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
+ ssm26
 
 
 ssm27 <- jags(jags.data.m, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
@@ -125,13 +125,16 @@ if(disaggregated == "1985-present") {
     cap <- df_cap 
 } else {
     cap <- df_cap[15:39,]
-} 
+}
+
 # combined N2-N4[t]
 tmp_plot <- ipm_plot(df_med = ls_all$N_med, df_cri = ls_all$N_ci, df_pri = ls_all$Pr_ci, df_dat = cap) # ignore warnings - all legit NAs although df_cap needs to be updated. 
 tmp_plot <- tmp_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = log(exp(I2) + exp(I3)), x = year),
                                       shape = 16, size = 2)
 tmp_plot
+
+
 
 # N2[t] - create plot, then add the capelin data
 tmpN2_plot <- ipm_plot(df_med = calc$N2, df_cri = cri$N2_cri, df_pri = pri$I2.rep_pri, df_dat = cap) # ignore warnings - all legit NAs although df_cap needs to be updated.
@@ -160,8 +163,6 @@ tmpN4_plot <- tmpN4_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = I4, x = year),
                                       shape = 16, size = 2)
 tmpN4_plot 
-
-# ggsave("N4_plot.pdf")
 
 
 

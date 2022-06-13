@@ -107,7 +107,7 @@ parms6 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs",
 #             "I2.rep", "I3.rep", "I4.rep", "I.rep"
 # )
 
-parms7 <- c("tau.proc2", "tau.proc",  "tau.obs",
+parms7 <- c("tau.proc",  "tau.obs",
             "N",
             "mu", "beta",  "gamma", "delta",
             "alpha", 
