@@ -54,13 +54,13 @@ Column {.tabset}
 ### capelin Life cycle
 
 ```{r}
-knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/lifeCycle_plus_Data.png")
+knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/presentations/lifeCycle_plus_Data.png")
 ```
 
 ### Data time series
 
 ```{r}
-knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/lifeCycle_dataTimeSeries.png")
+knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/presentations/lifeCycle_dataTimeSeries.png")
 ```
 
 Study area and Data {data-navmenu="Background"}
@@ -119,12 +119,15 @@ knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelin
 ```
 
 
-# MCMC info
+# Model info {data-navmenu="Model info"}
 
 ### Date
-Date = `r Sys.Date()`
+Date = `r Sys.Date()`  
+p = `r jags.data$p`  
+q = `r jags.data$q`
+Note: blank for p and q indicate its not an ARMA model
 
-### JAGS info
+### MCMC & JAGS info
 
 Model = `r tC.txt`  
 iterations (ni) = `r ni`  
@@ -145,6 +148,13 @@ Different time periods: The regime shift may be an issue - may need to have a ti
 Spatial mis-match: larval density is gathered on one beach and extrapolated to the whole stock.  S&K don't elaborate on this.  
 
 Clearly, a tradeoff between Independence and the Common Demography Assumption
+
+# str {data-navmenu="Model info"}
+
+```{r}
+str(out$sims.list)
+```
+
 
 # Parameter estimates
 
