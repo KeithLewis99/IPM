@@ -5,10 +5,11 @@
 b <- c(1:3)
 b = 2
 
+# folder files should follow this format: model #, time, description
 for (i in b){
      outfile <- paste0("IPM_out_diag", i, ".html")
-     outDir1 <- paste0("output/output_1985_ARMA", i)
-     outDir2 <- paste0("output/output_ez", i)
+     outDir1 <- paste0("output/M29_1985P_20K_CPreg_b=", i)
+     #outDir2 <- paste0("output/output_ez", i)
      #if(!dir.exists(paste0("output/", outDir)))dir.create(outDir)
      rmarkdown::render("IPM_out_diag.Rmd", output_file = outfile, output_dir = outDir1) # makes a dashboard
      #ezknitr::ezknit(file = "IPM_out_diag.Rmd", out_dir = outDir2, keep_md = F) # saves all graphs as png in folder.
