@@ -2136,7 +2136,7 @@ for (t in 19:n.occasions) {
 
 
 
-## 24: Extend model time ----
+# 24: Extend model time ----
 ### ln scale: N2-N4: DEMOGRAPHIC MODEL ONLY
 
 cap.v24 = '
@@ -2489,7 +2489,7 @@ for (t in 19:n.occasions) {
 
 # 26: Extend model time ----
 ### ln scale: N2-N4 
-#### SMOOTHER MODEL: This model combines the 1985-1998 data but with ARMA smoothers for age 2 and 3.
+#### SMOOTHER MODEL: This model combines the 1985-1998 data but with ARMA smoothers for age 2 and 3. b==6
 
 cap.v26 = '
  model {
@@ -2693,7 +2693,7 @@ for (t in 19:n.occasions) {
 
 # 27: Extend model time ----
 ### ln scale: N2-N4 + forecast for each age but including LD and CO
-#### This model combines the 1985-1998 data but with ARMA smoothers.
+#### This model combines the 1985-1998 data but with ARMA smoothers.b==6
 
 cap.v27 = '
  model {
@@ -2884,7 +2884,7 @@ for (t in 19:n.occasions) {
 
 # 28: Extend model time ----
 ### ln scale: N2-N4 + forecast for each age but including LD and CO
-#### This model combines the 1985-1998 data but with a Random Walk
+#### This model combines the 1985-1998 data but with a Random Walk: b==5
 
 cap.v28 = '
  model {
@@ -2915,11 +2915,11 @@ cap.v28 = '
    N4[1] ~ dnorm(6, 1/9)
 
 # # set up residuals, and initial values of N2 and mu2
- for(t in 1:max(p, q)){
-   eps[t] <- alpha2 - N2[t]
-   N2[t] ~ dnorm(8.5, 1/9)
-   mu2[t] ~ dunif(0,10)           
- }
+ #for(t in 1:max(p, q)){
+   eps[1] <- alpha2 - N2[1]
+   N2[1] ~ dnorm(8.5, 1/9)
+   mu2[1] ~ dunif(0,10)           
+ #}
 
 # LIKELIHOODS
  ## State process
@@ -2933,7 +2933,8 @@ cap.v28 = '
    epsilon2 ~ dnorm(0, 100^-2)   # condition # for CO
     u ~ dnorm(0, 1/16) # this is based on a SD of 2 so Var = 4- then, I doubled it for no good reason other than to see what would happen
 
-for (t in (max(p:q)+1):11) {
+#for (t in (max(p:q)+1):11) {
+for (t in 2:11) {
       mu2[t] <- alpha2 + gamma2*TI[t]*(1-TI[t]/delta2) + u
       N2[t] ~ dnorm(mu2[t], tau.proc2)
       eps[t] <- N2[t] - mu2[t]
@@ -3065,7 +3066,7 @@ for (t in 19:n.occasions) {
 # 29: Extend model time----
 ## ln scale: N2-N4 + forecast for each age
 ### Added in the capelin data from 1985-1998
-#### Change Point regression
+#### Change Point regression b==2
 
 cap.v29 = '
 model {
