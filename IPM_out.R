@@ -18,7 +18,10 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
 # JAGS settings ----
 # model - the value of b will determine what model and parameters from IPM_JAGS-settings.R
-b <- 7
+b <- 2
+smoother <- "no"
+matrix <- "no"
+
 source("IPM_JAGS-settings.R")
 
 
@@ -29,8 +32,11 @@ ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 # ni <- 5000000; nt <- 1000; nb <- 300000; nc <- 3 # this produces really nice ACFs!!!!
 
 # these are just preliminary values for p (auto-regression: AR) and q (MA: moving average)
-jags.data$p <- 1
-jags.data$q <- 2
+if(smoother == "yes"){
+    jags.data$p <- 2
+    jags.data$q <- 2
+}
+
 jags.data.m$Ni <- 3
 
 # these are values to make the JAGS code more generalized, i.e., that the indices are not hard coded.  Currently applies only to cap.v20.
@@ -47,27 +53,31 @@ if(disaggregated == "1985-present"){
     jags.data$N3start <- 11
 }
 
-# run model
+# run model----
 #source("IPM_mod.R")
- ssm26 <- jags(jags.data, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
- ssm26
+if(matrix == "no") {
+    ssm26 <- jags(jags.data, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
+    ssm26
+    out <- ssm26$BUGSoutput 
 
+    
+} else if(matrix == "yes"){
+    ssm27 <- jags(jags.data.m, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
+    ssm27
+    out <- ssm27$BUGSoutput 
+    out$sims.list$N2 <- out$sims.list$N[,,1]
+    out$sims.list$N3 <- out$sims.list$N[,,2]
+    out$sims.list$N4 <- out$sims.list$N[,,3]
+    out$sims.list$N <- NULL
+    out$sims.list$mu2 <- out$sims.list$mu[,,1]
+    out$sims.list$mu3 <- out$sims.list$mu[,,2]
+    out$sims.list$mu4 <- out$sims.list$mu[,,3]
+    
+}
 
-ssm27 <- jags(jags.data.m, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
-ssm27
-
-# JAGS output ----
-out <- ssm27$BUGSoutput 
 str(out$sims.list)
 
-out$sims.list$N2 <- out$sims.list$N[,,1]
-out$sims.list$N3 <- out$sims.list$N[,,2]
-out$sims.list$N4 <- out$sims.list$N[,,3]
-out$sims.list$N <- NULL
-out$sims.list$mu2 <- out$sims.list$mu[,,1]
-out$sims.list$mu3 <- out$sims.list$mu[,,2]
-out$sims.list$mu4 <- out$sims.list$mu[,,3]
-
+# JAGS output ----
 ## extract raw values from chains
 raw <- ls_out(out)
 str(raw)
@@ -297,7 +307,7 @@ if(disaggregated == "1985-present") {
 
 ##### raw residuals - I reason that the N2 is the process which is what the linear model is predicting and the mu is the fitted value
 ##### this is mu for N2 which missed the first 4 years.
-if (b == 1){
+if (b == 1|b == 6|b == 5){
     resN2 <- raw$N2[,i] - raw$mu2
     resN3 <- raw$N3[,i] - raw$mu3
     resN4 <- raw$N4[,i] - raw$mu4
@@ -310,11 +320,11 @@ if (b == 1){
 
 #### Pearson residuals
 presN2 <- sweep(resN2, 1, raw$tau.obs, "/")  # I do not understand why the "1" works as this indicates rowwise division but it seems to work based on the work below, i.e. change values of z and w to manually get same results as presN2 
-if (b ==1|b==2){
+if (b ==1|b==2|b==6|b==5){
     presN3 <- sweep(resN3, 1, raw$tau.obs, "/")    
 }
 
-if (b==1){
+if (b==1|b==6|b==5){
     presN4 <- sweep(resN4, 1, raw$tau.obs, "/")    
 }
 
@@ -335,7 +345,7 @@ str(presN2)
 
 # get median values
 # Cooks' D - Zuur pg 58 is a leave-one-observation-out measure of influence
-if(b ==1){
+if(b ==1|b==6|b==5){
     # raw resids
     resN2_mean <- apply(resN2, 2, 'mean')
     resN3_mean <- apply(resN3, 2, 'mean')
