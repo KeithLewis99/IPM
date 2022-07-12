@@ -9,6 +9,7 @@ library(lattice)
 rm(list=ls())
 
 
+
 # Source files
 source("IPM_dat.R")
 source("IPM_fun.R")
@@ -18,9 +19,9 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
 # JAGS settings ----
 # model - the value of b will determine what model and parameters from IPM_JAGS-settings.R
-b <- 2
+b <- 9
 smoother <- "no"
-matrix <- "no"
+matrix <- "yes"
 
 source("IPM_JAGS-settings.R")
 
@@ -72,7 +73,9 @@ if(matrix == "no") {
     out$sims.list$mu2 <- out$sims.list$mu[,,1]
     out$sims.list$mu3 <- out$sims.list$mu[,,2]
     out$sims.list$mu4 <- out$sims.list$mu[,,3]
-    
+    out$sims.list$eps2 <- out$sims.list$eps[,,1]
+    out$sims.list$eps3 <- out$sims.list$eps[,,2]
+    out$sims.list$eps4 <- out$sims.list$eps[,,3]
 }
 
 str(out$sims.list)
@@ -174,6 +177,79 @@ tmpN4_plot <- tmpN4_plot + geom_point(data = df_dis_tabLog,
                                       shape = 16, size = 2)
 tmpN4_plot 
 
+
+# Process error----
+
+# Bubble Plot
+## bind residuals and then pivot them to make a long data set
+eps <- as.data.frame(cbind(calc$eps2, calc$eps3, calc$eps4))
+eps <- cbind(eps, 1985:2023)
+eps <- eps %>% rename(eps2 = V1, eps3 = V2, eps4 = V3, year = '1985:2023')
+eps_wide <- pivot_longer(eps, cols = c("eps2", "eps3", "eps4"), names_to = "age", values_to = "pres")
+eps_wide$sign <- NA
+
+## create positive and negative colours
+for(i in seq_along(eps_wide$pres)){
+     if(eps_wide$pres[i] > 0){
+          eps_wide$sign[i] <- "pos"
+     } else {
+          eps_wide$sign[i] <- "neg"
+     }
+}
+head(eps_wide)
+
+## Bubble Plot
+p <- ggplot(data = eps_wide, aes(x = year, y = age, size = pres, colour = sign))
+p <- p + geom_point()
+p
+
+
+str(cri$eps_cri)
+
+lines(1985:2023, cri$eps2_cri[2,])
+lines(1985:2023, cri$eps2_cri[1,])
+
+# trends in process error
+## create a data frame with the years and residuals for each year
+calc$year <- rep(NA, 39)
+calc$year <- 1985:2023
+eps_trend <- as.data.frame(cbind(calc$year, calc$eps2, calc$eps3, calc$eps4))
+eps_trend <- eps_trend %>% rename(year = V1, eps2 = V2, eps3 = V3, eps4 = V4)
+str(calc)
+str(eps_trend)
+
+# create a dataframe with the years and credible intervals for each year
+eps2_cri <- as.data.frame(cbind(year = 1985:2023, min = cri$eps2_cri[1,], max = cri$eps2_cri[2,]))
+eps3_cri <- as.data.frame(cbind(year = 1985:2023, min = cri$eps3_cri[1,], max = cri$eps3_cri[2,]))
+eps4_cri <- as.data.frame(cbind(year = 1985:2023, min = cri$eps4_cri[1,], max = cri$eps4_cri[2,]))
+
+
+# eps2: create a plot 
+p <- ggplot()
+p <- p + geom_point(data = eps_trend, aes(x = year, y = eps2))
+p <- p + geom_ribbon(data=eps2_cri, aes(x = year,
+                    ymax = max, 
+                    ymin = min),
+                alpha = 0.5, fill = "grey")
+p
+
+# eps3: create a plot 
+p <- ggplot()
+p <- p + geom_point(data = eps_trend, aes(x = year, y = eps3))
+p <- p + geom_ribbon(data=eps3_cri, aes(x = year,
+                                        ymax = max, 
+                                        ymin = min),
+                     alpha = 0.5, fill = "grey")
+p
+
+# eps4: create a plot 
+p <- ggplot()
+p <- p + geom_point(data = eps_trend, aes(x = year, y = eps4))
+p <- p + geom_ribbon(data=eps4_cri, aes(x = year,
+                                        ymax = max, 
+                                        ymin = min),
+                     alpha = 0.5, fill = "grey")
+p
 
 
 # Diagnostics----
@@ -457,6 +533,48 @@ d2 <- post_param(param = "delta", priormean = 11.5, priorsd = 5.7, jags = out$si
 # pd2 <- postPriors(df = d2$jags, df2 = d2$prior, df3 = d2$df_cred, limits=d2$limits, x_label=d2$x_label, priormean=d2$priormean, priorsd=d2$priorsd, by_bin = d2$bin_1)
 # 
 # pd2
+
+
+# process error-----
+# this is for a process error that is constant within time periods.
+# this cuts the array on the "a" which is the tau.proc for different ages. Then the apply cuts it by the z which is the time series.
+tp1 <- apply(out$sims.list$tau.proc[,1,],2,'median')
+tp2 <- apply(out$sims.list$tau.proc[,2,],2,'median')
+cri_tp1 <- apply(out$sims.list$tau.proc[,1,],2,'quantile', c(0.025, 0.975))
+cri_tp2 <- apply(out$sims.list$tau.proc[,2,],2,'quantile', c(0.025, 0.975))
+
+plot(1:4, cri$tau.proc_cri)
+
+# these are the estiamtes for a fully time varying process error
+tp1 <- apply(out$sims.list$tau.proc[,,1],2,'median')
+tp2 <- apply(out$sims.list$tau.proc[,,2],2,'median')
+cri_tp1 <- apply(out$sims.list$tau.proc[,,1],2,'quantile', c(0.025, 0.975))
+cri_tp2 <- apply(out$sims.list$tau.proc[,,2],2,'quantile', c(0.025, 0.975))
+
+
+# remember that tau is the precision - t
+plot(1985:2023, 1/tp1, type= 'n', ylim = c(0,500))
+lines(1985:2023, 1/cri_tp1[2,])
+lines(1985:2023, 1/cri_tp1[1,])
+
+plot(1985:2023, 1/tp2, type= 'n', ylim = c(0,500))
+lines(1985:2023, 1/cri_tp2[2,])
+lines(1985:2023, 1/cri_tp2[1,])
+
+# trying the same with the variance
+s2 <- apply(out$sims.list$sigma2.proc[,,1],2,'median')
+s3 <- apply(out$sims.list$sigma2.proc[,,2],2,'median')
+cri_s2 <- apply(out$sims.list$sigma2.proc[,,1],2,'quantile', c(0.025, 0.975))
+cri_s3 <- apply(out$sims.list$sigma2.proc[,,2],2,'quantile', c(0.025, 0.975))
+
+plot(1985:2023, s2, type= 'n', ylim = c(0,300))
+lines(1985:2023, 1/cri_s2[2,])
+lines(1985:2023, 1/cri_s2[1,])
+
+plot(1985:2023, s3, type= 'n', ylim = c(0,300))
+lines(1985:2023, 1/cri_s3[2,])
+lines(1985:2023, 1/cri_s3[1,])
+
 # End----
 
 ### archived code-----
