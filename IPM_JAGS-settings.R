@@ -106,15 +106,17 @@ parms6 <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs",
 #             "Dssm.rep", "Dmape.rep",  "Tturn.rep",
 #             "I2.rep", "I3.rep", "I4.rep", "I.rep"
 # )
-
-parms7 <- c("tau.proc",  "tau.obs",
-            "N",
+# parms7-----
+parms7 <- c("tau.proc",  "tau.obs", "sigma2.proc",
+            "N", "eps", "osa",
             "mu", "beta",  "gamma", "delta",
             "alpha", 
             "Dssm.obs", "Dmape.obs",  "Tturn.obs",
             "Dssm.rep", "Dmape.rep",  "Tturn.rep",
             "I2.rep", "I3.rep", "I4.rep", "I.rep"
 )
+
+
 
 # model----
 
@@ -189,6 +191,30 @@ if (b==1){ # model with separate parms for each age
         tC = cap.v32
         tC.txt = "cap.v32"
         vars_vAR <- c("tau.proc2", "tau.proc3", "tau.proc4", "tau.obs")
+        vars_Nyear <- c("N[1,10]", "N[2,10]", "N[2,10]")
+        vars_N2 <- c("mu[1,10]","alpha2", "beta2",  "gamma2", "delta2")
+        vars_N3 <- c("mu[2,10]", "alpha3", "gamma3", "delta3", "epsilon3", "mu[3,10]")
+        vars_N4 <- c(NA)
+        
+} else if (b==8) { # model separate parms for N2 and N3:N4  - EXT
+        parms = parms7
+        # tC = cap.v8
+        # tC.txt = "cap.v8"
+        tC = cap.v33
+        tC.txt = "cap.v33"
+        vars_vAR <- c("tau.proc[1]", "tau.proc[2]", "tau.obs")
+        vars_Nyear <- c("N[1,10]", "N[2,10]", "N[2,10]")
+        vars_N2 <- c("mu[1,10]","alpha2", "beta2",  "gamma2", "delta2")
+        vars_N3 <- c("mu[2,10]", "alpha3", "gamma3", "delta3", "epsilon3", "mu[3,10]")
+        vars_N4 <- c(NA)
+        
+} else if (b==9) { # model separate parms for N2 and N3:N4  - EXT
+        parms = parms7
+        # tC = cap.v8
+        # tC.txt = "cap.v8"
+        tC = cap.v34
+        tC.txt = "cap.v34"
+        vars_vAR <- c("tau.proc[1,1]", "tau.proc[2,1]", "tau.obs")
         vars_Nyear <- c("N[1,10]", "N[2,10]", "N[2,10]")
         vars_N2 <- c("mu[1,10]","alpha2", "beta2",  "gamma2", "delta2")
         vars_N3 <- c("mu[2,10]", "alpha3", "gamma3", "delta3", "epsilon3", "mu[3,10]")
