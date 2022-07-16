@@ -8,8 +8,6 @@ library(lattice)
 # Start----
 rm(list=ls())
 
-
-
 # Source files
 source("IPM_dat.R")
 source("IPM_fun.R")
@@ -76,6 +74,9 @@ if(matrix == "no") {
     out$sims.list$eps2 <- out$sims.list$eps[,,1]
     out$sims.list$eps3 <- out$sims.list$eps[,,2]
     out$sims.list$eps4 <- out$sims.list$eps[,,3]
+    out$sims.list$posa2 <- out$sims.list$posa[,,1]
+    out$sims.list$posa3 <- out$sims.list$posa[,,2]
+    out$sims.list$posa4 <- out$sims.list$posa[,,3]
 }
 
 str(out$sims.list)
@@ -179,9 +180,79 @@ tmpN4_plot
 
 
 # Process error----
+## One-step ahead resids----
+## see AugerMethe 2021
+### couldn't get this to run in JAGS
+plot(density(out$sims.list$osa[,,1]))
+str(out$sims.list$osa[,,1])
 
-# Bubble Plot
-## bind residuals and then pivot them to make a long data set
+# this give the standard deviation for each t - I don't think this is right bc its sd[t] which is not in the formula
+# sd_osa <-  apply(out$sims.list$osa[,,1],2,'sd')
+# str(sd_osa)
+# 
+# # this gives the sd for the whole matrix 
+# # then, the Pearson resids for the matrix/a single sd and then the median - this also doesn't seem right because its the sd of all the various iterations
+# sd_osa <- sd(out$sims.list$osa[,,1])
+# posa <- sweep(out$sims.list$osa[,,1], 2, sd_osa, FUN="/")
+# str(posa)
+# posa_med <-  apply(out$sims.list$osa[,,1],2,'median')
+# 
+# # this is the median of the osa divided by a single sd - also doesn't seem right bc its a median value divided by the single sd
+# tmp <- apply(out$sims.list$osa[,,1],2,'median')
+# posa <- tmp/sd_osa
+
+# sd for each row - calculate teh sd across the row, then divide each osa by that sd - I think that this is the right one and the intent of Auger-Methe.  I can also do this in JAGS now but this helped me to figure out how to write the JAGS code
+
+osa_sd <-  apply(out$sims.list$osa[,,1],1,'sd')
+str(t(osa_sd))
+posa <- sweep(out$sims.list$osa[,,1], 1, osa_sd, FUN="/")
+posa_med <- apply(posa, 2, 'median')
+str(out$sims.list$osa[,,1])
+str(posa)
+str(posa_med)
+plot(density(posa[,1]))
+
+## Bubble Plot - osa/posa resids
+# this shows that the JAGS approach and the R approach are equivalent
+plot(posa_med, calc$posa2)
+
+posa_df <- as.data.frame(cbind(calc$posa2, calc$posa3, calc$posa4))
+posa_df <- cbind(posa_df, 1985:2023)
+posa_df <- posa_df %>% rename(posa2 = V1, posa3 = V2, posa4 = V3, year = '1985:2023')
+posa_wide <- pivot_longer(posa_df, cols = c("posa2", "posa3", "posa4"), names_to = "age", values_to = "pres")
+posa_wide$sign <- NA
+
+#eps_wide <- pivot_longer(eps, cols = c("eps2", "eps3", "eps4"), names_to = "age", values_to = "pres")
+posa_wide$sign <- NA
+
+## create positive and negative colours
+for(i in seq_along(posa_wide$pres)){
+     if(posa_wide$pres[i] > 0){
+          posa_wide$sign[i] <- "pos"
+     } else {
+          posa_wide$sign[i] <- "neg"
+     }
+}
+head(posa_wide)
+
+## Bubble Plot - posa resids
+p <- ggplot(data = posa_wide, aes(x = year, y = age, size = pres, colour = sign))
+p <- p + geom_point()
+p
+
+
+# qqplot
+qqnorm(calc$N2)
+qqline(calc$N2)
+
+plot(1985:2023, calc$posa2)
+qqnorm(calc$posa2)
+qqline(calc$posa2)
+
+acf(calc$posa2)
+
+# Bubble Plot - raw resids
+## bind median residuals and then pivot them to make a long data set
 eps <- as.data.frame(cbind(calc$eps2, calc$eps3, calc$eps4))
 eps <- cbind(eps, 1985:2023)
 eps <- eps %>% rename(eps2 = V1, eps3 = V2, eps4 = V3, year = '1985:2023')
@@ -198,16 +269,12 @@ for(i in seq_along(eps_wide$pres)){
 }
 head(eps_wide)
 
-## Bubble Plot
+## Bubble Plot - raw resids
 p <- ggplot(data = eps_wide, aes(x = year, y = age, size = pres, colour = sign))
 p <- p + geom_point()
 p
 
 
-str(cri$eps_cri)
-
-lines(1985:2023, cri$eps2_cri[2,])
-lines(1985:2023, cri$eps2_cri[1,])
 
 # trends in process error
 ## create a data frame with the years and residuals for each year
