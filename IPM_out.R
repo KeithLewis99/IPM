@@ -17,7 +17,7 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
 # JAGS settings ----
 # model - the value of b will determine what model and parameters from IPM_JAGS-settings.R
-b <- 9
+b <- 10
 smoother <- "no"
 matrix <- "yes"
 
@@ -34,6 +34,8 @@ ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 if(smoother == "yes"){
     jags.data$p <- 2
     jags.data$q <- 2
+    jags.data.m$p <- 2
+    jags.data.m$q <- 2
 }
 
 jags.data.m$Ni <- 3
@@ -74,9 +76,9 @@ if(matrix == "no") {
     out$sims.list$eps2 <- out$sims.list$eps[,,1]
     out$sims.list$eps3 <- out$sims.list$eps[,,2]
     out$sims.list$eps4 <- out$sims.list$eps[,,3]
-    out$sims.list$posa2 <- out$sims.list$posa[,,1]
-    out$sims.list$posa3 <- out$sims.list$posa[,,2]
-    out$sims.list$posa4 <- out$sims.list$posa[,,3]
+    # out$sims.list$posa2 <- out$sims.list$posa[,,1]
+    # out$sims.list$posa3 <- out$sims.list$posa[,,2]
+    # out$sims.list$posa4 <- out$sims.list$posa[,,3]
 }
 
 str(out$sims.list)
@@ -87,6 +89,7 @@ raw <- ls_out(out)
 str(raw)
 
 #extract medians, credible intervals, and prediction intervals
+source("IPM_fun.R")
 ls_all <- ls_med(raw)
 calc <- ls_all$ls_med
 cri <- ls_all$ls_cri
@@ -147,7 +150,6 @@ tmp_plot <- tmp_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = log(exp(I2) + exp(I3)), x = year),
                                       shape = 16, size = 2)
 tmp_plot
-
 
 
 # N2[t] - create plot, then add the capelin data
