@@ -108,12 +108,27 @@ ls_med <- function(ls){
   #browser()
   ls_med <- rep(list(list()), length(ls))
   
-  for(i in 1:length(ls)){
-    med = apply(ls[[i]],2,'median')
-    ls_med[[i]] <- med
-    names(ls_med)[i] <- names(ls)[i]
-  }
+  # for(i in 1:length(ls)){
+  #   med = apply(ls[[i]],2,'median')
+  #   ls_med[[i]] <- med
+  #   names(ls_med)[i] <- names(ls)[i]
+  # }
 
+  for(i in 1:length(ls)){
+       if(is.matrix(ls[[i]])){
+            
+            med = apply(ls[[i]],2,'median')
+            ls_med[[i]] <- med
+            names(ls_med)[i] <- names(ls)[i]
+       } else {
+            med = apply(ls[[i]],c(2,3),'median')
+            #med_array <- rep(list(list()), ncol(med))
+            #for(a in ncol(med)){
+            ls_med[[i]] <- med
+            names(ls_med)[i] <- names(ls)[i]
+       }
+  }  
+  
   
   ls_cri <- rep(list(list()), length(ls))
 
