@@ -311,7 +311,8 @@ postPriors <- function(df, df2, df3, limits = limits, x_label = x_label, priorme
   p <- ggplot() + theme_bw(base_size = 20)
   p <- p + coord_cartesian(xlim = c(limits[1], limits[2])) 
   p <- p + geom_histogram(data = as.data.frame(df), 
-                          aes(x = V1, y=..density..), 
+                          #aes(x = V1, y=..density..),
+                          aes(x = df, y=..density..), 
                           col="grey", fill="grey",
                           #alpha=.6,
                           breaks = seq(limits[1], limits[2], by=by_bin)) + xlab(x_label) + ylab("Density")
@@ -333,7 +334,7 @@ postPriors <- function(df, df2, df3, limits = limits, x_label = x_label, priorme
 #' @examples
 post_param <- function(param = w, priormean = NULL, priorsd = NULL, jags = z, x_label = NULL){
   #browser()
-if(param == "alpha"|param == "beta"){
+if(param == "alpha"|param == "beta"|param=="alpha[1]"|param=="beta[1]"){
   param = param
   priormean <- priormean
   priorsd <- priorsd
@@ -341,11 +342,11 @@ if(param == "alpha"|param == "beta"){
   prior <- rnorm(n = 10000, mean = priormean, sd = priorsd)
   limits <- c(min(jags)-0.3, max(jags) + 0.3)
   x_label <- x_label
-  bin_1 <- mean(jags)/100
+  bin_1 <- abs(mean(jags)/100)
   df_quant <- quantile(jags, c(0.025, 0.975))
   df_cred <- subset(jags, jags > df_quant[1] & jags < df_quant[2])
 
-} else if (param == "gamma"){
+} else if (param == "gamma"|param == "gamma[1]"){
   #browser()
   param = param
   jags <- jags
@@ -356,7 +357,7 @@ if(param == "alpha"|param == "beta"){
   df_quant <- quantile(jags, c(0.025, 0.975))
   df_cred <- subset(jags, jags > df_quant[1] & jags < df_quant[2])
 
-} else if (param == "delta"){
+} else if (param == "delta"|param == "delta[1]"){
   #browser()
   param = param
   jags <- jags
