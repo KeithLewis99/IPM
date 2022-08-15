@@ -263,7 +263,7 @@ mix_N2
 ### N3
 
 ```{r}
-if (b ==1 | b==2){
+if (b ==1 | b==2 | b==10){
      mix_N3  
 }
 ```
@@ -302,7 +302,7 @@ autocorr_N2
 ### N3
 
 ```{r}
-if(b ==1|b ==2){
+if(b==1 | b ==2 | b==10){
      autocorr_N3 
 }
 
@@ -342,16 +342,20 @@ Column
 -------------------------------------
      
 ```{r}
-par(mfrow = c(2,2), mar = c(5,5,2,2))
+if(b == 10){
+  plot(x=calc$N2[i], y = eps$eps2, xlab = "Fitted values", ylab = "Raw residuals")
+     abline(h = 0, lty = 2)
+   
+} else {
 plot(x=calc$N2[i], y = resN2_mean, xlab = "Fitted values", ylab = "Raw residuals")
 abline(h = 0, lty = 2)
+}
 ```
 
 ```{r}
 # # see notes in Mortality model
 plot(y = jd$I2, x = calc$N2, xlab = "Fitted values", ylab = "Observed data") # should follow the line
 abline(coef = c(0,1), lty = 2)
-
 ```
 
 Column
@@ -359,12 +363,21 @@ Column
      
 ```{r}
 #normality
-histogram(resN2_mean)
+if(b == 10){
+     histogram(eps$eps2)
+} else {
+     histogram(resN2_mean)     
+}
+
 ```
 
 ```{r}
 # Cook's D
-plot(y = dN2, x = N2xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
+if (b == 10){
+   plot(y = posa_df$posa2^2, x = N2xaxis, xlab = "Observation", ylab = "Cook's D")  
+} else {
+     plot(y = dN2, x = N2xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
+}
 ```
 
 
@@ -375,7 +388,11 @@ Column
 -------------------------------------
      
 ```{r}
-if(b==1|b==2){
+if(b == 10){
+  plot(x=calc$N3[i], y = eps$eps3, xlab = "Fitted values", ylab = "Raw residuals")
+     abline(h = 0, lty = 2)
+   
+} else if(b==1|b==2){
 par(mfrow = c(2,2), mar = c(5,5,2,2))
 plot(x=calc$N3, y = resN3_mean, xlab = "Fitted values", ylab = "Raw residuals")
 abline(h = 0, lty = 2)
@@ -384,7 +401,7 @@ abline(h = 0, lty = 2)
 
 ```{r}
 # # see notes in Mortality model
-if(b==1|b==2){
+if(b==1|b==2|b==10){
 plot(y = jd$I3, x = calc$N3, xlab = "Fitted values", ylab = "Observed data") # should follow the line
 abline(coef = c(0,1), lty = 2)
 }
@@ -395,14 +412,18 @@ Column
      
 ```{r}
 #normality
-if(b==1|b==2){
+if(b == 10){
+ histogram(eps$eps3)
+} else if(b==1|b==2){
 histogram(resN3_mean)
 }
 ```
 
 ```{r}
 # Cook's D
-if(b==1|b==2){
+if(b == 10){
+ plot(y = posa_df$posa3^2, x = N2xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
+} else if(b==1|b==2){
 plot(y = dN3, x = N3xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
 }
 ```
@@ -456,7 +477,13 @@ Column
 -------------------------------------
      
 ```{r}
-plot(jags.data$LD[LDxaxis], resN2_mean[LDxaxis], xlab = "Larval Density", ylab = "Pearson resids")
+if(b==10){
+     plot(jags.data$LD[LDxaxis], posa_df$posa2[LDxaxis], xlab = "Larval Density", ylab = "Pearson resids")
+
+} else {
+     plot(jags.data$LD[LDxaxis], resN2_mean[LDxaxis], xlab = "Larval Density", ylab = "Pearson resids")     
+}
+
 ```
 
 
@@ -464,7 +491,13 @@ Column
 -------------------------------------
      
 ```{r}
-plot(jags.data$TI[TIxaxis], resN2_mean[TIxaxis], xlab = "Ice retreat", ylab = "Pearson resids")
+if(b==10){
+     plot(jags.data$LD[LDxaxis], posa_df$posa2[LDxaxis], xlab = "Larval Density", ylab = "Pearson resids")
+
+} else {
+     plot(jags.data$TI[TIxaxis], resN2_mean[TIxaxis], xlab = "Ice retreat", ylab = "Pearson resids")     
+}
+
 ```
 
 N3 - Covariates {data-navmenu="Covariates"}
@@ -474,7 +507,9 @@ Column
 -------------------------------------
      
 ```{r}
-if(b==1|b==2){
+if(b==10){
+    plot(jags.data$LD[LDxaxis], posa_df$posa3[LDxaxis], xlab = "Larval Density", ylab = "Pearson resids") 
+} else if(b==1|b==2){
 plot(jags.data$LD[LDxaxis], resN3_mean[LDxaxis], xlab = "Larval Density", ylab = "Pearson resids")
 }
 ```
@@ -484,7 +519,9 @@ Column
 -------------------------------------
      
 ```{r}
-if(b==1|b==2){
+if(b==10){
+    plot(jags.data$TI[TIxaxis], posa_df$posa3[TIxaxis], xlab = "Ice retreat", ylab = "Pearson resids") 
+} else if(b==1|b==2){
 plot(jags.data$TI[TIxaxis], resN3_mean[TIxaxis], xlab = "Ice retreat", ylab = "Pearson resids")
 }
 ```
