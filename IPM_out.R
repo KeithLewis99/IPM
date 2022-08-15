@@ -18,7 +18,7 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 # JAGS settings ----
 # model - the value of b will determine what model and parameters from IPM_JAGS-settings.R
 b <- 10
-smoother <- "no"
+smoother <- "yes"
 matrix <- "yes"
 
 source("IPM_JAGS-settings.R")
@@ -76,9 +76,12 @@ if(matrix == "no") {
     out$sims.list$eps2 <- out$sims.list$eps[,,1]
     out$sims.list$eps3 <- out$sims.list$eps[,,2]
     out$sims.list$eps4 <- out$sims.list$eps[,,3]
-    # out$sims.list$posa2 <- out$sims.list$posa[,,1]
-    # out$sims.list$posa3 <- out$sims.list$posa[,,2]
-    # out$sims.list$posa4 <- out$sims.list$posa[,,3]
+    out$sims.list$osa2 <- out$sims.list$osa[,,1]
+    out$sims.list$osa3 <- out$sims.list$osa[,,2]
+    out$sims.list$osa4 <- out$sims.list$osa[,,3]
+    out$sims.list$osa_sd2 <- out$sims.list$osa_sd[,,1]
+    out$sims.list$osa_sd3 <- out$sims.list$osa_sd[,,2]
+    out$sims.list$osa_sd4 <- out$sims.list$osa_sd[,,3]
 }
 
 str(out$sims.list)
@@ -89,7 +92,7 @@ raw <- ls_out(out)
 str(raw)
 
 #extract medians, credible intervals, and prediction intervals
-source("IPM_fun.R")
+#source("IPM_fun.R")
 ls_all <- ls_med(raw)
 calc <- ls_all$ls_med
 cri <- ls_all$ls_cri
@@ -194,8 +197,8 @@ str(out$sims.list$osa[,,1])
 # 
 # # this gives the sd for the whole matrix 
 # # then, the Pearson resids for the matrix/a single sd and then the median - this also doesn't seem right because its the sd of all the various iterations
-# sd_osa <- sd(out$sims.list$osa[,,1])
-# posa <- sweep(out$sims.list$osa[,,1], 2, sd_osa, FUN="/")
+ # sd_osa <- sd(out$sims.list$osa[,,1])
+ # posa <- sweep(out$sims.list$osa[,,1], 2, sd_osa, FUN="/")
 # str(posa)
 # posa_med <-  apply(out$sims.list$osa[,,1],2,'median')
 # 
@@ -204,54 +207,122 @@ str(out$sims.list$osa[,,1])
 # posa <- tmp/sd_osa
 
 # sd for each row - calculate teh sd across the row, then divide each osa by that sd - I think that this is the right one and the intent of Auger-Methe.  I can also do this in JAGS now but this helped me to figure out how to write the JAGS code
+# actually, on further reflection, I don't think this is right because sd is static
 
-osa_sd <-  apply(out$sims.list$osa[,,1],1,'sd')
-str(t(osa_sd))
-posa <- sweep(out$sims.list$osa[,,1], 1, osa_sd, FUN="/")
-posa_med <- apply(posa, 2, 'median')
-str(out$sims.list$osa[,,1])
-str(posa)
+# osa_sd <-  apply(out$sims.list$osa[,,1],1,'sd')
+# str(out$sims.list$osa[,,1])
+# str(t(osa_sd))
+# posa <- sweep(out$sims.list$osa[,,1], 1, osa_sd, FUN="/")
+# str(posa)
+# posa_med <- apply(posa, 2, 'median')
+# str(posa_med)
+# plot(density(posa[,1]))
+
+
+# I think this is on the right track but I can't get it to work in JAGS
+tmpM <- matrix(NA, c(7500, 39))
+out$sims.list$posa <- array(NA, c(7500, 39, 3))
+str(out$sims.list$posa)
+str(out$sims.list$osa)
+str(out$sims.list$osa_sd)
+
+
+for(i in 1:3){
+     out$sims.list$posa[,,i] <- 
+          out$sims.list$osa[,,i]/out$sims.list$osa_sd[,,i]
+}
+
+str(out$sims.list$posa)
+posa_med <- matrix(NA, nrow=39, ncol=3)
+for(i in 1:3){
+     posa_med[,i] <- apply(out$sims.list$posa[,,i], 2, 'median')     
+}
 str(posa_med)
-plot(density(posa[,1]))
-
-## Bubble Plot - osa/posa resids
-# this shows that the JAGS approach and the R approach are equivalent
-plot(posa_med, calc$posa2)
-
-posa_df <- as.data.frame(cbind(calc$posa2, calc$posa3, calc$posa4))
+posa_df <- as.data.frame(posa_med)
 posa_df <- cbind(posa_df, 1985:2023)
 posa_df <- posa_df %>% rename(posa2 = V1, posa3 = V2, posa4 = V3, year = '1985:2023')
-posa_wide <- pivot_longer(posa_df, cols = c("posa2", "posa3", "posa4"), names_to = "age", values_to = "pres")
-posa_wide$sign <- NA
+str(posa_df)
 
-#eps_wide <- pivot_longer(eps, cols = c("eps2", "eps3", "eps4"), names_to = "age", values_to = "pres")
-posa_wide$sign <- NA
+# posa_df$sign_p2 <- NA
+# posa_df$sign_p3 <- NA
+# posa_df$sign_p4 <- NA
 
 ## create positive and negative colours
-for(i in seq_along(posa_wide$pres)){
-     if(posa_wide$pres[i] > 0){
-          posa_wide$sign[i] <- "pos"
-     } else {
-          posa_wide$sign[i] <- "neg"
+
+for(i in seq_along(posa_df$posa2)){
+     if(posa_df$posa2[i] > 0){
+          posa_df$sign_p2[i] <- "pos"
+     } else if (posa_df$posa2[i] < 0){
+          posa_df$sign_p2[i] <- "neg"
+     }
+     if(posa_df$posa3[i] > 0){
+          posa_df$sign_p3[i] <- "pos"
+     } else if (posa_df$posa3[i] < 0){
+          posa_df$sign_p3[i] <- "neg"
+     }
+     if(posa_df$posa4[i] > 0){
+          posa_df$sign_p4[i] <- "pos"
+     } else if (posa_df$posa4[i] < 0){
+          posa_df$sign_p4[i] <- "neg"
      }
 }
-head(posa_wide)
+
+head(posa_df)
+
+posa_long <- pivot_longer(posa_df, cols = c("posa2", "posa3", "posa4"), names_to = c("age"), values_to = "pres")
+head(posa_long)
+posa_long$sign <- NA
+
+for(i in seq_along(posa_long$age)){
+     if(posa_long$pres[i] > 0){
+          posa_long$sign[i] <- "pos"
+     } else {
+          posa_long$sign[i] <- "neg"
+     }          
+}     
+
+
+## Bubble Plot ---- 
+### osa/posa resids
+# this shows that the JAGS approach and the R approach are equivalent
+# plot(posa_med, calc$posa2)
+# 
+# posa_df <- as.data.frame(cbind(calc$posa2, calc$posa3, calc$posa4))
+# posa_df <- cbind(posa_df, 1985:2023)
+# posa_df <- posa_df %>% rename(posa2 = V1, posa3 = V2, posa4 = V3, year = '1985:2023')
+# posa_wide <- pivot_longer(posa_df, cols = c("posa2", "posa3", "posa4"), names_to = "age", values_to = "pres")
+# posa_wide$sign <- NA
+# 
+# #eps_wide <- pivot_longer(eps, cols = c("eps2", "eps3", "eps4"), names_to = "age", values_to = "pres")
+# posa_wide$sign <- NA
+# 
+# ## create positive and negative colours
+# for(i in seq_along(posa_wide$pres)){
+#      if(posa_wide$pres[i] > 0){
+#           posa_wide$sign[i] <- "pos"
+#      } else {
+#           posa_wide$sign[i] <- "neg"
+#      }
+# }
+# head(posa_wide)
 
 ## Bubble Plot - posa resids
-p <- ggplot(data = posa_wide, aes(x = year, y = age, size = pres, colour = sign))
+dev.off()
+
+p <- ggplot(data = posa_long, aes(x = year, y = age, size = pres, colour = sign))
 p <- p + geom_point()
 p
 
 
 # qqplot
-qqnorm(calc$N2)
-qqline(calc$N2)
-
-plot(1985:2023, calc$posa2)
-qqnorm(calc$posa2)
-qqline(calc$posa2)
-
-acf(calc$posa2)
+# qqnorm(calc$N2)
+# qqline(calc$N2)
+# 
+# plot(1985:2023, calc$posa2)
+# qqnorm(calc$posa2)
+# qqline(calc$posa2)
+# 
+# acf(calc$posa2)
 
 # Bubble Plot - raw resids
 ## bind median residuals and then pivot them to make a long data set
@@ -351,6 +422,7 @@ mix_var <- MyBUGSChains(out, vars_vAR)
 
 # vars for state space and demographic vars
 #MyBUGSChains(out, vars_Nyear)
+#dev.off()
 mix_vars_Nyear <- MyBUGSChains(out, vars_Nyear)
 #ggsave(MyBUGSChains(out, vars2), filename = paste0("Bayesian/", filepath, "/chains-demographic.pdf"), width=10, height=8, units="in")
 
@@ -362,7 +434,7 @@ mix_N2 <- MyBUGSChains(out, vars_N2)
 
 ### N3 ----
 #MyBUGSChains(out, vars_N3)
-if(b ==1 | b==2){
+if(b ==1 | b==2 | b==10){
     mix_N3 <- MyBUGSChains(out, vars_N3)    
 }
 
@@ -392,7 +464,7 @@ autocorr_N2 <- MyBUGSACF(out, vars_N2)
 
 ### N3 ----
 #MyBUGSACF(out, vars_N3)
-if(b ==1 | b ==2){
+if(b ==1 | b ==2 | b==10){
     autocorr_N3 <- MyBUGSACF(out, vars_N3)    
 }
 
@@ -452,33 +524,34 @@ if(disaggregated == "1985-present") {
 
 ##### raw residuals - I reason that the N2 is the process which is what the linear model is predicting and the mu is the fitted value
 ##### this is mu for N2 which missed the first 4 years.
-if (b == 1|b == 6|b == 5){
-    resN2 <- raw$N2[,i] - raw$mu2
-    resN3 <- raw$N3[,i] - raw$mu3
-    resN4 <- raw$N4[,i] - raw$mu4
-} else if (b == 2){
-    resN2 <- raw$N2[,i] - raw$mu2
-    resN3 <- raw$N3[,i] - raw$mu3
-} else if (b == 3){
-    resN2 <- raw$N2[i] - raw$mu2
-}
-
-#### Pearson residuals
-presN2 <- sweep(resN2, 1, raw$tau.obs, "/")  # I do not understand why the "1" works as this indicates rowwise division but it seems to work based on the work below, i.e. change values of z and w to manually get same results as presN2 
-if (b ==1|b==2|b==6|b==5){
-    presN3 <- sweep(resN3, 1, raw$tau.obs, "/")    
-}
-
-if (b==1|b==6|b==5){
-    presN4 <- sweep(resN4, 1, raw$tau.obs, "/")    
-}
-
-
-
-str(resN2)
-str(raw$tau.obs)
-str(as.vector(raw$tau.obs))
-str(presN2)
+#### May not need this anymore because its done in JAGS
+# if (b == 1|b == 6|b == 5){
+#     resN2 <- raw$N2[,i] - raw$mu2
+#     resN3 <- raw$N3[,i] - raw$mu3
+#     resN4 <- raw$N4[,i] - raw$mu4
+# } else if (b == 2){
+#     resN2 <- raw$N2[,i] - raw$mu2
+#     resN3 <- raw$N3[,i] - raw$mu3
+# } else if (b == 3){
+#     resN2 <- raw$N2[i] - raw$mu2
+# } 
+# 
+# #### Pearson residuals
+# presN2 <- sweep(resN2, 1, raw$tau.obs, "/")  # I do not understand why the "1" works as this indicates rowwise division but it seems to work based on the work below, i.e. change values of z and w to manually get same results as presN2 
+# if (b ==1|b==2|b==6|b==5){
+#     presN3 <- sweep(resN3, 1, raw$tau.obs, "/")    
+# }
+# 
+# if (b==1|b==6|b==5){
+#     presN4 <- sweep(resN4, 1, raw$tau.obs, "/")    
+# }
+# 
+# 
+# 
+# str(resN2)
+# str(raw$tau.obs)
+# str(as.vector(raw$tau.obs))
+# str(presN2)
 # z <- 7500 # row
 # w<- 21 # column
 #     
@@ -523,7 +596,7 @@ if(b ==1|b==6|b==5){
     # Pearson resids but I don't think we need these
     presN2_mean <- apply(presN2, 2, 'mean')
     dN2 <- presN2_mean^2
-}
+} 
 
 
 
@@ -533,13 +606,16 @@ if(b ==1|b==6|b==5){
 
 #pdf(paste0("Bayesian/", filepath, "/fit_obs.pdf"))
 par(mfrow = c(2,2), mar = c(5,5,2,2))
-plot(x=calc$N2[i], y = resN2_mean, xlab = "Fitted values", ylab = "Raw residuals")
+#plot(x=calc$N2[i], y = resN2_mean, xlab = "Fitted values", ylab = "Raw residuals")
+plot(x=calc$N2[i], y = eps$eps2, xlab = "Fitted values", ylab = "Raw residuals")
+
 abline(h = 0, lty = 2)
 # # see notes in Mortality model
 plot(y = jd$I2, x = calc$N2, xlab = "Fitted values", ylab = "Observed data") # should follow the line
 abline(coef = c(0,1), lty = 2)
 #normality
-histogram(resN2_mean)
+#histogram(resN2_mean)
+histogram(eps$eps2)
 
 if(disaggregated == "1985-present"){
     N2xaxis <- 1:39
@@ -551,7 +627,7 @@ if(disaggregated == "1985-present"){
     N4xaxis <- 1:25
 }
 # Cook's D
-plot(y = dN2, x = N2xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
+plot(y = posa_df$posa2^2, x = N2xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
 
 par(mfrow = c(1,1))
 dev.off()
@@ -568,8 +644,12 @@ if(disaggregated == "1985-present"){ # set resN2_mean
 # Residuals v covariates Zuur et al. 2013, pg 59-60: look for no patterns; patterns may indicated non-linear
 #pdf(paste0("Bayesian/", filepath, "/resid_covar.pdf"))
 par(mfrow = c(2,2), mar = c(5,5,2,2))
-plot(jags.data$LD[LDxaxis], resN2_mean[LDxaxis], xlab = "Larval Density", ylab = "Pearson resids")
-plot(jags.data$TI[TIxaxis], resN2_mean[TIxaxis], xlab = "Ice retreat", ylab = "Pearson resids")
+#plot(jags.data$LD[LDxaxis], resN2_mean[LDxaxis], xlab = "Larval Density", ylab = "Pearson resids")
+plot(jags.data$LD[LDxaxis], posa_df$posa2[LDxaxis], xlab = "Larval Density", ylab = "Pearson resids")
+
+#plot(jags.data$TI[TIxaxis], resN2_mean[TIxaxis], xlab = "Ice retreat", ylab = "Pearson resids")
+plot(jags.data$TI[TIxaxis], posa_df$posa2[TIxaxis], xlab = "Ice retreat", ylab = "Pearson resids")
+
 par(mfrow = c(1,1))
 dev.off()
 
@@ -577,27 +657,30 @@ dev.off()
 # Posteriors & Priors ----
 #alpha
 
-a2 <- post_param(param = "alpha", priormean = 0, priorsd = 100, jags = out$sims.list$alpha2, x_label = "Intercept - alpha") 
+#a2 <- post_param(param = "alpha", priormean = 0, priorsd = 100, jags = out$sims.list$alpha2, x_label = "Intercept - alpha") 
+
+a2 <- post_param(param = "alpha[1]", priormean = 0, priorsd = 100, jags = out$sims.list$alpha[,1], x_label = "Intercept - alpha") 
 
 # pa2 <- postPriors(df = a2$jags, df2 = a2$prior, df3 = a2$df_cred, limits=a2$limits, x_label=a2$x_label, priormean=a2$priormean, priorsd=a2$priorsd, by_bin = a2$bin_1)
 # 
 # pa2
 
 #beta
-b2 <- post_param(param = "beta", priormean = 0, priorsd = 100, jags = out$sims.list$beta2, x_label = "Larval Density - beta") 
+
+b2 <- post_param(param = "beta[1]", priormean = 0, priorsd = 100, jags = out$sims.list$beta[,1], x_label = "Larval Density - beta") 
 
 # pb2 <- postPriors(df = b2$jags, df2 = b2$prior, df3 = b2$df_cred, limits = b2$limits, x_label=b2$x_label, priormean=b2$priormean, priorsd=b2$priorsd, by_bin = a2$bin_1)
 
 #gamma - MRI
 #source("IPM_fun.R")
-g2 <- post_param(param = "gamma", jags = out$sims.list$gamma2) # max rate of increase
+g2 <- post_param(param = "gamma[1]", jags = out$sims.list$gamma[,1]) # max rate of increase
 
- pg2 <- postPriors(df = g2$jags, df2 = g2$prior, df3 = g2$df_cred, limits=g2$limits, x_label=g2$x_label, by_bin = g2$bin_1)
+pg2 <- postPriors(df = g2$jags, df2 = g2$prior, df3 =           g2$df_cred, limits=g2$limits, x_label=g2$x_label, by_bin =    g2$bin_1)
 # 
  pg2
 
 #delta - width
-d2 <- post_param(param = "delta", priormean = 11.5, priorsd = 5.7, jags = out$sims.list$delta2) 
+d2 <- post_param(param = "delta[1]", priormean = 11.5, priorsd = 5.7, jags = out$sims.list$delta[,1]) 
 
 # pd2 <- postPriors(df = d2$jags, df2 = d2$prior, df3 = d2$df_cred, limits=d2$limits, x_label=d2$x_label, priormean=d2$priormean, priorsd=d2$priorsd, by_bin = d2$bin_1)
 # 
@@ -612,37 +695,37 @@ tp2 <- apply(out$sims.list$tau.proc[,2,],2,'median')
 cri_tp1 <- apply(out$sims.list$tau.proc[,1,],2,'quantile', c(0.025, 0.975))
 cri_tp2 <- apply(out$sims.list$tau.proc[,2,],2,'quantile', c(0.025, 0.975))
 
-plot(1:4, cri$tau.proc_cri)
-
-# these are the estiamtes for a fully time varying process error
-tp1 <- apply(out$sims.list$tau.proc[,,1],2,'median')
-tp2 <- apply(out$sims.list$tau.proc[,,2],2,'median')
-cri_tp1 <- apply(out$sims.list$tau.proc[,,1],2,'quantile', c(0.025, 0.975))
-cri_tp2 <- apply(out$sims.list$tau.proc[,,2],2,'quantile', c(0.025, 0.975))
-
-
-# remember that tau is the precision - t
-plot(1985:2023, 1/tp1, type= 'n', ylim = c(0,500))
-lines(1985:2023, 1/cri_tp1[2,])
-lines(1985:2023, 1/cri_tp1[1,])
-
-plot(1985:2023, 1/tp2, type= 'n', ylim = c(0,500))
-lines(1985:2023, 1/cri_tp2[2,])
-lines(1985:2023, 1/cri_tp2[1,])
-
-# trying the same with the variance
-s2 <- apply(out$sims.list$sigma2.proc[,,1],2,'median')
-s3 <- apply(out$sims.list$sigma2.proc[,,2],2,'median')
-cri_s2 <- apply(out$sims.list$sigma2.proc[,,1],2,'quantile', c(0.025, 0.975))
-cri_s3 <- apply(out$sims.list$sigma2.proc[,,2],2,'quantile', c(0.025, 0.975))
-
-plot(1985:2023, s2, type= 'n', ylim = c(0,300))
-lines(1985:2023, 1/cri_s2[2,])
-lines(1985:2023, 1/cri_s2[1,])
-
-plot(1985:2023, s3, type= 'n', ylim = c(0,300))
-lines(1985:2023, 1/cri_s3[2,])
-lines(1985:2023, 1/cri_s3[1,])
+# plot(1:4, cri$tau.proc_cri)
+# 
+# # these are the estiamtes for a fully time varying process error
+# tp1 <- apply(out$sims.list$tau.proc[,,1],2,'median')
+# tp2 <- apply(out$sims.list$tau.proc[,,2],2,'median')
+# cri_tp1 <- apply(out$sims.list$tau.proc[,,1],2,'quantile', c(0.025, 0.975))
+# cri_tp2 <- apply(out$sims.list$tau.proc[,,2],2,'quantile', c(0.025, 0.975))
+# 
+# 
+# # remember that tau is the precision - t
+# plot(1985:2023, 1/tp1, type= 'n', ylim = c(0,500))
+# lines(1985:2023, 1/cri_tp1[2,])
+# lines(1985:2023, 1/cri_tp1[1,])
+# 
+# plot(1985:2023, 1/tp2, type= 'n', ylim = c(0,500))
+# lines(1985:2023, 1/cri_tp2[2,])
+# lines(1985:2023, 1/cri_tp2[1,])
+# 
+# # trying the same with the variance
+# s2 <- apply(out$sims.list$sigma2.proc[,,1],2,'median')
+# s3 <- apply(out$sims.list$sigma2.proc[,,2],2,'median')
+# cri_s2 <- apply(out$sims.list$sigma2.proc[,,1],2,'quantile', c(0.025, 0.975))
+# cri_s3 <- apply(out$sims.list$sigma2.proc[,,2],2,'quantile', c(0.025, 0.975))
+# 
+# plot(1985:2023, s2, type= 'n', ylim = c(0,300))
+# lines(1985:2023, 1/cri_s2[2,])
+# lines(1985:2023, 1/cri_s2[1,])
+# 
+# plot(1985:2023, s3, type= 'n', ylim = c(0,300))
+# lines(1985:2023, 1/cri_s3[2,])
+# lines(1985:2023, 1/cri_s3[1,])
 
 # End----
 
