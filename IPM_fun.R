@@ -76,6 +76,7 @@
 
 #' ls_out
 #' Extract a list from the jags.data list with important variables - feeds function "ls_med" - really just simplifies by renaming
+#' confirmed that this renames arrays as well
 #' @param x - the list of jags output from function ls_jag
 #'
 #' @return a list
@@ -85,11 +86,11 @@
 ls_out <- function(x){
   #browser()
   #ls_names <- names(x$sims.list)
-  ls_raw <- rep(list(list()), length(x$sims.list))
+  ls_raw <- rep(list(list()), length(x$sims.list)) # make a list of appropriate length
     for(i in 1:length(x$sims.list)){
-      df = x$sims.list[names(x$sims.list[i])]
-      ls_raw[i] <- df
-      names(ls_raw)[i] <- names(x$sims.list[i])
+      df = x$sims.list[names(x$sims.list[i])] # creates a list called df
+      ls_raw[i] <- df # put df in the proper slot of list ls_raw
+      names(ls_raw)[i] <- names(x$sims.list[i]) # names the slot in the list
     }
      return(ls_raw)
 }
@@ -115,13 +116,13 @@ ls_med <- function(ls){
   # }
 
   for(i in 1:length(ls)){
-       if(is.matrix(ls[[i]])){
+       if(is.matrix(ls[[i]])){ # is it a matrix?
             
-            med = apply(ls[[i]],2,'median')
-            ls_med[[i]] <- med
-            names(ls_med)[i] <- names(ls)[i]
+            med = apply(ls[[i]],2,'median') # if yes, get the median
+            ls_med[[i]] <- med # put the median values in the list slot
+            names(ls_med)[i] <- names(ls)[i] # name the list slot
        } else {
-            med = apply(ls[[i]],c(2,3),'median')
+            med = apply(ls[[i]],c(2,3),'median') # if its an array, get teh median of the column and the third dimension
             #med_array <- rep(list(list()), ncol(med))
             #for(a in ncol(med)){
             ls_med[[i]] <- med
@@ -129,22 +130,35 @@ ls_med <- function(ls){
        }
   }  
   
-  
+  #browser()
   ls_cri <- rep(list(list()), length(ls))
 
   for(i in 1:length(ls)){
-    cri = apply(ls[[i]],2,'quantile', c(0.025, 0.975))
-    ls_cri[[i]] <- cri
-    names(ls_cri)[i] <- paste0(names(ls)[i], "_cri")
+       if(is.matrix(ls[[i]])){ # for matrices
+            cri = apply(ls[[i]],2,'quantile', c(0.025, 0.975))
+            ls_cri[[i]] <- cri
+            names(ls_cri)[i] <- paste0(names(ls)[i], "_cri")
+            
+       } else { # for arrays
+            cri = apply(ls[[i]], c(2,3),'quantile', c(0.025, 0.975))
+            ls_cri[[i]] <- cri
+            names(ls_cri)[i] <- paste0(names(ls)[i], "_cri")
+       }
   }
 
   
   ls_pri <- rep(list(list()), length(ls))
 
   for(i in 1:length(ls)){
-    pri = apply(ls[[i]],2,'quantile', c(0.1, 0.9))
-    ls_pri[[i]] <- pri
-    names(ls_pri)[i] <- paste0(names(ls)[i], "_pri")
+       if(is.matrix(ls[[i]])){
+            pri = apply(ls[[i]],2,'quantile', c(0.1, 0.9))
+            ls_pri[[i]] <- pri
+            names(ls_pri)[i] <- paste0(names(ls)[i], "_pri")
+       } else {
+            pri = apply(ls[[i]], c(2,3),'quantile', c(0.1, 0.9))
+            ls_pri[[i]] <- pri
+            names(ls_pri)[i] <- paste0(names(ls)[i], "_pri")
+       }
   }
   #browser()
   
