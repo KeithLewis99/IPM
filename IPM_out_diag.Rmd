@@ -330,8 +330,59 @@ obs_v_rep
 ### Jaggedness
 See S&K pg 274 and 279 for explanation
 ```{r}
-hist(out$sims.list$Tturn.rep, xlim = c(7, 22), xlab = "Number of switches \n (replicated data)")
+hist(out$sims.list$Tturn.rep, xlab = "Number of switches \n (replicated data)")
 abline(v= out$mean$Tturn.obs, col = "red")
+```
+
+### Process error trend eps2
+
+```{r}
+p <- ggplot()
+p <- p + geom_point(data = eps_trend, aes(x = year, y = eps2))
+p <- p + geom_ribbon(data=eps2_cri, aes(x = year,
+                    ymax = max, 
+                    ymin = min),
+                alpha = 0.5, fill = "grey")
+p
+```
+
+### Process error trend eps3
+
+```{r}
+p <- ggplot()
+p <- p + geom_point(data = eps_trend, aes(x = year, y = eps3))
+p <- p + geom_ribbon(data=eps3_cri, aes(x = year,
+                                        ymax = max, 
+                                        ymin = min),
+                     alpha = 0.5, fill = "grey")
+p
+```
+
+### Process error trend eps4
+
+```{r}
+p <- ggplot()
+p <- p + geom_point(data = eps_trend, aes(x = year, y = eps4))
+p <- p + geom_ribbon(data=eps4_cri, aes(x = year,
+                                        ymax = max, 
+                                        ymin = min),
+                     alpha = 0.5, fill = "grey")
+p
+
+```
+
+### Effective sample size
+
+```{r}
+tab_neff
+```
+
+### PPC
+
+Posterior Predictive Checks
+
+```{r}
+obs_v_rep
 ```
 
 
