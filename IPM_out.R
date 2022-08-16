@@ -92,7 +92,7 @@ raw <- ls_out(out)
 str(raw)
 
 #extract medians, credible intervals, and prediction intervals
-#source("IPM_fun.R")
+source("IPM_fun.R")
 ls_all <- ls_med(raw)
 calc <- ls_all$ls_med
 cri <- ls_all$ls_cri
@@ -220,19 +220,21 @@ str(out$sims.list$osa[,,1])
 
 
 # I think this is on the right track but I can't get it to work in JAGS
-tmpM <- matrix(NA, c(7500, 39))
-out$sims.list$posa <- array(NA, c(7500, 39, 3))
+tmpM <- matrix(NA, c(7500, 39)) # create an emptly matrix
+out$sims.list$posa <- array(NA, c(7500, 39, 3)) # create an empty array for the Pearson OSA resids
 str(out$sims.list$posa)
 str(out$sims.list$osa)
 str(out$sims.list$osa_sd)
 
-
+# create POSA and fill the array
 for(i in 1:3){
      out$sims.list$posa[,,i] <- 
           out$sims.list$osa[,,i]/out$sims.list$osa_sd[,,i]
 }
 
 str(out$sims.list$posa)
+
+# calculate teh median value for the POSA
 posa_med <- matrix(NA, nrow=39, ncol=3)
 for(i in 1:3){
      posa_med[,i] <- apply(out$sims.list$posa[,,i], 2, 'median')     
@@ -247,28 +249,29 @@ str(posa_df)
 # posa_df$sign_p3 <- NA
 # posa_df$sign_p4 <- NA
 
-## create positive and negative colours
-
-for(i in seq_along(posa_df$posa2)){
-     if(posa_df$posa2[i] > 0){
-          posa_df$sign_p2[i] <- "pos"
-     } else if (posa_df$posa2[i] < 0){
-          posa_df$sign_p2[i] <- "neg"
-     }
-     if(posa_df$posa3[i] > 0){
-          posa_df$sign_p3[i] <- "pos"
-     } else if (posa_df$posa3[i] < 0){
-          posa_df$sign_p3[i] <- "neg"
-     }
-     if(posa_df$posa4[i] > 0){
-          posa_df$sign_p4[i] <- "pos"
-     } else if (posa_df$posa4[i] < 0){
-          posa_df$sign_p4[i] <- "neg"
-     }
-}
+## create positive and negative columns for each year
+# for(i in seq_along(posa_df$posa2)){
+#      if(posa_df$posa2[i] > 0){
+#           posa_df$sign_p2[i] <- "pos"
+#      } else if (posa_df$posa2[i] < 0){
+#           posa_df$sign_p2[i] <- "neg"
+#      }
+#      if(posa_df$posa3[i] > 0){
+#           posa_df$sign_p3[i] <- "pos"
+#      } else if (posa_df$posa3[i] < 0){
+#           posa_df$sign_p3[i] <- "neg"
+#      }
+#      if(posa_df$posa4[i] > 0){
+#           posa_df$sign_p4[i] <- "pos"
+#      } else if (posa_df$posa4[i] < 0){
+#           posa_df$sign_p4[i] <- "neg"
+#      }
+# }
 
 head(posa_df)
 
+# pivot the dataframe to longer so that its easier to graph
+## this does the same as the lines above but much more efficiently
 posa_long <- pivot_longer(posa_df, cols = c("posa2", "posa3", "posa4"), names_to = c("age"), values_to = "pres")
 head(posa_long)
 posa_long$sign <- NA
@@ -307,7 +310,7 @@ for(i in seq_along(posa_long$age)){
 # head(posa_wide)
 
 ## Bubble Plot - posa resids
-dev.off()
+#dev.off()
 
 p <- ggplot(data = posa_long, aes(x = year, y = age, size = pres, colour = sign))
 p <- p + geom_point()
@@ -364,32 +367,6 @@ eps3_cri <- as.data.frame(cbind(year = 1985:2023, min = cri$eps3_cri[1,], max = 
 eps4_cri <- as.data.frame(cbind(year = 1985:2023, min = cri$eps4_cri[1,], max = cri$eps4_cri[2,]))
 
 
-# eps2: create a plot 
-p <- ggplot()
-p <- p + geom_point(data = eps_trend, aes(x = year, y = eps2))
-p <- p + geom_ribbon(data=eps2_cri, aes(x = year,
-                    ymax = max, 
-                    ymin = min),
-                alpha = 0.5, fill = "grey")
-p
-
-# eps3: create a plot 
-p <- ggplot()
-p <- p + geom_point(data = eps_trend, aes(x = year, y = eps3))
-p <- p + geom_ribbon(data=eps3_cri, aes(x = year,
-                                        ymax = max, 
-                                        ymin = min),
-                     alpha = 0.5, fill = "grey")
-p
-
-# eps4: create a plot 
-p <- ggplot()
-p <- p + geom_point(data = eps_trend, aes(x = year, y = eps4))
-p <- p + geom_ribbon(data=eps4_cri, aes(x = year,
-                                        ymax = max, 
-                                        ymin = min),
-                     alpha = 0.5, fill = "grey")
-p
 
 
 # Diagnostics----
@@ -406,8 +383,6 @@ N_samples <- nc*(ni-nb)/nt
 neff <- nc*100  #n.eff should be >nc*100
 tab_neff <- out$summary[rownames(out$summary), c("n.eff")][out$summary[rownames(out$summary), c("n.eff")]< 300]
 tab_neffa <- out$summary[rownames(out$summary), c("n.eff")][out$summary[rownames(out$summary), c("n.eff")]> 300]
-
-tab_neff
 
 
 ## Mixing ----
@@ -507,8 +482,8 @@ obs_v_rep <- p
 low <- min(out$sims.list$Tturn.rep)
 high <- max(out$sims.list$Tturn.rep)
 # number of switches, i.e., jaggedness pg 274 & 279 in S&K
-hist(out$sims.list$Tturn.rep, xlim = c(low, high), xlab = "Number of switches \n (replicated data)")
-abline(v= out$mean$Tturn.obs, col = "red")
+#hist(out$sims.list$Tturn.rep, xlim = c(low, high), xlab = "Number of switches \n (replicated data)")
+#abline(v= out$mean$Tturn.obs, col = "red")
 
 # need simulated data----
 
