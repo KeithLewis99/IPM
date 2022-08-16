@@ -4632,15 +4632,21 @@ for (a in 1:Ni){
 
 # one step ahead resids - could set a p
 for (a in 1:Ni){
-     osa[1, a] ~ dnorm(0, 1/10)
-     posa[1, a] ~ dnorm(0, 1/10)
+     # osa[1, a] ~ dnorm(0, 1/10)
+     # posa[1, a] ~ dnorm(0, 1/10)
+    osa[1, a] ~ dnorm(0, 1/10)
+     osa[2, a] ~ dnorm(0, 1/10)
+     osa_sd[1, a] ~ dnorm(0, 1/10)
+     osa_sd[2, a] ~ dnorm(0, 1/10)     
 }
 
 for (a in 1:Ni){
-     for (t in 2:n.occasions){
+#     for (t in 2:n.occasions){
+     for (t in 3:n.occasions){
      osa_mean[t,a] <- mean(N[1:(t-1), a])
      osa[t,a] <- N[t,a] - osa_mean[t,a]
-     posa[t,a] <- osa[t,a]/sd(osa[,a])
+     osa_sd[t,a] <- sd(osa[1:(t-1), a])
+#     posa[t,a] <- osa[t,a]/sd(osa[,a])
      }
 }
  ## Observation
@@ -5079,15 +5085,21 @@ for (a in 1:Ni){
 
 # one step ahead resids - could set a p
 for (a in 1:Ni){
+     # osa[1, a] ~ dnorm(0, 1/10)
+     # posa[1, a] ~ dnorm(0, 1/10)
      osa[1, a] ~ dnorm(0, 1/10)
-     posa[1, a] ~ dnorm(0, 1/10)
+     osa[2, a] ~ dnorm(0, 1/10)
+     osa_sd[1, a] ~ dnorm(0, 1/10)
+     osa_sd[2, a] ~ dnorm(0, 1/10)
 }
 
 for (a in 1:Ni){
-     for (t in 2:n.occasions){
+     # for (t in 2:n.occasions){
+     for (t in 3:n.occasions){
      osa_mean[t,a] <- mean(N[1:(t-1), a])
      osa[t,a] <- N[t,a] - osa_mean[t,a]
-     posa[t,a] <- osa[t,a]/sd(osa[,a])
+     osa_sd[t,a] <- sd(osa[1:(t-1), a])     
+#     posa[t,a] <- osa[t,a]/sd(osa[,a])
      }
 }
  ## Observation
@@ -5311,15 +5323,21 @@ for (a in 1:Ni){
 
 # one step ahead resids - could set a p
 for (a in 1:Ni){
+     # osa[1, a] ~ dnorm(0, 1/10)
+     # posa[1, a] ~ dnorm(0, 1/10)
      osa[1, a] ~ dnorm(0, 1/10)
-     posa[1, a] ~ dnorm(0, 1/10)
+     osa[2, a] ~ dnorm(0, 1/10)
+     osa_sd[1, a] ~ dnorm(0, 1/10)
+     osa_sd[2, a] ~ dnorm(0, 1/10)
 }
 
 for (a in 1:Ni){
-     for (t in 2:n.occasions){
+#     for (t in 2:n.occasions){
+     for (t in 3:n.occasions){
      osa_mean[t,a] <- mean(N[1:(t-1), a])
      osa[t,a] <- N[t,a] - osa_mean[t,a]
-     posa[t,a] <- osa[t,a]/sd(osa[,a])
+     osa_sd[t,a] <- sd(osa[1:(t-1), a])
+#     posa[t,a] <- osa[t,a]/sd(osa[,a])
      }
 }
  ## Observation
@@ -5516,14 +5534,20 @@ for (a in 1:Ni){
 
 # one step ahead resids - could set a p
 for (a in 1:Ni){
+     # osa[1, a] ~ dnorm(0, 1/10)
+     # posa[1, a] ~ dnorm(0, 1/10)
      osa[1, a] ~ dnorm(0, 1/10)
-     posa[1, a] ~ dnorm(0, 1/10)
+     osa[2, a] ~ dnorm(0, 1/10)
+     osa_sd[1, a] ~ dnorm(0, 1/10)
+     osa_sd[2, a] ~ dnorm(0, 1/10)
 }
 
 for (a in 1:Ni){
-     for (t in 2:n.occasions){
+     # for (t in 2:n.occasions){
+     for (t in 3:n.occasions){
      osa_mean[t,a] <- mean(N[1:(t-1), a])
      osa[t,a] <- N[t,a] - osa_mean[t,a]
+     osa_sd[t,a] <- sd(osa[1:(t-1), a])
      #posa[t,a] <- (osa[t,a]+0.001)/sd(osa[,a])
      }
 }
@@ -5768,15 +5792,21 @@ for (a in 1:Ni){
 
 # one step ahead resids - could set a p
 for (a in 1:Ni){
+     # osa[1, a] ~ dnorm(0, 1/10)
+     # posa[1, a] ~ dnorm(0, 1/10)
      osa[1, a] ~ dnorm(0, 1/10)
-     posa[1, a] ~ dnorm(0, 1/10)
+     osa[2, a] ~ dnorm(0, 1/10)
+     osa_sd[1, a] ~ dnorm(0, 1/10)
+     osa_sd[2, a] ~ dnorm(0, 1/10)
 }
 
 for (a in 1:Ni){
-     for (t in 2:n.occasions){
+     # for (t in 2:n.occasions){
+     for (t in 3:n.occasions){
      osa_mean[t,a] <- mean(N[1:(t-1), a])
      osa[t,a] <- N[t,a] - osa_mean[t,a]
-     posa[t,a] <- osa[t,a]/sd(osa[,a])
+     osa_sd[t,a] <- sd(osa[1:(t-1), a])
+     #posa[t,a] <- osa[t,a]/sd(osa[,a])
      }
 }
  ## Observation
@@ -5878,7 +5908,7 @@ for (t in 8:n.occasions){
 ##### extend tau.proc and tau.obs to two time periods (tp) corresponding to the pre/post collapse
 #### added osa and posa resids
 #### add TI, CO, and LD in time appropriate periods
-#### replace rdm walk with MA
+#### replace rdm walk with MA - problems with N3
 
 cap.v39 = '
  model {
@@ -6033,17 +6063,24 @@ for (a in 1:Ni){
 
 # one step ahead resids - could set a p
 for (a in 1:Ni){
+     # osa[1, a] ~ dnorm(0, 1/10)
+     # posa[1, a] ~ dnorm(0, 1/10)
      osa[1, a] ~ dnorm(0, 1/10)
-     posa[1, a] ~ dnorm(0, 1/10)
+     osa[2, a] ~ dnorm(0, 1/10)
+     osa_sd[1, a] ~ dnorm(0, 1/10)
+     osa_sd[2, a] ~ dnorm(0, 1/10)     
 }
 
 for (a in 1:Ni){
-     for (t in 2:n.occasions){
+     #for (t in 2:n.occasions){
+      for (t in 3:n.occasions){
      osa_mean[t,a] <- mean(N[1:(t-1), a])
      osa[t,a] <- N[t,a] - osa_mean[t,a]
-     posa[t,a] <- osa[t,a]/sd(osa[,a])
+     osa_sd[t,a] <- sd(osa[1:(t-1), a])
+     # posa[t,a] <- osa[t,a]/sd(osa[,a])
      }
 }
+
  ## Observation
    ### see Schaub and Kerry pg 263 - this is for estimated indices instead of counts - eliminateed this for now
    #### y[t] is the "true" index that is sampled by I[t] - tau.obs is the sampling error of the index
@@ -6292,15 +6329,21 @@ for (a in 1:Ni){
 
 # one step ahead resids - could set a p
 for (a in 1:Ni){
+     # osa[1, a] ~ dnorm(0, 1/10)
+     # posa[1, a] ~ dnorm(0, 1/10)
      osa[1, a] ~ dnorm(0, 1/10)
-     posa[1, a] ~ dnorm(0, 1/10)
+     osa[2, a] ~ dnorm(0, 1/10)
+     osa_sd[1, a] ~ dnorm(0, 1/10)
+     osa_sd[2, a] ~ dnorm(0, 1/10)
 }
 
 for (a in 1:Ni){
-     for (t in 2:n.occasions){
+     # for (t in 2:n.occasions){
+     for (t in 3:n.occasions){
      osa_mean[t,a] <- mean(N[1:(t-1), a])
      osa[t,a] <- N[t,a] - osa_mean[t,a]
-     posa[t,a] <- osa[t,a]/sd(osa[,a])
+     osa_sd[t,a] <- sd(osa[1:(t-1), a])
+#     posa[t,a] <- osa[t,a]/sd(osa[,a])
      }
 }
  ## Observation
@@ -6370,7 +6413,26 @@ for (t in 1:7){
       Dssm.rep[t] <- abs((I.rep[t] - I.exp[t])/I.rep[t])
 }
 
+for (t in 8:n.occasions){
+      #    y2.rep[t] ~ dnorm(N2[t], tau.obs)
+      #    y3.rep[t] ~ dnorm(N3[t], tau.obs)
+      I2.rep[t] ~ dnorm(N[t,1], tau.obs[2])
+      I3.rep[t] ~ dnorm(N[t,2], tau.obs[2])
+      I4.rep[t] ~ dnorm(N[t,3], tau.obs[2])
+      I.rep[t] ~ dnorm(log(exp(I2.rep[t]) + exp(I3.rep[t]) + exp(I4.rep[t])), tau.obs[2])
+      Dssm.rep[t] <- abs((I.rep[t] - I.exp[t])/I.rep[t])
+}
+
      Dmape.rep <- sum(Dssm.rep)
+     
+##Test statistic: number of turns or switches - jaggedness
+   for (t in 1:(n.occasions-2)){
+      Tt1.rep[t] <- step(I.rep[t+2] - I.rep[t+1])
+      Tt2.rep[t] <- step(I.rep[t+1] - I.rep[t])
+      Tt3.rep[t] <- equals(Tt1.rep[t] + Tt2.rep[t], 1)
+   }
+   Tturn.rep <- sum(Tt3.rep)
+
 }'
 
 
@@ -6801,15 +6863,21 @@ for (a in 1:Ni){
 
 # one step ahead resids - could set a p
 for (a in 1:Ni){
+     # osa[1, a] ~ dnorm(0, 1/10)
+     # posa[1, a] ~ dnorm(0, 1/10)
      osa[1, a] ~ dnorm(0, 1/10)
-     posa[1, a] ~ dnorm(0, 1/10)
+     osa[2, a] ~ dnorm(0, 1/10)
+     osa_sd[1, a] ~ dnorm(0, 1/10)
+     osa_sd[2, a] ~ dnorm(0, 1/10)
 }
 
 for (a in 1:Ni){
-     for (t in 2:n.occasions){
+#     for (t in 2:n.occasions){
+     for (t in 3:n.occasions){
      osa_mean[t,a] <- mean(N[1:(t-1), a])
      osa[t,a] <- N[t,a] - osa_mean[t,a]
-     posa[t,a] <- osa[t,a]
+     osa_sd[t,a] <- sd(osa[1:(t-1), a])
+     # posa[t,a] <- osa[t,a]
      #/sd(osa[,a])
      }
 }
