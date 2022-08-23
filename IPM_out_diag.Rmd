@@ -519,6 +519,30 @@ plot(y = dN4, x = N4xaxis, xlab = "Observation", ylab = "Cook's D") # should fol
 }
 ```
 
+POSA {data-navmenu="Residuals"}
+=====================
+
+Column
+-------------------------------------
+
+eps
+```{r}
+p <- ggplot(data = eps_wide, aes(x = year, y = age, size = pres, colour = sign))
+p <- p + geom_point()
+p
+
+```
+
+Column
+-------------------------------------
+
+posa
+```{r}
+p <- ggplot(data = posa_long, aes(x = year, y = age, size = pres, colour = sign))
+p <- p + geom_point()
+p
+
+```
 
 N2 - Covariates {data-navmenu="Covariates"}
 =====================
