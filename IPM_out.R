@@ -92,7 +92,7 @@ raw <- ls_out(out)
 str(raw)
 
 #extract medians, credible intervals, and prediction intervals
-source("IPM_fun.R")
+#source("IPM_fun.R")
 ls_all <- ls_med(raw)
 calc <- ls_all$ls_med
 cri <- ls_all$ls_cri
@@ -361,11 +361,68 @@ eps_trend <- eps_trend %>% rename(year = V1, eps2 = V2, eps3 = V3, eps4 = V4)
 str(calc)
 str(eps_trend)
 
-# create a dataframe with the years and credible intervals for each year
+# create a dataframe with the years and credible intervals for each year but don't match the graphs in the Trends page on the dashboards
 eps2_cri <- as.data.frame(cbind(year = 1985:2023, min = cri$eps2_cri[1,], max = cri$eps2_cri[2,]))
 eps3_cri <- as.data.frame(cbind(year = 1985:2023, min = cri$eps3_cri[1,], max = cri$eps3_cri[2,]))
 eps4_cri <- as.data.frame(cbind(year = 1985:2023, min = cri$eps4_cri[1,], max = cri$eps4_cri[2,]))
 
+
+# Test the above.  Reproduce the JAGS results in R - make sure its doing what you think it is.
+# get the mean of N2 by row - creates 7500 means
+N2_mean = apply(out$sims.list$N2,1,'mean')
+plot(density(N2_mean))
+
+
+# create a matrix full of the acoustic survey results
+N2_mat <- matrix(jags.data.m$matI[,1], nrow = 7500, ncol = 39, byrow = T)
+str(N2_mat)
+head(N2_mat)
+
+#subtract each N2 value from the mean
+N2_diff <- N2_mat - N2_mean
+
+# get the median value
+N2_med <- apply(N2_diff, 2, 'median', (na.rm=T))
+head(N2_med)
+
+# results are equal to JAGS 
+plot(N2_med, calc$eps2)
+
+# and it doesn't equate to this crude approach but this seems to match the graphs in the Trends page on the dashboards
+plot(jags.data.m$matI[,1]-calc$N2, N2_med)
+
+plot(1:39, jags.data.m$matI[,1]-calc$N2)
+
+## process error----
+## see AugerMethe 2021 pg 29; 
+pe2 <- out$sims.list$N2[,1:39] - out$sims.list$mu2[,1:39]
+str(pe2)
+
+pe2_med <- apply(pe2, 1, 'median')
+pe2_cri <- apply(pe2, 1, 'quantile', c(0.025, 0.975))
+
+source("IPM_fun.R")
+pe2_plot <- pe_plot(df_med = pe2_med, df_cri = pe2_cri, df_pri = pe2_cri)
+pe2_plot
+
+
+pe3 <- out$sims.list$N3[,1:39] - out$sims.list$mu3[,1:39]
+str(pe3)
+
+pe3_med <- apply(pe3, 1, 'median')
+pe3_cri <- apply(pe3, 1, 'quantile', c(0.025, 0.975))
+
+pe3_plot <- pe_plot(df_med = pe3_med, df_cri = pe3_cri, df_pri = pe3_cri)
+pe3_plot
+
+pe4 <- out$sims.list$N4[,1:39] - out$sims.list$mu4[,1:39]
+str(pe4)
+
+pe4_med <- apply(pe4, 1, 'median')
+pe4_cri <- apply(pe4, 1, 'quantile', c(0.025, 0.975))
+
+pe4_plot <- pe_plot(df_med = pe4_med, df_cri = pe4_cri, df_pri = pe4_cri)
+pe4_plot
 
 
 
