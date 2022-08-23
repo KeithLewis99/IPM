@@ -231,7 +231,42 @@ ipm_plot <- function(df_med = x, df_cri = y, df_pri = z, df_dat = w){
      return(p)
 }
 
-
+pe_plot <- function(df_med = x, df_cri = y, df_pri = z){
+     #' PE plot
+     #' Produce a plot of the process error output inlucding median values, credible/prediction intervals and the raw data
+     #' @param x the output from function ls_med
+     #'
+     #' @return
+     #' @export
+     #'
+     #' @examples tmp_plot <- ipm_plot(calc) - see IPM_out.R
+     #' requires specification of values for ly and lf 
+     #' year <- 1999:2021
+     #' ly <- length(year)
+     #' forecast <- 2022:2023
+     #' lf <- length(forecast)
+     
+          p <- ggplot()  
+          #plot credible interval and median for process
+          #browser()
+          p <- p + geom_ribbon(aes(x = year, 
+                                   ymax = df_cri[2, 1:c(ly)], 
+                                   ymin = df_cri[1, 1:c(ly)]),
+                               alpha = 0.5, fill = "grey60")
+          p <- p + geom_line(aes(x = year, y = df_med[1:c(ly)]))
+          
+          #plot prediction interval and median for process
+          p <- p + geom_ribbon(aes(x = forecast, 
+                                   ymax = tail(df_pri[2,], lf), 
+                                   ymin = tail(df_pri[1,], lf)),
+                               alpha = 0.5, fill = "orange")
+          p <- p + geom_line(aes(x = forecast, y = tail(df_med, lf)))
+          #browser()
+          # plot points - observation median for I2 and I3
+          p <- p + ylab("Process error") + xlab("Year")
+          p <- p + theme(axis.text.x = element_text(size = 25), axis.text.y = element_text(size = 25)) + theme_bw() 
+          return(p)
+}
 
 #' Title
 #'
