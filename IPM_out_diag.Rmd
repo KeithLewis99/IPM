@@ -124,8 +124,9 @@ knitr::include_graphics("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelin
 ### Date
 Date = `r Sys.Date()`  
 p = `r jags.data$p`  
-q = `r jags.data$q`
-Note: blank for p and q indicate its not an ARMA model
+q = `r jags.data$q`  
+Note: blank for p and q indicate its not an ARMA model  
+Model Information = `r model_info`
 
 ### MCMC & JAGS info
 
@@ -156,7 +157,7 @@ str(out$sims.list)
 ```
 
 
-# Parameter estimates
+# Process estimates
 
 Column {.tabset}
 -------------------------------------
@@ -164,21 +165,21 @@ Column {.tabset}
 ### N2
      
 ```{r tab1, eval=T,prompt=T, comment = F}
-df_keep_rows <- keep_rows("N2", 25)
+df_keep_rows <- keep_rows("N", length(yearF), yr = 1)
 tab1 <- tabParm(out$summary, df_keep_rows)
-datatable(tab1, rownames = F, class = 'cell-border stripe', height = 50,  options = list(searching = F, pageLength = 30, autoWidth = TRUE, scrollY = F)) %>% formatRound(2:5, 3)
+datatable(tab1, rownames = T, class = 'cell-border stripe', height = 50,  options = list(searching = F, pageLength = 30, autoWidth = TRUE, scrollY = F)) %>% formatRound(2:5, 3)
 ```
 
 ### N3
 ```{r tab2, eval=T,prompt=T, comment = F}
-df_keep_rows <- keep_rows("N3", 25)
+df_keep_rows <- keep_rows("N", length(yearF), yr = 2)
 tab2 <- tabParm(out$summary, df_keep_rows)
 datatable(tab2, rownames = F, class = 'cell-border stripe', height = 50,  options = list(searching = F, pageLength = 30, autoWidth = TRUE, scrollY = F)) %>% formatRound(2:5, 3)
 ```
 
 ### N4
 ```{r tab3, eval=T,prompt=T, comment = F}
-df_keep_rows <- keep_rows("N4", 25)
+df_keep_rows <- keep_rows("N", length(yearF), yr = 3)
 tab3 <- tabParm(out$summary, df_keep_rows)
 datatable(tab3, rownames = F, class = 'cell-border stripe', height = 50,  options = list(searching = F, pageLength = 30, autoWidth = TRUE, scrollY = F)) %>% formatRound(2:5, 3)
 ```
@@ -203,7 +204,7 @@ datatable(df_dis_tab, rownames = F, class = 'cell-border stripe', height = 50,  
 
 # Trends
 
-Column
+Column {.tabset}
 -------------------------------------
      
 ### N
@@ -242,7 +243,7 @@ tmpN4_plot
 Column {.tabset}
 -------------------------------------
      
-### Process and observation
+### Variation
      
 ```{r}
 mix_var
@@ -254,13 +255,13 @@ mix_var
 mix_vars_Nyear
 ```
 
-### N2
+### Parameters - N2
 
 ```{r}
 mix_N2
 ```
 
-### N3
+### Parameters - N3
 
 ```{r}
 if (b ==1 | b==2 | b==10){
@@ -268,10 +269,10 @@ if (b ==1 | b==2 | b==10){
 }
 ```
 
-### N4
+### Parameters - N4
 
 ```{r}
-if (b ==1){
+if (b ==1| b==10){
      mix_N4  
 }
 ```
@@ -281,7 +282,7 @@ if (b ==1){
 Column {.tabset}
 -------------------------------------
      
-### Process and observation
+### Variation
      
 ```{r}
 autocorr_vars_vAR
@@ -293,13 +294,13 @@ autocorr_vars_vAR
 autocorr_vars_Nyear
 ```
 
-### N2
+### Parameters - N2
 
 ```{r}
 autocorr_N2
 ```
 
-### N3
+### Parameters - N3
 
 ```{r}
 if(b==1 | b ==2 | b==10){
@@ -308,10 +309,10 @@ if(b==1 | b ==2 | b==10){
 
 ```
 
-### N4
+### Parameters - N4
 
 ```{r}
-if(b ==1){
+if(b ==1| b==10){
      autocorr_N4  
 }
 ```
@@ -334,42 +335,42 @@ hist(out$sims.list$Tturn.rep, xlab = "Number of switches \n (replicated data)")
 abline(v= out$mean$Tturn.obs, col = "red")
 ```
 
-### Process error trend eps2
+<!-- ### Process error trend eps2 -->
 
-```{r}
-p <- ggplot()
-p <- p + geom_point(data = eps_trend, aes(x = year, y = eps2))
-p <- p + geom_ribbon(data=eps2_cri, aes(x = year,
-                    ymax = max, 
-                    ymin = min),
-                alpha = 0.5, fill = "grey")
-p
-```
+<!-- ```{r} -->
+<!-- p <- ggplot() -->
+<!-- p <- p + geom_point(data = eps_trend, aes(x = year, y = eps2)) -->
+<!-- p <- p + geom_ribbon(data=eps2_cri, aes(x = year, -->
+<!--                     ymax = max,  -->
+<!--                     ymin = min), -->
+<!--                 alpha = 0.5, fill = "grey") -->
+<!-- p -->
+<!-- ``` -->
 
-### Process error trend eps3
+<!-- ### Process error trend eps3 -->
 
-```{r}
-p <- ggplot()
-p <- p + geom_point(data = eps_trend, aes(x = year, y = eps3))
-p <- p + geom_ribbon(data=eps3_cri, aes(x = year,
-                                        ymax = max, 
-                                        ymin = min),
-                     alpha = 0.5, fill = "grey")
-p
-```
+<!-- ```{r} -->
+<!-- p <- ggplot() -->
+<!-- p <- p + geom_point(data = eps_trend, aes(x = year, y = eps3)) -->
+<!-- p <- p + geom_ribbon(data=eps3_cri, aes(x = year, -->
+<!--                                         ymax = max,  -->
+<!--                                         ymin = min), -->
+<!--                      alpha = 0.5, fill = "grey") -->
+<!-- p -->
+<!-- ``` -->
 
-### Process error trend eps4
+<!-- ### Process error trend eps4 -->
 
-```{r}
-p <- ggplot()
-p <- p + geom_point(data = eps_trend, aes(x = year, y = eps4))
-p <- p + geom_ribbon(data=eps4_cri, aes(x = year,
-                                        ymax = max, 
-                                        ymin = min),
-                     alpha = 0.5, fill = "grey")
-p
+<!-- ```{r} -->
+<!-- p <- ggplot() -->
+<!-- p <- p + geom_point(data = eps_trend, aes(x = year, y = eps4)) -->
+<!-- p <- p + geom_ribbon(data=eps4_cri, aes(x = year, -->
+<!--                                         ymax = max,  -->
+<!--                                         ymin = min), -->
+<!--                      alpha = 0.5, fill = "grey") -->
+<!-- p -->
 
-```
+<!-- ``` -->
 
 ### Effective sample size
 
@@ -377,13 +378,6 @@ p
 tab_neff
 ```
 
-### PPC
-
-Posterior Predictive Checks
-
-```{r}
-obs_v_rep
-```
 
 
 N2 - Residuals {data-navmenu="Residuals"}
@@ -391,7 +385,7 @@ N2 - Residuals {data-navmenu="Residuals"}
 
 Column 
 -------------------------------------
-     
+
 ```{r}
 if(b == 10){
   plot(x=calc$N2[i], y = eps$eps2, xlab = "Fitted values", ylab = "Raw residuals")
@@ -425,7 +419,7 @@ if(b == 10){
 ```{r}
 # Cook's D
 if (b == 10){
-   plot(y = posa_df$posa2^2, x = N2xaxis, xlab = "Observation", ylab = "Cook's D")  
+   plot(y = posa_df$posa2^2, x = N2xaxis[3:length(yearF)], xlab = "Observation", ylab = "Cook's D")  
 } else {
      plot(y = dN2, x = N2xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
 }
@@ -473,7 +467,7 @@ histogram(resN3_mean)
 ```{r}
 # Cook's D
 if(b == 10){
- plot(y = posa_df$posa3^2, x = N2xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
+ plot(y = posa_df$posa3^2, x = N3xaxis[3:length(yearF)], xlab = "Observation", ylab = "Cook's D") # should follow the line
 } else if(b==1|b==2){
 plot(y = dN3, x = N3xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
 }
@@ -514,18 +508,19 @@ histogram(resN4_mean)
 
 ```{r}
 # Cook's D
-if(b==1){
-plot(y = dN4, x = N4xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
+
+if(b == 10){
+ plot(y = posa_df$posa4^2, x = N4xaxis[3:length(yearF)], xlab = "Observation", ylab = "Cook's D") # should follow the line
+} else if(b==1|b==2){
+plot(y = dN4, x =  N4xaxis[3:length(yearF)], xlab = "Observation", ylab = "Cook's D") # should follow the line
 }
 ```
 
-POSA {data-navmenu="Residuals"}
+
+
+Raw resids - eps {data-navmenu="Bubble Plots"}
 =====================
 
-Column
--------------------------------------
-
-eps
 ```{r}
 p <- ggplot(data = eps_wide, aes(x = year, y = age, size = pres, colour = sign))
 p <- p + geom_point()
@@ -533,16 +528,107 @@ p
 
 ```
 
-Column
--------------------------------------
+Pearson One-step Ahead resids {data-navmenu="Bubble Plots"}
+=====================
 
-posa
 ```{r}
 p <- ggplot(data = posa_long, aes(x = year, y = age, size = pres, colour = sign))
 p <- p + geom_point()
 p
 
 ```
+
+Process error {data-navmenu="Bubble Plots"}
+=====================
+
+```{r}
+p <- ggplot(data = pe_trend_long1, aes(x = year, y = age, size = pe, colour = sign))
+p <- p + geom_point()
+p
+```
+
+
+N2 - POSA {data-navmenu="POSA"}
+=====================
+
+Column
+-------------------------------------
+
+```{r}
+p <- ggplot(data = posaN2, aes(x = N2, y = posa))
+p <- p + geom_point()
+p
+
+```
+
+Column
+-------------------------------------
+     
+```{r}
+#normality
+qqnorm(posa_df$posa2)
+qqline(posa_df$posa2)
+```
+
+```{r}
+#autocorrelation
+acf(posa_df$posa2)
+```
+
+N3 - POSA {data-navmenu="POSA"}
+=====================
+
+Column
+-------------------------------------
+
+```{r}
+p <- ggplot(data = posaN3, aes(x = N3, y = posa))
+p <- p + geom_point()
+p
+
+```
+
+Column
+-------------------------------------
+     
+```{r}
+#normality
+qqnorm(posa_df$posa3)
+qqline(posa_df$posa3)
+```
+
+```{r}
+#autocorrelation
+acf(posa_df$posa3)
+```
+
+N4 - POSA {data-navmenu="POSA"}
+=====================
+
+Column
+-------------------------------------
+
+```{r}
+p <- ggplot(data = posaN4, aes(x = N4, y = posa))
+p <- p + geom_point()
+p
+
+```
+
+Column
+-------------------------------------
+     
+```{r}
+#normality
+qqnorm(posa_df$posa4)
+qqline(posa_df$posa4)
+```
+
+```{r}
+#autocorrelation
+acf(posa_df$posa4)
+```
+
 
 N2 - Covariates {data-navmenu="Covariates"}
 =====================
