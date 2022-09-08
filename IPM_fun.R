@@ -277,13 +277,20 @@ pe_plot <- function(df_med = x, df_cri = y, df_pri = z){
 #' @export
 #'
 #' @examples
-keep_rows <- function(x,y){
+keep_rows <- function(x,y, yr = NULL){
   #browser()
   tmp_vec <- rep(NA, y)
-  for(i in 1:y){
-    row <- paste0(x,"[",i, "]")
-    tmp_vec[i] <- row
-  }
+if(matrix == "yes"){
+     for(i in 1:y){
+          row <- paste0(x, "[", i, ",", yr, "]")
+          tmp_vec[i] <- row
+     }
+     } else {
+     for(i in 1:y){
+          row <- paste0(x,"[",i, "]")
+          tmp_vec[i] <- row
+          }
+     }
   return(tmp_vec)
 }
 
@@ -330,12 +337,22 @@ keep_rows <- function(x,y){
 #' @examples
 tabParm <- function(df1 = x, rows){
   #browser()
-  tab <- data.frame(matrix(NA, nrow = 25, ncol = 5))
+     if(disaggregated == "1985-present"){
+          nrow = length(1985:2023)
+     } else {
+          nrow = length(1999: 2023)
+     }
+  tab <- data.frame(matrix(NA, nrow = nrow, ncol = 5))
   #if()
   #for(i in 1:length(rows)){
     tab <- df1[rownames(df1) %in% df_keep_rows, c("mean", "2.5%", "97.5%", "Rhat", "n.eff")]
    # }
-    tab1 <- data.frame(cbind(year = 1999:2023, tab))
+    if(disaggregated == "1985-present"){
+         tab1 <- data.frame(cbind(year = 1985:2023, tab))
+    } else {
+         tab1 <- data.frame(cbind(year = 1999:2023, tab))         
+    }
+
   return(tab1)
 }
 
