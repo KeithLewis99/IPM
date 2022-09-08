@@ -119,10 +119,11 @@ parms7 <- c("tau.proc",  "tau.obs", "sigma2.proc",
 # parms8-----
 parms8 <- c("tau.proc",  "tau.obs", "sigma2.proc",
             "N", "eps", "osa", "osa_mean", "osa_sd",
-            #"posa", 
-            "mu", "beta",  "gamma", "delta",
-            "alpha", 
-            "u",
+            "posa", 
+            "mu", "logit_s", "s", "beta",  "gamma", "delta",
+            "alpha", "epsilon", "pe",
+            #"u",
+            #"pe",
             #"eta", "ar_mean", 
             #"zeta", "ma_mean",
             
@@ -134,6 +135,13 @@ parms8 <- c("tau.proc",  "tau.obs", "sigma2.proc",
             "Tt1.rep",
             "Tt2.rep"
 )
+parms9 <- c("tau.proc",  "tau.obs", "sigma2.proc",
+            "N", 
+            #"posa", 
+            "mu", "gamma", "delta",
+            "alpha", "logit_mu"
+)
+
 # "eta", "zeta", "eps", "ar_mean", "ma_mean",
 #"zeta", "ma_mean",
 #"u",
@@ -244,18 +252,30 @@ if (b==1){ # model with separate parms for each age
 } else if (b==10) { # model separate parms for N2 and N3:N4  - EXT
      parms = parms8
      # tC = cap.v8
-     # tC.txt = "cap.v8"
-     tC = cap.v43
-     tC.txt = "cap.v43"
+     # tC.txt = "cap.v39"
+     tC = cap.v36
+     tC.txt = "cap.v36"
      #vars_vAR <- c("tau.proc[1,1]", "tau.proc[2,1]", "tau.obs")
-     vars_vAR <- c("tau.proc[1,1]", "tau.proc[2,1]", "tau.obs[1]")
+     #vars_vAR <- c("tau.proc[1,1]", "tau.proc[2,1]", "tau.obs[1]")
+     vars_vAR <- c("tau.proc", "tau.obs")
      vars_Nyear <- c("N[10,1]", "N[10,2]", "N[10,3]")
      #vars_N2 <- c("mu[1,10]","alpha2", "beta2",  "gamma2", "delta2")
-     vars_N2 <- c("mu[10,1]","alpha[1]", "beta[1]",  "gamma[1]", "delta[1]")
+     vars_N2 <- c("alpha[1]", "beta[1]",  "gamma[1]", "delta[1]")
      #vars_N3 <- c("mu[2,10]", "alpha3", "gamma3", "delta3", "epsilon3", "mu[3,10]")
-     vars_N3 <- c("mu[10,2]", "alpha[1]", "gamma[1]", "delta[1]", "mu[10,3]")
-     vars_N4 <- c(NA)
-     
+     #vars_N3 <- c("mu[10,2]", "alpha[1]", "gamma[1]", "delta[1]", "mu[10,3]")
+     vars_N3 <- c("alpha[2]", "gamma[2]", "delta[2]")
+     vars_N4 <- c("alpha[3]", "gamma[3]", "delta[3]")
+     model_info <- paste("
+     ln scale: N2-N4 + forecast for each age, \n
+     Added in the capelin data from 1985-1998 but in matrix form, \n
+     AS 31 but with I and all the diagnostics - this adds parameters to the loops and cleaned up much excess code Ni = N age[i], \n
+     eps (raw resids) added for N2-N4 and osa, \n
+     minimize code and reduce tau.proc to 3 values, \n
+     reduce tau.proc and tau.obs to a single value each, \n
+     added osa and posa resids and process error, \n
+     add TI, CO, and LD in time appropriate periods, \n
+     mu's changed to S for N3 and N4 as this reflects survival
+     ")
 }
 
 # END----
