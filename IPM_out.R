@@ -31,16 +31,23 @@ ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 # ni <- 5000000; nt <- 1000; nb <- 300000; nc <- 3 # this produces really nice ACFs!!!!
 
 # these are just preliminary values for p (auto-regression: AR) and q (MA: moving average)
-if(smoother == "yes"){
-    jags.data$p <- 2
-    jags.data$q <- 2
-    jags.data.m$p <- 2
-    jags.data.m$q <- 2
-}
+# if(smoother == "yes"){
+#     jags.data$p <- 2
+#     jags.data$q <- 2
+#     jags.data.m$p <- 2
+#     jags.data.m$q <- 2
+# }
 
 jags.data.m$Ni <- 3
 
 # these are values to make the JAGS code more generalized, i.e., that the indices are not hard coded.  Currently applies only to cap.v20.
+# jags.data.m$n.occasions <- 6
+# jags.data.m$matI <- jags.data.m$matI[1:6, 1:3]
+# jags.data.m$m <- jags.data.m$m[1:6]
+# jags.data.m$LD <- jags.data.m$LD[1:6]
+# jags.data.m$TI <- jags.data.m$TI[1:6]
+# jags.data.m$CO <- jags.data.m$CO[1:6]
+# year <- 1985:1995
 
 if(disaggregated == "1985-present"){
     jags.data$N2end <- 18
@@ -69,10 +76,10 @@ if(matrix == "no") {
     out$sims.list$N2 <- out$sims.list$N[,,1]
     out$sims.list$N3 <- out$sims.list$N[,,2]
     out$sims.list$N4 <- out$sims.list$N[,,3]
-    out$sims.list$N <- NULL
+    #out$sims.list$N <- NULL
     out$sims.list$mu2 <- out$sims.list$mu[,,1]
-    out$sims.list$mu3 <- out$sims.list$mu[,,2]
-    out$sims.list$mu4 <- out$sims.list$mu[,,3]
+    #out$sims.list$mu3 <- out$sims.list$mu[,,2]
+    #out$sims.list$mu4 <- out$sims.list$mu[,,3]
     out$sims.list$eps2 <- out$sims.list$eps[,,1]
     out$sims.list$eps3 <- out$sims.list$eps[,,2]
     out$sims.list$eps4 <- out$sims.list$eps[,,3]
@@ -91,6 +98,10 @@ str(out$sims.list)
 raw <- ls_out(out)
 str(raw)
 
+# this worked by taking the mu1 out of the N2 equation.  It was still calculated.  
+
+raw$mu[raw$mu < 0]
+
 #extract medians, credible intervals, and prediction intervals
 #source("IPM_fun.R")
 ls_all <- ls_med(raw)
@@ -101,6 +112,7 @@ str(ls_all,1)
 str(calc, 1)
 str(cri, 1)
 str(pri, 1)
+
 
 if(disaggregated == "1985-present") {
     cbind(1985:2023, calc$Nt2, jd$I2, calc$N3, jd$I3, calc$mu3)
@@ -113,8 +125,6 @@ if(disaggregated == "1985-present") {
 ssm26_dic <- out$DIC
 
 # Bayesian R-squared - see scratch pad
-
-
 
 # figures ----
 
@@ -184,90 +194,38 @@ tmpN4_plot <- tmpN4_plot + geom_point(data = df_dis_tabLog,
 tmpN4_plot 
 
 
-# Process error----
+# Residuals ----
 ## One-step ahead resids----
 ## see AugerMethe 2021
 ### couldn't get this to run in JAGS
 plot(density(out$sims.list$osa[,,1]))
 str(out$sims.list$osa[,,1])
 
-# this give the standard deviation for each t - I don't think this is right bc its sd[t] which is not in the formula
-# sd_osa <-  apply(out$sims.list$osa[,,1],2,'sd')
-# str(sd_osa)
-# 
-# # this gives the sd for the whole matrix 
-# # then, the Pearson resids for the matrix/a single sd and then the median - this also doesn't seem right because its the sd of all the various iterations
- # sd_osa <- sd(out$sims.list$osa[,,1])
- # posa <- sweep(out$sims.list$osa[,,1], 2, sd_osa, FUN="/")
-# str(posa)
-# posa_med <-  apply(out$sims.list$osa[,,1],2,'median')
-# 
-# # this is the median of the osa divided by a single sd - also doesn't seem right bc its a median value divided by the single sd
-# tmp <- apply(out$sims.list$osa[,,1],2,'median')
-# posa <- tmp/sd_osa
-
-# sd for each row - calculate teh sd across the row, then divide each osa by that sd - I think that this is the right one and the intent of Auger-Methe.  I can also do this in JAGS now but this helped me to figure out how to write the JAGS code
-# actually, on further reflection, I don't think this is right because sd is static
-
-# osa_sd <-  apply(out$sims.list$osa[,,1],1,'sd')
-# str(out$sims.list$osa[,,1])
-# str(t(osa_sd))
-# posa <- sweep(out$sims.list$osa[,,1], 1, osa_sd, FUN="/")
-# str(posa)
-# posa_med <- apply(posa, 2, 'median')
-# str(posa_med)
-# plot(density(posa[,1]))
-
-
 # I think this is on the right track but I can't get it to work in JAGS
-tmpM <- matrix(NA, c(7500, 39)) # create an emptly matrix
-out$sims.list$posa <- array(NA, c(7500, 39, 3)) # create an empty array for the Pearson OSA resids
-str(out$sims.list$posa)
-str(out$sims.list$osa)
-str(out$sims.list$osa_sd)
+#tmpM <- matrix(NA, c(7500, 39)) # create an emptly matrix
+# out$sims.list$posa <- array(NA, c(7500, 39, 3)) # create an empty array for the Pearson OSA resids
+# str(out$sims.list$posa)
+# str(out$sims.list$osa)
+# str(out$sims.list$osa_sd)
 
 # create POSA and fill the array
-for(i in 1:3){
-     out$sims.list$posa[,,i] <- 
-          out$sims.list$osa[,,i]/out$sims.list$osa_sd[,,i]
-}
+# for(i in 1:3){
+#      out$sims.list$posa[,,i] <- 
+#           out$sims.list$osa[,,i]/out$sims.list$osa_sd[,,i]
+# }
 
 str(out$sims.list$posa)
 
 # calculate teh median value for the POSA
-posa_med <- matrix(NA, nrow=39, ncol=3)
+posa_med <- matrix(NA, nrow=37, ncol=3)
 for(i in 1:3){
      posa_med[,i] <- apply(out$sims.list$posa[,,i], 2, 'median')     
 }
 str(posa_med)
 posa_df <- as.data.frame(posa_med)
-posa_df <- cbind(posa_df, 1985:2023)
-posa_df <- posa_df %>% rename(posa2 = V1, posa3 = V2, posa4 = V3, year = '1985:2023')
+posa_df <- cbind(posa_df, 1987:2023)
+posa_df <- posa_df %>% rename(posa2 = V1, posa3 = V2, posa4 = V3, year = '1987:2023')
 str(posa_df)
-
-# posa_df$sign_p2 <- NA
-# posa_df$sign_p3 <- NA
-# posa_df$sign_p4 <- NA
-
-## create positive and negative columns for each year
-# for(i in seq_along(posa_df$posa2)){
-#      if(posa_df$posa2[i] > 0){
-#           posa_df$sign_p2[i] <- "pos"
-#      } else if (posa_df$posa2[i] < 0){
-#           posa_df$sign_p2[i] <- "neg"
-#      }
-#      if(posa_df$posa3[i] > 0){
-#           posa_df$sign_p3[i] <- "pos"
-#      } else if (posa_df$posa3[i] < 0){
-#           posa_df$sign_p3[i] <- "neg"
-#      }
-#      if(posa_df$posa4[i] > 0){
-#           posa_df$sign_p4[i] <- "pos"
-#      } else if (posa_df$posa4[i] < 0){
-#           posa_df$sign_p4[i] <- "neg"
-#      }
-# }
-
 head(posa_df)
 
 # pivot the dataframe to longer so that its easier to graph
@@ -284,38 +242,23 @@ for(i in seq_along(posa_long$age)){
      }          
 }     
 
+# p <- ggplot(data = posa_long, aes(x = year, y = age, size = pres, colour = sign))
+# p <- p + geom_point()
+# p
+# posa <- p
 
-## Bubble Plot ---- 
-### osa/posa resids
-# this shows that the JAGS approach and the R approach are equivalent
-# plot(posa_med, calc$posa2)
-# 
-# posa_df <- as.data.frame(cbind(calc$posa2, calc$posa3, calc$posa4))
-# posa_df <- cbind(posa_df, 1985:2023)
-# posa_df <- posa_df %>% rename(posa2 = V1, posa3 = V2, posa4 = V3, year = '1985:2023')
-# posa_wide <- pivot_longer(posa_df, cols = c("posa2", "posa3", "posa4"), names_to = "age", values_to = "pres")
-# posa_wide$sign <- NA
-# 
-# #eps_wide <- pivot_longer(eps, cols = c("eps2", "eps3", "eps4"), names_to = "age", values_to = "pres")
-# posa_wide$sign <- NA
-# 
-# ## create positive and negative colours
-# for(i in seq_along(posa_wide$pres)){
-#      if(posa_wide$pres[i] > 0){
-#           posa_wide$sign[i] <- "pos"
-#      } else {
-#           posa_wide$sign[i] <- "neg"
-#      }
-# }
-# head(posa_wide)
+# bind process value and the posa: these are for the POSA v Nx plots
+posaN2 <- as.data.frame(cbind(N2 = jags.data.m$matI[3:length(yearF),1], posa = posa_med[,1]))
+posaN3 <- as.data.frame(cbind(N3 = jags.data.m$matI[3:length(yearF),2], posa = posa_med[,2]))
+posaN4 <- as.data.frame(cbind(N4 = jags.data.m$matI[3:length(yearF),3], posa = posa_med[,3]))
 
-## Bubble Plot - posa resids
-#dev.off()
 
-p <- ggplot(data = posa_long, aes(x = year, y = age, size = pres, colour = sign))
-p <- p + geom_point()
-p
-
+# p <- ggplot(data = posaN2, aes(x = N2, y = posa))
+# p <- p + geom_point()
+# p
+# plot(posa_df$year, posa_df$posa2)
+# qqnorm(posa_df$posa2)
+# qqline(posa_df$posa2)
 
 # qqplot
 # qqnorm(calc$N2)
@@ -327,7 +270,8 @@ p
 # 
 # acf(calc$posa2)
 
-# Bubble Plot - raw resids
+## raw resids ----
+## Observation error
 ## bind median residuals and then pivot them to make a long data set
 eps <- as.data.frame(cbind(calc$eps2, calc$eps3, calc$eps4))
 eps <- cbind(eps, 1985:2023)
@@ -346,13 +290,12 @@ for(i in seq_along(eps_wide$pres)){
 head(eps_wide)
 
 ## Bubble Plot - raw resids
-p <- ggplot(data = eps_wide, aes(x = year, y = age, size = pres, colour = sign))
-p <- p + geom_point()
-p
+# p <- ggplot(data = eps_wide, aes(x = year, y = age, size = pres, colour = sign))
+# p <- p + geom_point()
+# p
+# raw_resid <- p
 
-
-
-# trends in process error
+# trends in observation error
 ## create a data frame with the years and residuals for each year
 calc$year <- rep(NA, 39)
 calc$year <- 1985:2023
@@ -395,35 +338,86 @@ plot(1:39, jags.data.m$matI[,1]-calc$N2)
 
 ## process error----
 ## see AugerMethe 2021 pg 29; 
-pe2 <- out$sims.list$N2[,1:39] - out$sims.list$mu2[,1:39]
+### note that process error (pe) is always going to be the difference between the process output and the process equation.  In the case of Model 47, this is simple because mu2 is also N[t] which generates N[t+1].  But its probably best to generate this in JAGS but I have also done this in R to determine if there is any equivalency
+#### But these are normally distributed around 0 with a variance tau.proc.
+
+
+#source("IPM_fun.R")
+#### First, do this in R - subtract the N2s from the mu's
+pe2 <- out$sims.list$N2[,2:39] - out$sims.list$mu2[,1:38]
 str(pe2)
 
-pe2_med <- apply(pe2, 1, 'median')
-pe2_cri <- apply(pe2, 1, 'quantile', c(0.025, 0.975))
 
-source("IPM_fun.R")
+# N2 - get the median and Credibile intervals and plot
+pe2_med <- apply(pe2, 2, 'median')
+pe2_cri <- apply(pe2, 2, 'quantile', c(0.025, 0.975))
 pe2_plot <- pe_plot(df_med = pe2_med, df_cri = pe2_cri, df_pri = pe2_cri)
 pe2_plot
 
+# N3 - get the median and Credibile intervals and plot
+# pe3 <- out$sims.list$N3[,2:39] - out$sims.list$mu3[,1:38]
+# str(pe3)
+# pe3_med <- apply(pe3, 2, 'median')
+# pe3_cri <- apply(pe3, 2, 'quantile', c(0.025, 0.975))
+# pe3_plot <- pe_plot(df_med = pe3_med, df_cri = pe3_cri, df_pri = pe3_cri)
+# pe3_plot
+# 
+# # N3 - get the median and Credibile intervals and plot
+# pe4 <- out$sims.list$N4[,2:39] - out$sims.list$mu4[,1:38]
+# str(pe4)
+# pe4_med <- apply(pe4, 2, 'median')
+# pe4_cri <- apply(pe4, 2, 'quantile', c(0.025, 0.975))
+# pe4_plot <- pe_plot(df_med = pe4_med, df_cri = pe4_cri, df_pri = pe4_cri)
+# pe4_plot
 
-pe3 <- out$sims.list$N3[,1:39] - out$sims.list$mu3[,1:39]
-str(pe3)
 
-pe3_med <- apply(pe3, 1, 'median')
-pe3_cri <- apply(pe3, 1, 'quantile', c(0.025, 0.975))
+# Bubble plot for R method
+# year_pe <- 1986:2023
+# out$sims.list$N4[,2:39]
+# pe_trend <- as.data.frame(cbind(year_pe, pe2_med, pe3_med, pe4_med))
+# str(pe_trend)
+# pe_trend_long <- pivot_longer(pe_trend, cols = c("pe2_med", "pe3_med", "pe4_med"), names_to = "age", values_to = "pe")
+# str(pe_trend_long)
+# 
+# ## create positive and negative colours
+# pe_trend_long$sign <- NA
+# for(i in seq_along(pe_trend_long$pe)){
+#      if(pe_trend_long$pe[i] > 0){
+#           pe_trend_long$sign[i] <- "pos"
+#      } else {
+#           pe_trend_long$sign[i] <- "neg"
+#      }
+# }
+# 
+# p <- ggplot(data = pe_trend_long, aes(x = year_pe, y = age, size = pe, colour = sign))
+# p <- p + geom_point()
+# p
 
-pe3_plot <- pe_plot(df_med = pe3_med, df_cri = pe3_cri, df_pri = pe3_cri)
-pe3_plot
+## Process error----
+###JAGS approach: Should be equivalent to the above but easier to get - changes can be made in JAGS models and not in R.
 
-pe4 <- out$sims.list$N4[,1:39] - out$sims.list$mu4[,1:39]
-str(pe4)
+str(calc$pe)
+year_pe1 <- 1985:2023
+pe_trend1 <- as.data.frame(cbind(year_pe1, calc$pe[,1], calc$pe[,2], calc$pe[,3]))
+pe_trend1 <- pe_trend1 %>% rename(year = year_pe1, pe2 = V2, pe3 = V3, pe4 = V4)
+str(pe_trend1)
+pe_trend_long1 <- pivot_longer(pe_trend1, cols = c("pe2", "pe3", "pe4"), names_to = "age", values_to = "pe")
+str(pe_trend_long1)
 
-pe4_med <- apply(pe4, 1, 'median')
-pe4_cri <- apply(pe4, 1, 'quantile', c(0.025, 0.975))
+## create positive and negative colours
+pe_trend_long1$sign <- NA
+for(i in seq_along(pe_trend_long1$pe)){
+     if(pe_trend_long1$pe[i] > 0){
+          pe_trend_long1$sign[i] <- "pos"
+     } else {
+          pe_trend_long1$sign[i] <- "neg"
+     }
+}
 
-pe4_plot <- pe_plot(df_med = pe4_med, df_cri = pe4_cri, df_pri = pe4_cri)
-pe4_plot
-
+# this is the same as the R equivalent.  
+p <- ggplot(data = pe_trend_long1, aes(x = year, y = age, size = pe, colour = sign))
+p <- p + geom_point()
+p
 
 
 # Diagnostics----
@@ -474,7 +468,7 @@ if(b ==1 | b==2 | b==10){
 
 ### N4 ----
 #MyBUGSChains(out, vars_N4)
-if(b == 1){
+if(b == 1| b==10){
     mix_N4 <- MyBUGSChains(out, vars_N4)    
 }
 
@@ -504,7 +498,7 @@ if(b ==1 | b ==2 | b==10){
 
 ### N4 ----
 #MyBUGSACF(out, vars_N4)
-if (b==1){
+if (b==1| b==10){
     autocorr_N4 <- MyBUGSACF(out, vars_N4)    
 }
 
@@ -543,6 +537,8 @@ high <- max(out$sims.list$Tturn.rep)
 #abline(v= out$mean$Tturn.obs, col = "red")
 
 # need simulated data----
+
+
 
 ### - Residuals for Covariates----
 #### (see Zuur et al. 2013 for options for calculating Pearson residuals) - note that I am opting to do a lot of this outside of JAGS due to run time issues.
@@ -659,7 +655,7 @@ if(disaggregated == "1985-present"){
     N4xaxis <- 1:25
 }
 # Cook's D
-plot(y = posa_df$posa2^2, x = N2xaxis, xlab = "Observation", ylab = "Cook's D") # should follow the line
+plot(y = posa_df$posa2^2, x = N2xaxis[3:length(yearF)], xlab = "Observation", ylab = "Cook's D") # should follow the line
 
 par(mfrow = c(1,1))
 dev.off()
@@ -722,10 +718,10 @@ d2 <- post_param(param = "delta[1]", priormean = 11.5, priorsd = 5.7, jags = out
 # process error-----
 # this is for a process error that is constant within time periods.
 # this cuts the array on the "a" which is the tau.proc for different ages. Then the apply cuts it by the z which is the time series.
-tp1 <- apply(out$sims.list$tau.proc[,1,],2,'median')
-tp2 <- apply(out$sims.list$tau.proc[,2,],2,'median')
-cri_tp1 <- apply(out$sims.list$tau.proc[,1,],2,'quantile', c(0.025, 0.975))
-cri_tp2 <- apply(out$sims.list$tau.proc[,2,],2,'quantile', c(0.025, 0.975))
+# tp1 <- apply(out$sims.list$tau.proc[,1,],2,'median')
+# tp2 <- apply(out$sims.list$tau.proc[,2,],2,'median')
+# cri_tp1 <- apply(out$sims.list$tau.proc[,1,],2,'quantile', c(0.025, 0.975))
+# cri_tp2 <- apply(out$sims.list$tau.proc[,2,],2,'quantile', c(0.025, 0.975))
 
 # plot(1:4, cri$tau.proc_cri)
 # 
