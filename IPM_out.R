@@ -25,6 +25,7 @@ source("IPM_JAGS-settings.R")
 
 
 # MCMC settings
+#ni <- 1000; nt <- 6; nb <- 50; nc <- 3
 ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
 #ni <- 200000; nt <- 60; nb <- 30000; nc <- 3
 # ni <- 2000000; nt <- 600; nb <- 300000; nc <- 3
@@ -80,18 +81,58 @@ if(matrix == "no") {
     out$sims.list$mu2 <- out$sims.list$mu[,,1]
     #out$sims.list$mu3 <- out$sims.list$mu[,,2]
     #out$sims.list$mu4 <- out$sims.list$mu[,,3]
-    out$sims.list$eps2 <- out$sims.list$eps[,,1]
-    out$sims.list$eps3 <- out$sims.list$eps[,,2]
-    out$sims.list$eps4 <- out$sims.list$eps[,,3]
-    out$sims.list$osa2 <- out$sims.list$osa[,,1]
-    out$sims.list$osa3 <- out$sims.list$osa[,,2]
-    out$sims.list$osa4 <- out$sims.list$osa[,,3]
-    out$sims.list$osa_sd2 <- out$sims.list$osa_sd[,,1]
-    out$sims.list$osa_sd3 <- out$sims.list$osa_sd[,,2]
-    out$sims.list$osa_sd4 <- out$sims.list$osa_sd[,,3]
+    # out$sims.list$eps2 <- out$sims.list$eps[,,1]
+    # out$sims.list$eps3 <- out$sims.list$eps[,,2]
+    # out$sims.list$eps4 <- out$sims.list$eps[,,3]
+    # out$sims.list$osa2 <- out$sims.list$osa[,,1]
+    # out$sims.list$osa3 <- out$sims.list$osa[,,2]
+    # out$sims.list$osa4 <- out$sims.list$osa[,,3]
+    # out$sims.list$osa_sd2 <- out$sims.list$osa_sd[,,1]
+    # out$sims.list$osa_sd3 <- out$sims.list$osa_sd[,,2]
+    # out$sims.list$osa_sd4 <- out$sims.list$osa_sd[,,3]
 }
 
 str(out$sims.list)
+plot(density(head(out$sims.list$s[,,1])))
+head(out$sims.list$s[,,1])
+apply(head(out$sims.list$s[,,1]), 2, 'median')
+apply(head(out$sims.list$s[,,1]), 2, 'mean')
+plot(density(head(out$sims.list$logit_s[,,1])))
+
+plot(density(head(out$sims.list$s[,,2])))
+apply(head(out$sims.list$s[,,2]), 2, 'median')
+apply(head(out$sims.list$s[,,2]), 2, 'mean')
+plot(density(head(out$sims.list$logit_s[,,2])))
+
+
+age2 = apply(out$sims.list$N[,,1], 2, 'median')
+age3 = apply(out$sims.list$N[,,2], 2, 'median')
+age4 = apply(out$sims.list$N[,,3], 2, 'median')
+
+tmp2 <- as.data.frame(cbind(year = 1985:2023, N2=age2, N3 = lead(age3), N4=lead(age4, 2)))
+tmp2$immN <- log(exp(tmp2$N2)*(1-jags.data.m$m))
+tmp2$matN <- log(exp(tmp2$N2)*jags.data.m$m)
+
+tmp2_long <- pivot_longer(tmp2, cols = c("N2", "matN", "immN", "N3", "N4"))
+level_order <- c("N2", "matN", "immN", "N3", "N4")
+tmp2_long$name <- factor(tmp2_long$name, levels=level_order)
+
+# whole time series
+p <- ggplot(data = tmp2_long, aes (x = year, y = exp(value), fill = factor(name, level_order)))
+p <- p + geom_bar(stat="identity", position=position_dodge())
+p <- p + scale_fill_manual(values = c("orange", "black", "lightgoldenrod2", "darkgreen", "red"))
+p <- p + guides(fill=guide_legend(title="Age/Mat"))
+p <- p + theme_bw()
+p
+
+
+p <- ggplot(data = tmp2_long[31:195,], aes (x = year, y = exp(value), fill = factor(name, level_order)))
+p <- p + geom_bar(stat="identity", position=position_dodge())
+p <- p + scale_fill_manual(values = c("orange", "black", "lightgoldenrod2", "darkgreen", "red"))
+p <- p + guides(fill=guide_legend(title="Age/Mat"))
+p <- p + theme_bw()
+p
+
 
 # JAGS output ----
 ## extract raw values from chains
@@ -200,6 +241,24 @@ tmpN4_plot
 ### couldn't get this to run in JAGS
 plot(density(out$sims.list$osa[,,1]))
 str(out$sims.list$osa[,,1])
+
+# these are equivalent.  I can calculate them in R and in JAGS but I can't get POSA
+raw$osa_sd[1,5,1]
+sd(raw$osa[1, 1:4,1])
+
+# these are equivalent.  I can calculate them in R and JAGS and I can get POSA
+sd(raw$osa_sd[1,1:39,1])
+sd(raw$osa[1,,1])
+
+# 
+raw$posa[1,5,1]
+raw$osa[1,5,1]/sd(raw$osa[1, 1:4,1]) # this is equivalent to next line but not posa
+raw$osa[1,5,1]/raw$osa_sd[1,5,1]
+raw$osa[1,5,1]/sd(raw$osa[1, 1:39,1]) # this produces the same as posa 
+
+
+raw$osa[1,3,1]/raw$osa_sd[1,3,1]
+
 
 # I think this is on the right track but I can't get it to work in JAGS
 #tmpM <- matrix(NA, c(7500, 39)) # create an emptly matrix
@@ -754,6 +813,60 @@ d2 <- post_param(param = "delta[1]", priormean = 11.5, priorsd = 5.7, jags = out
 # plot(1985:2023, s3, type= 'n', ylim = c(0,300))
 # lines(1985:2023, 1/cri_s3[2,])
 # lines(1985:2023, 1/cri_s3[1,])
+
+
+#2010 problem----
+## plot of the age disaggregaged data
+tmp <- df_dis_summ %>%
+     filter(age == 2| age == 3| age == 4)
+
+p <- ggplot(data = tmp, aes(x = year, y = log(abun), colour = age))
+p <- p + geom_point()
+p <- p + scale_colour_manual(values = c("black", "red", "pink"))
+p
+ggsave("2010_problem.png", width = 7, height = 5)
+
+# as above but from 1985
+tmp <- pivot_longer(df_dis_tabLog[,1:4], cols = c("I2", "I3", "I4"), names_to = "age", values_to = "Ln_abund")
+p <- ggplot(data = tmp, aes(x = year, y = Ln_abund, colour = age))
+p <- p + geom_point()
+p <- p + scale_colour_manual(values = c("black", "red", "pink"))
+p
+
+
+# plot the equivalent age disaggregated values from teh process equation
+# 1999-pres
+tmp <- as.data.frame(cbind(year = 1985:2023, N2 = calc$N2, N3 = calc$N3, N4 = calc$N4))
+tmp <- pivot_longer(tmp, cols = c("N2", "N3", "N4"), names_to = c("age"), values_to = "ln_abun")
+
+p <- ggplot(data = tmp, aes(x = year, y = ln_abun, colour = age))
+p <- p + geom_point()
+p <- p + scale_colour_manual(values = c("black", "red", "pink"))
+p
+ggsave("2010_problem_SSM.png", width = 7, height = 5)
+
+# plot the equivalent age disaggregated values from teh process equation - 1999-present
+tmp <- subset(tmp, year >=1999)
+
+p <- ggplot(data = tmp, aes(x = year, y = ln_abun, colour = age))
+p <- p + geom_point()
+p <- p + scale_colour_manual(values = c("black", "red", "pink"))
+p
+ggsave("2010_problem_SSM_1999.png", width = 7, height = 5)
+
+
+# Divya table
+str(df_dis_tabLog)
+tmp <- as.data.frame(cbind(year = 1985:2023, jags.data.m$matI, jags.data.m$m))
+tmp <- rename(tmp, I2 = V2, I3 = V3, I4 = V4, m = V5)
+tmp$s2 <- lead(exp(tmp$I3), 1)/(exp(tmp$I2) - exp(tmp$I2)*tmp$m)
+str(tmp)
+
+plot(tmp$year, tmp$s2)
+abline(h=1)
+
+# S ----
+calc$s
 
 # End----
 
