@@ -8097,27 +8097,273 @@ for (t in 8:n.occasions){
 
 
 
-# 38: Extend model time----
-## ln scale: N2-N4 + forecast for each age
-### Added in the capelin data from 1985-1998 but in matrix form
-#### AS 31 but with I and all the diagnostics - this adds parameters to the loops and cleaned up much excess code Ni = N age[i]
-##### eps added for N2-N4 and osa
-#####  minimize code and reduce tau.proc to 3 values
-##### extend tau.proc and tau.obs to two time periods (tp) corresponding to the pre/post collapse
-#### added osa and posa resids
-#### add TI, CO, and LD in time appropriate periods
+# # 38: Extend model time----
+# ## ln scale: N2-N4 + forecast for each age
+# ### Added in the capelin data from 1985-1998 but in matrix form
+# #### AS 31 but with I and all the diagnostics - this adds parameters to the loops and cleaned up much excess code Ni = N age[i]
+# ##### eps added for N2-N4 and osa
+# #####  minimize code and reduce tau.proc to 3 values
+# ##### extend tau.proc and tau.obs to two time periods (tp) corresponding to the pre/post collapse
+# #### added osa and posa resids
+# #### add TI, CO, and LD in time appropriate periods
+# 
+# cap.v36 = '
+#  model {
+# #PRIORS
+# ###### Need to check that these are reasonable
+# ## Prior for sd of process - N2-N3[t] uninformative
+# # a is process variance for age group, tp for time period pre/post collapse
+#  
+#   sigma.proc ~ dunif(0.01, 20)
+#   sigma2.proc <- pow(sigma.proc, 2)
+#   tau.proc <- pow(sigma.proc, -2)
+# 
+# 
+# ## Prior for sd of observation - I2-I4[t] - uninformative
+#   sigma.obs ~ dunif(0.01, 20)
+#   sigma2.obs <- pow(sigma.obs, 2)
+#   tau.obs <- pow(sigma.obs, -2)
+# 
+# 
+# ### Priors for Initial values for N2-N4[t] informative - based on actual values
+#   N[1,1] ~ dnorm(12.8, 1/9)
+#    N[1,2] ~ dnorm(11.3, 1/9)
+#    N[1,3] ~ dnorm(8.2, 1/9)
+# 
+# 
+# # LIKELIHOODS
+#  ## State process
+#    ### N2
+#    # From Murphy the equation relating R = LD*S is R = 0.40x + 2.80
+#    # priors from Lewis et al. 2019 - mostly uninformative but see TI-width - not sure here
+#    for(a in 1:Ni){
+#    alpha[a] ~ dnorm(0, 100^-2)      # int
+#    beta[a] ~ dnorm(0, 100^-2)       # larval abund
+#    gamma[a] ~ dunif(0, 100)         # tices-max rate of increase
+#    delta[a] ~ dgamma(11.5, 5.7)     # tice-width
+#    epsilon[a] ~ dnorm(0, 100^-2)   # condition # for CO
+# }
+# 
+# # Ale"s ice mode predicts N2
+# for (t in 1:11) { #18
+#       mu[t,1] <- alpha[1] + gamma[1]*TI[t]*(1-TI[t]/delta[1])
+#   }
+# 
+# # Use the ice model to get a survival rate for N3 & N4
+# for (a in 2:Ni){
+#    for (t in 1:11) { #18
+#       logit_s[t,a-1] <- alpha[a] + gamma[a]*TI[t]*(1-TI[t]/delta[a])
+#       s[t,a-1] <- exp(logit_s[t,a-1])/(1 + exp(logit_s[t,a-1]))
+#    }
+# }
+# 
+# # Ale"s ice mode predicts N2 but is modified by condition
+# for (t in 12:18) { #18
+#      mu[t,1] <- alpha[1] + gamma[1]*TI[t]*(1-TI[t]/delta[1]) + epsilon[1]*CO[t-1]
+#    }
+#       
+# for (a in 2:Ni){
+#    for (t in 12:18) { #18
+#       phi[t,a-1] <- alpha[a] + gamma[a]*TI[t]*(1-TI[t]/delta[a]) + epsilon[a]*CO[t-1]
+#       logit_s[t,a-1] <- ifelse(phi[t, a-1] > 700, 700, phi[t, a-1])
+#       s[t,a-1] <- exp(logit_s[t,a-1])/(1 + exp(logit_s[t,a-1]))
+#    }
+# }
+# 
+# 
+# # N2; 1985:2002
+#    for (t in 2:18) { #18
+#       N[t,1] ~ dnorm(mu[t,1], tau.proc)
+#    }
+# 
+#    for (t in 2:18-1) { #18
+#       N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1]), tau.proc) #N3
+#       N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.8)*s[t,2]), tau.proc)
+#    } #N4
+# 
+# 
+# # ######################################
+# 
+# # mu and N2: 2003-present
+# for (t in 19:n.occasions) { #19
+#       mu[t,1] <- alpha[1] + beta[1]*LD[t-2] + gamma[1]*TI[t]*(1-TI[t]/delta[1]) + epsilon[1]*CO[t-1]
+#       N[t,1] ~ dnorm(mu[t,1], tau.proc)
+#    }
+# 
+# 
+# # mu: N3 and N4; 2003-present
+# ##
+# for (a in 2:Ni){
+#   for (t in 19:n.occasions) { #19
+#     phi[t,a-1] <- alpha[a] + gamma[a]*TI[t]*(1-TI[t]/delta[a]) + epsilon[a]*CO[t-1]
+#      logit_s[t,a-1] <- ifelse(phi[t, a-1] > 700, 700, phi[t, a-1])
+#      s[t,a-1] <- exp(logit_s[t,a-1])/(1 + exp(logit_s[t,a-1]))
+#    }
+# }
+# 
+# 
+# #N3 & N4; 2003-present
+#    for (t in 19:n.occasions-1) { #19
+#       N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1]), tau.proc) #N3
+#       N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.8)*s[t,2]), tau.proc) #N4
+#    }
+# 
+# 
+# # raw resids
+# for (a in 1:Ni){
+#      for (t in 1:n.occasions){
+#      # eps[t,a] <- mu[t,a] - N[t,a] # probably wrong N[t] - mu
+#      #eps[t,a] <- N[t,a] - matI[t,a]
+#      #eps[t,a] <- N[t,a] - mean(N[,a])
+#      #eps[t,a] <- N[t,a] - mu[t,a]
+#      # eps[t,a] <- matI[t,a] - mean(N[,a]) See AugerMethe about this line and the next - do you use N[,a] or N[t,a]
+#      eps[t,a] <- matI[t,a] - mean(N[t,a])
+#      }
+# }
+# 
+# # one step ahead resids - could set a p
+# for (a in 1:Ni){
+#      posa[1, a] ~ dnorm(0, 1/10)
+#      posa[2, a] ~ dnorm(0, 1/10)
+#      osa[1, a] ~ dnorm(0, 1/10)
+#      osa[2, a] ~ dnorm(0, 1/10)
+#      osa_mean[1, a] ~ dnorm(0, 1/10)
+#      osa_mean[2, a] ~ dnorm(0, 1/10)
+#      osa_sd[1, a] ~ dnorm(0, 1/10)
+#      osa_sd[2, a] ~ dnorm(0, 1/10)
+#      #osa_sd[1, a] ~ duniform(0.1, 10)
+#      #osa_sd[2, a] ~ duniform(0.1, 10)
+#      pe[1, a] ~ dnorm(0, 1/10)
+# }
+# 
+# for (a in 1:Ni){
+#      for (t in 3:n.occasions){
+#      osa_mean[t,a] <- mean(N[1:(t-1), a])
+#      osa[t,a] <- N[t,a] - osa_mean[t,a]
+#      osa_sd[t,a] <- sd(osa[1:(t-1), a]) # this is the SD for t-1
+#      #posa[t,a] <- osa[t,a]/sd(osa[,a]) # this is the SD for all t
+#      #posa[t,a] <- osa[t,a]/osa_mean[t,a] # this is nonsense but it works
+#      #posa[t,a] <- osa[t,a]*osa_sd[t,a]   # this is nonsense but it works
+#      #posa[t,a] <- osa[t,a]/osa_sd[t,a] # get error in parent value posa[3,1] - WTF WTF WTF!!!!!!!!
+#      #posa[t,a] <- osa[t,a]/sd(osa[1:(t-1), a])
+#      }
+# }
+# 
+# for (a in 1:(Ni-1)){
+# for (t in 3:n.occasions){
+#      #N8[t,a] <- N[t,a+1]/N[t,a]) # this works som why not second posa option???
+#      #N8[t,a] <- N[t,a+1]/(sqrt(N[t,a])) # this does not work
+# #     x[t,a] <- abs(N[t,a])
+# # N8[t,a] <- N[t,a+1]/x[t,a] # this does work
+# #     x[t,a] <- mean(N[1:(t-1),a])
+# # N8[t,a] <- N[t,a+1]/x[t,a] # this does work
+#      x[t,a] <- sd(N[1:(t-1),a])
+#  N8[t,a] <- N[t,a+1]/x[t,a] # this does work
+# }
+# }
+# 
+# # process error
+#      for (t in 2:n.occasions){
+#       pe[t,1] <- N[t,1] - mu[t-1,1]
+#      pe[t,2] <- N[t,2] - log(exp(N[t,1])*(1-m[t]))
+#       pe[t,3] <- N[t,3] - log(exp(N[t,2])*(1-0.95))
+#      }
+# 
+#  ## Observation
+#    ### see Schaub and Kerry pg 263 - this is for estimated indices instead of counts - eliminateed this for now
+#    #### y[t] is the "true" index that is sampled by I[t] - tau.obs is the sampling error of the index
+#    #### N[t] is the "true" population (process) where the tau is the additional residual error - i may have tehse confused.
+# 
+# 
+# for (a in 1:Ni){
+#    for (t in 1:n.occasions) {
+#       matI[t,a] ~ dnorm(N[t,a], tau.obs)       # sampled observation
+#    }
+# }
+# 
+# 
+# 
+# for (t in 1:n.occasions) {
+#      # I[t] ~ dnorm(log(exp(matI[t,1]) + exp(matI[t,2]) + exp(matI[t,3])), tau.obs)
+#      I[t] <- log(exp(matI[t,1]) + exp(matI[t,2]) + exp(matI[t,3]))
+# }
+# 
+# # Assessing the fit of the state-space model
+#    ## 1. Compute fit statistics for observed data.
+#    ### 1.1 Discrepancy meansure: mean absolute error
+# 
+#    for (t in 1:n.occasions) {
+#       I.exp[t] <- log(exp(N[t,1]) + exp(N[t,2]) + exp(N[t,3]))
+#       Dssm.obs[t] <- abs((I[t] - I.exp[t])/I[t])
+#    }
+#    Dmape.obs <- sum(Dssm.obs)
+# 
+#    # ## 1.2 Test statistic: number of turns or switches - jaggedness
+#    for (t in 1:(n.occasions-2)){
+#       Tt1.obs[t] <- step(I[t+2] - I[t+1])
+#       Tt2.obs[t] <- step(I[t+1] - I[t])
+#       # Tt12.obs[t] <- step(I2[t+2] - I2[t+1])
+#       # Tt13.obs[t] <- step(I3[t+2] - I3[t+1])
+#       # Tt22.obs[t] <- step(I2[t+1] - I2[t])
+#       # Tt23.obs[t] <- step(I3[t+1] - I3[t])
+#       # Tt1.obs[t] <- log(exp(Tt12.obs[t]) + exp(Tt13.obs[t]))
+#       # Tt2.obs[t] <- log(exp(Tt22.obs[t]) + exp(Tt23.obs[t]))
+#       Tt3.obs[t] <- equals(Tt1.obs[t] + Tt2.obs[t], 1)
+#    }
+#    Tturn.obs <- sum(Tt3.obs)
+# 
+# 
+#    ## 2.1 Simulated data
+# for (t in 1:n.occasions){
+#       #    y2.rep[t] ~ dnorm(N2[t], tau.obs)
+#       #    y3.rep[t] ~ dnorm(N3[t], tau.obs)
+#       I2.rep[t] ~ dnorm(N[t,1], tau.obs)
+#       I3.rep[t] ~ dnorm(N[t,2], tau.obs)
+#       I4.rep[t] ~ dnorm(N[t,3], tau.obs)
+#       I.rep[t] ~ dnorm(log(exp(I2.rep[t]) + exp(I3.rep[t]) + exp(I4.rep[t])), tau.obs)
+#       Dssm.rep[t] <- abs((I.rep[t] - I.exp[t])/I.rep[t])
+# }
+# 
+# 
+#    Dmape.rep <- sum(Dssm.rep)
+# 
+# 
+#    ##Test statistic: number of turns or switches - jaggedness
+#    for (t in 1:(n.occasions-2)){
+#       Tt1.rep[t] <- step(I.rep[t+2] - I.rep[t+1])
+#       Tt2.rep[t] <- step(I.rep[t+1] - I.rep[t])
+#       Tt3.rep[t] <- equals(Tt1.rep[t] + Tt2.rep[t], 1)
+#    }
+#    Tturn.rep <- sum(Tt3.rep)
+# 
+# }'
 
+
+
+# # 38: Extend model time----
+# ## ln scale: N2-N4 + forecast for each age
+# ### Added in the capelin data from 1985-1998 but in matrix form
+# #### AS 31 but with I and all the diagnostics - this adds parameters to the loops and cleaned up much excess code Ni = N age[i]
+# ##### eps added for N2-N4 and osa
+# #####  minimize code and reduce tau.proc to 3 values
+# ##### extend tau.proc and tau.obs to two time periods (tp) corresponding to the pre/post collapse
+# #### added osa and posa resids
+# #### add TI, CO, and LD in time appropriate periods
+# 
 cap.v36 = '
  model {
 #PRIORS
 ###### Need to check that these are reasonable
 ## Prior for sd of process - N2-N3[t] uninformative
 # a is process variance for age group, tp for time period pre/post collapse
- 
+
   sigma.proc ~ dunif(0.01, 20)
   sigma2.proc <- pow(sigma.proc, 2)
   tau.proc <- pow(sigma.proc, -2)
 
+  sigmaRW.proc ~ dunif(0.01, 20)
+  sigmaRW2.proc <- pow(sigmaRW.proc, 2)
+  tauRW.proc <- pow(sigmaRW.proc, -2)
 
 ## Prior for sd of observation - I2-I4[t] - uninformative
   sigma.obs ~ dunif(0.01, 20)
@@ -8129,6 +8375,7 @@ cap.v36 = '
   N[1,1] ~ dnorm(12.8, 1/9)
    N[1,2] ~ dnorm(11.3, 1/9)
    N[1,3] ~ dnorm(8.2, 1/9)
+   beta[1] ~ dnorm(0, 100^-2) # larval abund
 
 
 # LIKELIHOODS
@@ -8138,13 +8385,12 @@ cap.v36 = '
    # priors from Lewis et al. 2019 - mostly uninformative but see TI-width - not sure here
    for(a in 1:Ni){
    alpha[a] ~ dnorm(0, 100^-2)      # int
-   beta[a] ~ dnorm(0, 100^-2)       # larval abund
    gamma[a] ~ dunif(0, 100)         # tices-max rate of increase
    delta[a] ~ dgamma(11.5, 5.7)     # tice-width
    epsilon[a] ~ dnorm(0, 100^-2)   # condition # for CO
 }
 
-# Ale"s ice mode predicts N2
+# # Ale"s ice mode predicts N2
 for (t in 1:11) { #18
       mu[t,1] <- alpha[1] + gamma[1]*TI[t]*(1-TI[t]/delta[1])
   }
@@ -8161,24 +8407,55 @@ for (a in 2:Ni){
 for (t in 12:18) { #18
      mu[t,1] <- alpha[1] + gamma[1]*TI[t]*(1-TI[t]/delta[1]) + epsilon[1]*CO[t-1]
    }
-      
+
 for (a in 2:Ni){
    for (t in 12:18) { #18
-      phi[t,a-1] <- alpha[a] + gamma[a]*TI[t]*(1-TI[t]/delta[a]) + epsilon[a]*CO[t-1]
-      logit_s[t,a-1] <- ifelse(phi[t, a-1] > 700, 700, phi[t, a-1])
+#      phi[t,a-1] <- alpha[a] + gamma[a]*TI[t]*(1-TI[t]/delta[a]) + epsilon[a]*CO[t-1]
+#      logit_s[t,a-1] <- ifelse(phi[t, a-1] > 700, 700, phi[t, a-1])
+      logit_s[t,a-1] <- alpha[a] + gamma[a]*TI[t]*(1-TI[t]/delta[a]) + epsilon[a]*CO[t-1]
       s[t,a-1] <- exp(logit_s[t,a-1])/(1 + exp(logit_s[t,a-1]))
    }
 }
 
 
-# N2-3; 1985:1990
+# N2; 1985:2002
    for (t in 2:18) { #18
       N[t,1] ~ dnorm(mu[t,1], tau.proc)
+     # N[t,1] ~ dnorm(N[t-1,1], tauRW.proc)
    }
 
-   for (t in 2:18-1) { #18
-      N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1]), tau.proc) #N3
-      N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2]), tau.proc)
+ #for (t in 1:n.occasions){
+#      R[t,1] ~ dnorm(0.26, 1/0.19)  # grabbed this from page 5 of Flynn et al.  Took midpoint of 17-35% and 1/range for precision
+    #  R[t,2] ~ dnorm(0.73, 1/0.15)  # grabbed this from page 5 of Flynn et al.  Took midpoint of 65-80% and 1/range for precision
+  #     R[t,2] ~ dnorm(0.73, 10^-2)  # modifiyting above just to see if it helps with invalid parent values
+  #}
+
+   for (t in 2:18-1) { #18  *(1-m[t])*s[t,1] *m[t]*R[t,1]*s[t,1])
+#      N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,2]) 
+ #         + 0.05*0.26*s[t,2], tau.proc) #N3
+
+      # N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1])
+      #     + log(0.*m[t]*exp(N[t,1])*s[t,1]), tau.proc) #N3
+      # 
+      # N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2]) + log(0.73*0.95*exp(N[t,2])*s[t,2]), tau.proc)
+
+#     N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1] + 0.26*m[t]*exp(N[t,1])*s[t,1]), tau.proc) #N3
+
+    N[t+1,2] ~ dnorm(log(exp(N[t,1])/0.5*(1-m[t])*s[t,1] + 0.13*m[t]*exp(N[t,1])/0.5*s[t,1]), tau.proc) #N3
+
+     N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2] + 0.36*0.95*exp(N[t,2])*s[t,2]), tau.proc)
+     #N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2] + R[t,2]*0.95*exp(N[t,2])*s[t,2]), tau.proc)
+
+      # N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1])
+      #     + log(R[t,1]*m[t]*exp(N[t,1])*s[t,1]), tau.proc) #N3
+      # 
+      # N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2]) + log(R[t,2]*0.95*exp(N[t,2])*s[t,2]), tau.proc)
+ 
+# Divya - no maturity
+   # N[t+1,2] ~ dnorm(log(exp(N[t,1])*s[t,1]) 
+   #        + log(0.26*exp(N[t,1])), tau.proc) #N3
+   # 
+   #    N[t+1,3] ~ dnorm(log(exp(N[t,2])*s[t,2]) + log(0.73*exp(N[t,2])), tau.proc)
    } #N4
 
 
@@ -8188,6 +8465,7 @@ for (a in 2:Ni){
 for (t in 19:n.occasions) { #19
       mu[t,1] <- alpha[1] + beta[1]*LD[t-2] + gamma[1]*TI[t]*(1-TI[t]/delta[1]) + epsilon[1]*CO[t-1]
       N[t,1] ~ dnorm(mu[t,1], tau.proc)
+ #     N[t,1] ~ dnorm(N[t-1,1], tauRW.proc)
    }
 
 
@@ -8197,19 +8475,47 @@ for (a in 2:Ni){
   for (t in 19:n.occasions) { #19
     phi[t,a-1] <- alpha[a] + gamma[a]*TI[t]*(1-TI[t]/delta[a]) + epsilon[a]*CO[t-1]
      logit_s[t,a-1] <- ifelse(phi[t, a-1] > 700, 700, phi[t, a-1])
+   #  logit_s[t,a-1] <- alpha[a] + gamma[a]*TI[t]*(1-TI[t]/delta[a]) + epsilon[a]*CO[t-1]
      s[t,a-1] <- exp(logit_s[t,a-1])/(1 + exp(logit_s[t,a-1]))
    }
 }
 
 
 #N3 & N4; 2003-present
-   for (t in 19:n.occasions-1) { #19
-      N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1]), tau.proc) #N3
-      N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2]), tau.proc) #N4
+   for (t in 19:n.occasions-1) { #19 *(1-m[t])*s[t,1] *m[t]*R[t
+   #,1]*s[t,1])
+#      N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,2]) + #0.05*0.26*s[t,2], tau.proc) #N3
+ 
+      # N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1])
+      #     + log(0.26*m[t]*exp(N[t,1])*s[t,1]), tau.proc) #N3
+      # 
+      # N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2])
+      #     + log(0.73*0.95*exp(N[t,2])*s[t,2]), tau.proc) #N4
+
+#      N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1]
+         # + 0.26*m[t]*exp(N[t,1])*s[t,1]), tau.proc) #N3
+
+    N[t+1,2] ~ dnorm(log(exp(N[t,1])/0.5*(1-m[t])*s[t,1] + 0.13*m[t]*exp(N[t,1])/0.5*s[t,1]), tau.proc) #N3
+
+     N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2] + 0.36*0.95*exp(N[t,2])*s[t,2]), tau.proc) #N4
+     # N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2] + R[t,2]*0.95*exp(N[t,2])*s[t,2]), tau.proc)
+
+      # N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1])
+      #     + log(R[t,1]*m[t]*exp(N[t,1])*s[t,1]), tau.proc) #N3
+      # 
+      # N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2])
+      #     + log(R[t,2]*0.95*exp(N[t,2])*s[t,2]), tau.proc) #N4          
+
+# Divya - no maturity
+      # N[t+1,2] ~ dnorm(log(exp(N[t,1])*s[t,1]) 
+      #     + log(0.26*exp(N[t,1])), tau.proc) #N3
+      # 
+      # N[t+1,3] ~ dnorm(log(exp(N[t,2])*s[t,2]) 
+      #     + log(0.73*exp(N[t,2])), tau.proc) #N4
    }
 
 
-# process error
+# raw resids
 for (a in 1:Ni){
      for (t in 1:n.occasions){
      # eps[t,a] <- mu[t,a] - N[t,a] # probably wrong N[t] - mu
@@ -8223,30 +8529,50 @@ for (a in 1:Ni){
 
 # one step ahead resids - could set a p
 for (a in 1:Ni){
-     # osa[1, a] ~ dnorm(0, 1/10)
-     # posa[1, a] ~ dnorm(0, 1/10)
+     posa[1, a] ~ dnorm(0, 1/10)
+     posa[2, a] ~ dnorm(0, 1/10)
      osa[1, a] ~ dnorm(0, 1/10)
      osa[2, a] ~ dnorm(0, 1/10)
+     osa_mean[1, a] ~ dnorm(0, 1/10)
+     osa_mean[2, a] ~ dnorm(0, 1/10)
      osa_sd[1, a] ~ dnorm(0, 1/10)
      osa_sd[2, a] ~ dnorm(0, 1/10)
+     #osa_sd[1, a] ~ duniform(0.1, 10)
+     #osa_sd[2, a] ~ duniform(0.1, 10)
      pe[1, a] ~ dnorm(0, 1/10)
 }
 
 for (a in 1:Ni){
-#     for (t in 2:n.occasions){
      for (t in 3:n.occasions){
      osa_mean[t,a] <- mean(N[1:(t-1), a])
      osa[t,a] <- N[t,a] - osa_mean[t,a]
-     osa_sd[t,a] <- sd(osa[1:(t-1), a])
-     posa[t,a] <- osa[t,a]/sd(osa[,a])
+     osa_sd[t,a] <- sd(osa[1:(t-1), a]) # this is the SD for t-1
+     #posa[t,a] <- osa[t,a]/sd(osa[,a]) # this is the SD for all t
+     #posa[t,a] <- osa[t,a]/osa_mean[t,a] # this is nonsense but it works
+     posa[t,a] <- osa[t,a]*osa_sd[t,a]   # this is nonsense but it works
+     #posa[t,a] <- osa[t,a]/osa_sd[t,a] # get error in parent value posa[3,1] - WTF WTF WTF!!!!!!!!
+     #posa[t,a] <- osa[t,a]/sd(osa[1:(t-1), a])
      }
 }
 
+# for (a in 1:(Ni-1)){
+# for (t in 3:n.occasions){
+#      #N8[t,a] <- N[t,a+1]/N[t,a]) # this works som why not second posa option???
+#      #N8[t,a] <- N[t,a+1]/(sqrt(N[t,a])) # this does not work
+# #     x[t,a] <- abs(N[t,a])
+# # N8[t,a] <- N[t,a+1]/x[t,a] # this does work
+# #     x[t,a] <- mean(N[1:(t-1),a])
+# # N8[t,a] <- N[t,a+1]/x[t,a] # this does work
+#      x[t,a] <- sd(N[1:(t-1),a])
+#  N8[t,a] <- N[t,a+1]/x[t,a] # this does work
+# }
+# }
+
 # process error
      for (t in 2:n.occasions){
-      pe[t,1] <- N[t,1] - mu[t-1,1]
-     pe[t,2] <- N[t,2] - log(exp(N[t,1])*(1-m[t]))
-      pe[t,3] <- N[t,3] - log(exp(N[t,2])*(1-0.95))
+ #     pe[t,1] <- N[t,1] - mu[t-1,1]
+     pe[t,2] <- N[t,2] - log(exp(N[t,1])*s[t,1])
+      pe[t,3] <- N[t,3] - log(exp(N[t,2])*s[t,2])
      }
 
  ## Observation
@@ -8317,3 +8643,93 @@ for (t in 1:n.occasions){
    Tturn.rep <- sum(Tt3.rep)
 
 }'
+
+
+
+
+# # 38: Extend model time----
+# ## ln scale: N2-N4 + forecast for each age
+# ### Added in the capelin data from 1985-1998 but in matrix form
+# #### AS 31 but with I and all the diagnostics - this adds parameters to the loops and cleaned up much excess code Ni = N age[i]
+# ##### eps added for N2-N4 and osa
+# #####  minimize code and reduce tau.proc to 3 values
+# ##### extend tau.proc and tau.obs to two time periods (tp) corresponding to the pre/post collapse
+# #### added osa and posa resids
+# #### add TI, CO, and LD in time appropriate periods
+# 
+# cap.v36 = '
+#  model {
+# #PRIORS
+# ###### Need to check that these are reasonable
+# ## Prior for sd of process - N2-N3[t] uninformative
+# # a is process variance for age group, tp for time period pre/post collapse
+#  
+#   sigma.proc ~ dunif(0.01, 20)
+#   sigma2.proc <- pow(sigma.proc, 2)
+#   tau.proc <- pow(sigma.proc, -2)
+# 
+#   sigmaRW.proc ~ dunif(0.01, 20)
+#   sigmaRW2.proc <- pow(sigmaRW.proc, 2)
+#   tauRW.proc <- pow(sigmaRW.proc, -2)
+# 
+# ## Prior for sd of observation - I2-I4[t] - uninformative
+#   sigma.obs ~ dunif(0.01, 20)
+#   sigma2.obs <- pow(sigma.obs, 2)
+#   tau.obs <- pow(sigma.obs, -2)
+# 
+# 
+# ### Priors for Initial values for N2-N4[t] informative - based on actual values
+#   N[1,1] ~ dnorm(12.8, 1/9)
+#   N[1,2] ~ dnorm(11.3, 1/9)
+# #   Nstart ~ dnorm(11.3, 1/9)
+# #    N[1,2] <- Nstart
+# #   T[1,2] ~ dnorm(11.3, 1/9)
+# #   N[1,3] ~ dnorm(8.2, 1/9)
+#    beta[1] ~ dnorm(0, 100^-2) # larval abund
+# 
+# 
+# # LIKELIHOODS
+#  ## State process
+#    ### N2
+#    # From Murphy the equation relating R = LD*S is R = 0.40x + 2.80
+#    # priors from Lewis et al. 2019 - mostly uninformative but see TI-width - not sure here
+#    for(a in 1:Ni){
+#    alpha[a] ~ dnorm(0, 100^-2)      # int
+#    gamma[a] ~ dunif(0, 100)         # tices-max rate of increase
+#    delta[a] ~ dgamma(11.5, 5.7)     # tice-width
+#    epsilon[a] ~ dnorm(0, 100^-2)   # condition # for CO
+# }
+# 
+# # Ale"s ice mode predicts N2
+# for (t in 1:11) { #18
+#       mu[t,1] <- alpha[1] + gamma[1]*TI[t]*(1-TI[t]/delta[1])
+#   }
+# 
+# # Ale"s ice mode predicts N2 but is modified by condition
+# for (t in 12:18) { #18
+#      mu[t,1] <- alpha[1] + gamma[1]*TI[t]*(1-TI[t]/delta[1]) + epsilon[1]*CO[t-1]
+#    }
+#       
+# # N2; 1985:2002
+#    for (t in 2:18) { #18
+#       N[t,1] ~ dnorm(mu[t,1], tau.proc)
+#      # N[t,1] ~ dnorm(N[t-1,1], tauRW.proc)
+#    }
+# 
+# # ######################################
+# # mu and N2: 2003-present
+# for (t in 19:n.occasions) { #19
+#       mu[t,1] <- alpha[1] + beta[1]*LD[t-2] + gamma[1]*TI[t]*(1-TI[t]/delta[1]) + epsilon[1]*CO[t-1]
+#       N[t,1] ~ dnorm(mu[t,1], tau.proc)
+#    }
+# 
+# 
+#  ## Observation
+#    ### see Schaub and Kerry pg 263 - this is for estimated indices instead of counts - eliminateed this for now
+#    #### y[t] is the "true" index that is sampled by I[t] - tau.obs is the sampling error of the index
+#    #### N[t] is the "true" population (process) where the tau is the additional residual error - i may have tehse confused.
+# 
+#    for (t in 1:n.occasions) {
+#       matI[t,1] ~ dnorm(N[t,1], tau.obs)       # sampled observation
+#    }
+# }'
