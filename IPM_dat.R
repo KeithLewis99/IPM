@@ -222,21 +222,19 @@ I2010min <- log(exp(I3_2010min) + exp(I2_2010min) + exp(I4_2010min))
 cbind(I2m = I2_2010min, I3m = I3_2010min, I4m = I4_2010min, Im = I2010min)
 
 
-if(disaggregated == "1985-present") {
-        df_dis_tabLog[26,2]  <- I2_2010 
-        df_dis_tabLog[26,3]  <- I3_2010 
-        df_dis_tabLog[26,4]  <- I4_2010 
-} else {
-        df_dis_tabLog[11,2]  <- I2_2010min 
-        df_dis_tabLog[11,3]  <- I3_2010min 
-        df_dis_tabLog[11,4]  <- I4_2010min 
-        
-}
-
+# if(disaggregated == "1985-present") {
+#         df_dis_tabLog[26,2]  <- I2_2010 
+#         df_dis_tabLog[26,3]  <- I3_2010 
+#         df_dis_tabLog[26,4]  <- I4_2010 
+# } else {
+#         df_dis_tabLog[11,2]  <- I2_2010min 
+#         df_dis_tabLog[11,3]  <- I3_2010min 
+#         df_dis_tabLog[11,4]  <- I4_2010min 
+#         
+# }
 
 
 # USSR data 1981-1992----
-
 
 ## maturity ----
 df_mat <- df_dis_summ %>%
@@ -265,7 +263,7 @@ if(disaggregated == "1985-present") {
         df_tmp <- df_mat[1:14,]
         df_tmp[, c(1, 3:7)] <- NA
         df_tmp$year <- c(1985:1998)
-        df_tmp$mat <- df_dis_1998$perAge2/100
+        df_tmp$mat <- df_dis_1998$mature/100
         df_mat <- rbind(df_tmp, df_mat)
         # get a mean maturity form 1991:1999
         imp90 <- mean(df_mat$mat[7:15], na.rm = T) 
@@ -276,11 +274,34 @@ if(disaggregated == "1985-present") {
         df_mat
 } 
 
+# check the relationships
+plot(df_mat$year, df_mat$mat)
+plot(df_dis_1998$year, df_dis_1998$perAge2)
 
+
+df_matM  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/data/springAcoustics-percentMature.csv")
+str(df_matM)
+
+# check data
+df_matM$age2[is.na(df_matM$age2)]
+is.na(df_matM$age2)
+df_matM$age3[is.na(df_matM$age3)]
+df_matM[,1:3]
+
+
+# crude imputation for age 2 maturity
+for (i in seq_along(df_matM$age2)){
+     if(is.na(df_matM$age2[i])){
+          df_matM$age2[i] <- mean(df_matM$age2[12:35], na.rm = T)
+     }
+}
+# confirm above works
+df_matM[,1:3]
+
+# could also do this with density dependent approach
 
 ## larval density ----
-df_ld  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/larvae2001_2021.csv"
-)
+df_ld  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/larvae2001_2021.csv")
 str(df_ld)
 
 # add extra years to start the time series
@@ -380,3 +401,72 @@ jd_raw <- cbind(year = year, jd_raw)
 #source("IPM_fun.R")
 jags.data.m <- ls_jag("yes", "yes", "yes")
 str(jags.data.m)
+
+
+
+
+# figure ----
+# create data frame to show realationships between mature/imm age 2, age 3 and age 4
+tmp1 <- as.data.frame(cbind(year = 1985:2021, age2 = jags.data.m$matI[1:37,1], perMat = jags.data.m$m[1:37]))
+tmp1$imm <- log(exp(tmp1$age2)*(1-tmp1$perMat))
+tmp1$mat <- log(exp(tmp1$age2)*tmp1$perMat)
+tmp <- as.data.frame(cbind(tmp1, age3 = lead(jags.data.m$matI[1:37,2]), age4 = lead(jags.data.m$matI[1:37,3], 2)))
+
+tmp_long <- pivot_longer(tmp, cols = c("mat", "imm", "age3", "age4"))
+
+level_order <- c("mat", "imm", "age3", "age4")
+tmp_long$name <- factor(tmp_long$name, levels=level_order)
+
+# whole time series
+p <- ggplot(data = tmp_long, aes (x = year, y = exp(value), fill = factor(name, level_order)))
+p <- p + geom_bar(stat="identity", position=position_dodge())
+p <- p + scale_fill_manual(values = c("black", "lightgoldenrod2", "darkgreen", "red"))
+p <- p + guides(fill=guide_legend(title="Age/Mat"))
+p <- p + theme_bw()
+p
+
+tmp$check <- tmp$age2-tmp$age3
+
+
+# post collapse
+p <- ggplot(data = tmp_long[25:148,], aes (x = year, y = exp(value), fill = factor(name, level_order)))
+p <- p + geom_bar(stat="identity", position=position_dodge())
+p <- p + scale_fill_manual(values = c("black", "lightgoldenrod2", "darkgreen", "red"))
+p <- p + guides(fill=guide_legend(title="Age/Mat"))
+p <- p + theme_bw()
+p
+
+
+# post collapse with Recovery for maturity
+tmp1$mat <- log(exp(tmp1$mat)*0.26)
+tmp <- as.data.frame(cbind(tmp1, age3 = lead(jags.data.m$matI[1:37,2]), age4 = lead(jags.data.m$matI[1:37,3], 2)))
+tmp_long <- pivot_longer(tmp, cols = c("mat", "imm", "age3", "age4"))
+level_order <- c("mat", "imm", "age3", "age4")
+tmp_long$name <- factor(tmp_long$name, levels=level_order)
+
+p <- ggplot(data = tmp_long[25:148,], aes (x = year, y = exp(value), fill = factor(name, level_order)))
+p <- p + geom_bar(stat="identity", position=position_dodge())
+p <- p + scale_fill_manual(values = c("black", "lightgoldenrod2", "darkgreen", "red"))
+p <- p + guides(fill=guide_legend(title="Age/Mat"))
+p <- p + theme_bw()
+p
+
+
+# trying to zoom in without the 2014 outlier
+
+#install.packages("ggforce")                   # Install & load ggforce package
+library("ggforce")
+
+p <- ggplot(data = tmp_long[25:148,], aes (x = year, y = exp(value), fill = factor(name, level_order)))
+p <- p + geom_bar(stat="identity", position=position_dodge())
+p <- p + scale_fill_manual(values = c("black", "lightgoldenrod2", "darkgreen", "red"))
+p <- p + guides(fill=guide_legend(title="Age/Mat"))
+p <- p + theme_bw() 
+p <- p + facet_zoom(ylim = c(0, 20000))
+p
+
+
+ggplot(data, aes(group, value)) +             # ggplot2 facet_zoom plot
+     geom_bar(stat = "identity") +
+     geom_col() +
+     facet_zoom(ylim = c(0, 10))
