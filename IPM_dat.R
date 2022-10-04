@@ -301,7 +301,7 @@ df_matM[,1:3]
 # could also do this with density dependent approach
 
 ## larval density ----
-df_ld  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/larvae2001_2021.csv")
+df_ld  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/larvae2001_2022.csv")
 str(df_ld)
 
 # add extra years to start the time series
@@ -319,10 +319,16 @@ if(disaggregated == "1985-present") {
 } 
 
 # change column names
-df_ld <- df_ld %>% rename(year = SurveyYear,
-                          larvae = `Bellevue_larvae_m-3`,
-                          log_larvae = `log_Bellevue_larvae_m-3`) 
+# df_ld <- df_ld %>% rename(year = SurveyYear,
+#                           larvae = `Bellevue_larvae_m-3`,
+#                           log_larvae = `log_Bellevue_larvae_m-3`) 
+# df_ld$lnlarvae <- log(df_ld$larvae)
+
+df_ld <- df_ld %>% rename(year = `Year`,
+                          larvae = `Larval densities_ind_m-3`,
+                          se_auc = `SE_AUC`) 
 df_ld$lnlarvae <- log(df_ld$larvae)
+str(df_ld)
 
 
 ## ice ----
@@ -437,8 +443,10 @@ p <- p + theme_bw()
 p
 
 
-# post collapse with Recovery for maturity
+# post collapse with Recovery for maturity and q
+## even with these adjustments, there are years where age 2 < age 3
 tmp1$mat <- log(exp(tmp1$mat)*0.26)
+tmp1$imm <- log(exp(tmp1$imm)/0.5)
 tmp <- as.data.frame(cbind(tmp1, age3 = lead(jags.data.m$matI[1:37,2]), age4 = lead(jags.data.m$matI[1:37,3], 2)))
 tmp_long <- pivot_longer(tmp, cols = c("mat", "imm", "age3", "age4"))
 level_order <- c("mat", "imm", "age3", "age4")
@@ -470,3 +478,4 @@ ggplot(data, aes(group, value)) +             # ggplot2 facet_zoom plot
      geom_bar(stat = "identity") +
      geom_col() +
      facet_zoom(ylim = c(0, 10))
+
