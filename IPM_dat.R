@@ -24,7 +24,6 @@ if(!dir.exists("report"))dir.create("report") #for rmd report
 if(!dir.exists("refs"))dir.create("refs") #for rmd report
 
 
-## Start----
 # shouldn't need the above after the first day
 #libraries
 library(readr)
@@ -35,7 +34,7 @@ library(plotly)
 library(purrr)
 
 
-rm(list=ls())
+#rm(list=ls())
 options(dplyr.print_max = 1e9)
 
 
@@ -91,7 +90,7 @@ df_dis_summ <- df_dis %>%
      group_by(year, age) %>%
      filter(age != "Unknown") %>%
      #summarise(mat = mean(prop_mat), biomass = sum(biomass))
-     summarise(mat = mean(prop_mat, na.rm = T), abun = sum(abundance), biomass = sum(biomass), varA = var(abundance, na.rm = T), varB = var(biomass, na.rm = T))
+     summarise(mat = mean(prop_mat, na.rm = T), abun = sum(abundance), biomass = sum(biomass), varA = var(abundance, na.rm = T), varB = var(biomass, na.rm = T)) # SOMETHING WRONG WITH VAR(BIOMASS)
 
 df_dis_summ  
 str(df_dis_summ)
@@ -237,6 +236,7 @@ cbind(I2m = I2_2010min, I3m = I3_2010min, I4m = I4_2010min, Im = I2010min)
 # USSR data 1981-1992----
 
 ## maturity ----
+## note that variable 'mat' is as a proportion, not a percent - so no need to divide by 100
 df_mat <- df_dis_summ %>%
      filter(age == 2 | is.na(age))
 #df_mat$mat[19] <- 0.3 # this is just a place holder until we figure out what is going on.
@@ -257,19 +257,16 @@ tmp <- df_mat %>%
 tmp 
 
 # create an identical data frame to df_mat for years 1985:1998 and append them to more recent data.  
-
-
 if(disaggregated == "1985-present") {
         df_tmp <- df_mat[1:14,]
         df_tmp[, c(1, 3:7)] <- NA
         df_tmp$year <- c(1985:1998)
-        df_tmp$mat <- df_dis_1998$mature/100
+        df_tmp$mat <- df_dis_1998$mature/100 # maturity is a percentage here so divide by 100
         df_mat <- rbind(df_tmp, df_mat)
         # get a mean maturity form 1991:1999
         imp90 <- mean(df_mat$mat[7:15], na.rm = T) 
         #df_mat$mat[7] <- imp
         df_mat$mat[c(9:11, 13:14)] <- imp90
-        
 } else {
         df_mat
 } 
