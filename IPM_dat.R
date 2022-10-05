@@ -35,7 +35,7 @@ library(plotly)
 library(purrr)
 
 
-#rm(list=ls())
+rm(list=ls())
 options(dplyr.print_max = 1e9)
 
 
@@ -321,7 +321,7 @@ if(disaggregated == "1985-present") {
 # change column names
 # df_ld <- df_ld %>% rename(year = SurveyYear,
 #                           larvae = `Bellevue_larvae_m-3`,
-#                           log_larvae = `log_Bellevue_larvae_m-3`) 
+#                           log_larvae = `log_Bellevue_larvae_m-3`)
 # df_ld$lnlarvae <- log(df_ld$larvae)
 
 df_ld <- df_ld %>% rename(year = `Year`,
@@ -400,9 +400,9 @@ if(disaggregated == "1985-present") {
 jdy <- cbind(year = yearF, jd)
 str(jdy)
 
-jd_raw <- ls_jag("no", "no")
-jd_raw <- as.data.frame(jd_raw)
-jd_raw <- cbind(year = year, jd_raw)
+# jd_raw <- ls_jag("no", "no")
+# jd_raw <- as.data.frame(jd_raw)
+# jd_raw <- cbind(year = year, jd_raw)
 
 #source("IPM_fun.R")
 jags.data.m <- ls_jag("yes", "yes", "yes")
@@ -430,6 +430,7 @@ p <- p + scale_fill_manual(values = c("black", "lightgoldenrod2", "darkgreen", "
 p <- p + guides(fill=guide_legend(title="Age/Mat"))
 p <- p + theme_bw()
 p
+#ggsave("figs/recruitment1986_2020.png", width = 7, height = 5)
 
 tmp$check <- tmp$age2-tmp$age3
 
@@ -441,6 +442,7 @@ p <- p + scale_fill_manual(values = c("black", "lightgoldenrod2", "darkgreen", "
 p <- p + guides(fill=guide_legend(title="Age/Mat"))
 p <- p + theme_bw()
 p
+#ggsave("figs/recruitment1990_2020.png", width = 7, height = 5)
 
 
 # post collapse with Recovery for maturity and q
@@ -458,7 +460,7 @@ p <- p + scale_fill_manual(values = c("black", "lightgoldenrod2", "darkgreen", "
 p <- p + guides(fill=guide_legend(title="Age/Mat"))
 p <- p + theme_bw()
 p
-
+#ggsave("figs/recruitment1990_2020_modified.png", width = 7, height = 5)
 
 # trying to zoom in without the 2014 outlier
 
@@ -472,10 +474,5 @@ p <- p + guides(fill=guide_legend(title="Age/Mat"))
 p <- p + theme_bw() 
 p <- p + facet_zoom(ylim = c(0, 20000))
 p
-
-
-ggplot(data, aes(group, value)) +             # ggplot2 facet_zoom plot
-     geom_bar(stat = "identity") +
-     geom_col() +
-     facet_zoom(ylim = c(0, 10))
+#ggsave("figs/recruitment1986_2020_facet.png", width = 7, height = 5)
 

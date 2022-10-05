@@ -50,7 +50,7 @@
             I3 =  c(df_dis_tabLog$I3, rep(NA, num_forecasts)),
             I4 =  c(df_dis_tabLog$I4, rep(NA, num_forecasts)),
             m = c(df_mat$mat, rep(mean(df_mat$mat), num_forecasts)),
-            LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts)),10)),
+            LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts-1)),10)),
             TI = as.vector(scale(c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),10)),
             CO = as.vector(scale(c(df_con$meanCond, rep(mean(df_con$meanCond, na.rm = T), num_forecasts))))
                 )
@@ -65,7 +65,7 @@
             n.occasions = length(df_dis_tab$year) + num_forecasts,
             matI = matI,
             m = c(df_mat$mat, rep(mean(df_mat$mat), num_forecasts)),
-            LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts)),10)),
+            LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts-1)),10)), # the minus 1 is just a patch for now until I update the other data sets.
             TI = as.vector(scale(c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),10)),
             CO = as.vector(scale(c(df_con$meanCond, rep(mean(df_con$meanCond, na.rm = T), num_forecasts))))
             )
