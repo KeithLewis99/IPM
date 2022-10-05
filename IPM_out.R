@@ -26,8 +26,8 @@ source("IPM_JAGS-settings.R")
 
 # MCMC settings
 #ni <- 1000; nt <- 6; nb <- 50; nc <- 3
-ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
-#ni <- 200000; nt <- 60; nb <- 30000; nc <- 3
+#ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
+ni <- 200000; nt <- 60; nb <- 30000; nc <- 3
 # ni <- 2000000; nt <- 600; nb <- 300000; nc <- 3
 # ni <- 5000000; nt <- 1000; nb <- 300000; nc <- 3 # this produces really nice ACFs!!!!
 
@@ -98,6 +98,7 @@ head(out$sims.list$s[,,1])
 apply(head(out$sims.list$s[,,1]), 2, 'median')
 apply(head(out$sims.list$s[,,1]), 2, 'mean')
 plot(density(head(out$sims.list$logit_s[,,1])))
+
 
 plot(density(head(out$sims.list$s[,,2])))
 apply(head(out$sims.list$s[,,2]), 2, 'median')
