@@ -8388,7 +8388,13 @@ cap.v36 = '
    gamma[a] ~ dunif(0, 100)         # tices-max rate of increase
    delta[a] ~ dgamma(11.5, 5.7)     # tice-width
    epsilon[a] ~ dnorm(0, 100^-2)   # condition # for CO
-}
+ }
+
+mo_fr1 <- 1
+mo_fr2 <- 1
+q <- 0.75
+R1 <- 0.26
+R2 <- 0.73
 
 # # Ale"s ice mode predicts N2
 for (t in 1:11) { #18
@@ -8430,6 +8436,10 @@ for (a in 2:Ni){
   #     R[t,2] ~ dnorm(0.73, 10^-2)  # modifiyting above just to see if it helps with invalid parent values
   #}
 
+
+# 0.13* or 0.36* is to accout for survival by females
+# /0.5 is a prelim q applied only to age 2
+# 7/12 is because this should only be for surviving from fall to spring or 7 months
    for (t in 2:18-1) { #18  *(1-m[t])*s[t,1] *m[t]*R[t,1]*s[t,1])
 #      N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,2]) 
  #         + 0.05*0.26*s[t,2], tau.proc) #N3
@@ -8441,9 +8451,10 @@ for (a in 2:Ni){
 
 #     N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1] + 0.26*m[t]*exp(N[t,1])*s[t,1]), tau.proc) #N3
 
-    N[t+1,2] ~ dnorm(log(exp(N[t,1])/0.5*(1-m[t])*s[t,1] + 0.13*m[t]*exp(N[t,1])/0.5*s[t,1]), tau.proc) #N3
+    N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1] + R1*m[t]*exp(N[t,1])*s[t,1]*mo_fr1), tau.proc) #N3
 
-     N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2] + 0.36*0.95*exp(N[t,2])*s[t,2]), tau.proc)
+     N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2] + R2*0.95*exp(N[t,2])*s[t,2]*mo_fr2), tau.proc)
+     
      #N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2] + R[t,2]*0.95*exp(N[t,2])*s[t,2]), tau.proc)
 
       # N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1])
@@ -8484,7 +8495,7 @@ for (a in 2:Ni){
 #N3 & N4; 2003-present
    for (t in 19:n.occasions-1) { #19 *(1-m[t])*s[t,1] *m[t]*R[t
    #,1]*s[t,1])
-#      N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,2]) + #0.05*0.26*s[t,2], tau.proc) #N3
+   #      N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,2]) + #0.05*0.26*s[t,2], tau.proc) #N3
  
       # N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1])
       #     + log(0.26*m[t]*exp(N[t,1])*s[t,1]), tau.proc) #N3
@@ -8495,9 +8506,10 @@ for (a in 2:Ni){
 #      N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1]
          # + 0.26*m[t]*exp(N[t,1])*s[t,1]), tau.proc) #N3
 
-    N[t+1,2] ~ dnorm(log(exp(N[t,1])/0.5*(1-m[t])*s[t,1] + 0.13*m[t]*exp(N[t,1])/0.5*s[t,1]), tau.proc) #N3
+    N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1] + R1*m[t]*exp(N[t,1])*s[t,1]*mo_fr1), tau.proc) #N3
 
-     N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2] + 0.36*0.95*exp(N[t,2])*s[t,2]), tau.proc) #N4
+     N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2] + R2*0.95*exp(N[t,2])*s[t,2]*mo_fr2), tau.proc) #N4
+     
      # N[t+1,3] ~ dnorm(log(exp(N[t,2])*(1-0.95)*s[t,2] + R[t,2]*0.95*exp(N[t,2])*s[t,2]), tau.proc)
 
       # N[t+1,2] ~ dnorm(log(exp(N[t,1])*(1-m[t])*s[t,1])
@@ -8583,16 +8595,16 @@ for (a in 1:Ni){
 
 for (a in 1:Ni){
    for (t in 1:n.occasions) {
-      matI[t,a] ~ dnorm(N[t,a], tau.obs)       # sampled observation
+     # matI[t,a] ~ dnorm(q*N[t,a], tau.obs)     # sampled observation
+      matI[t,a] ~ dnorm(ifelse(a<2, q*N[t,a], N[t,a]), tau.obs)
    }
 }
-
-
 
 for (t in 1:n.occasions) {
      # I[t] ~ dnorm(log(exp(matI[t,1]) + exp(matI[t,2]) + exp(matI[t,3])), tau.obs)
      I[t] <- log(exp(matI[t,1]) + exp(matI[t,2]) + exp(matI[t,3]))
 }
+
 
 # Assessing the fit of the state-space model
    ## 1. Compute fit statistics for observed data.
