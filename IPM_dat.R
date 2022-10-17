@@ -275,27 +275,53 @@ if(disaggregated == "1985-present") {
 plot(df_mat$year, df_mat$mat)
 plot(df_dis_1998$year, df_dis_1998$perAge2)
 
-
+## mat- matrix----
 df_matM  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/data/springAcoustics-percentMature.csv")
 str(df_matM)
+head(df_matM) # these are percentages
 
-# check data
+# check data - just look for NA in one age class
 df_matM$age2[is.na(df_matM$age2)]
 is.na(df_matM$age2)
 df_matM$age3[is.na(df_matM$age3)]
 df_matM[,1:3]
 
+df_tmp <- df_matM[1:4,]
+df_tmp[, 1:7] <- NA
+df_tmp$year[1:4] <- c(2020:2023)
 
-# crude imputation for age 2 maturity
+df_matM <- rbind(df_matM, df_tmp)
+
+# crude imputation for age 2 maturity - this is weakest for age-2, a bit better for age 3, and probably a good approximation for age-4.  Note, no NA in pre-collapse period
 for (i in seq_along(df_matM$age2)){
      if(is.na(df_matM$age2[i])){
           df_matM$age2[i] <- mean(df_matM$age2[12:35], na.rm = T)
      }
 }
+
+for (i in seq_along(df_matM$age3)){
+     if(is.na(df_matM$age3[i])){
+          df_matM$age3[i] <- mean(df_matM$age3[12:35], na.rm = T)
+     }
+}
+
+for (i in seq_along(df_matM$age4)){
+     if(is.na(df_matM$age4[i])){
+          df_matM$age4[i] <- mean(df_matM$age4[12:35], na.rm = T)
+     }
+}
+
+
 # confirm above works
 df_matM[,1:3]
+df_matM[,1:5]
+
+m_matM <- as.matrix(cbind(df_matM$age2/100, df_matM$age3/100, df_matM$age4/100))
+
 
 # could also do this with density dependent approach
+
+
 
 ## larval density ----
 df_ld  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/larvae2001_2022.csv")
@@ -369,6 +395,30 @@ if(disaggregated == "1985-present") {
         } 
 
 
+## catch-at-age----
+df_caa <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/catchAtAge1998_2021.csv")
+str(df_caa)
+
+
+df_caa
+
+tmp <- df_caa %>% 
+     group_by(year, age) %>%
+     filter(age != "Unknown") %>%
+     summarise(abundance_sum = sum(N_millions), prop_mat_mean = mean(prop_mat))
+tmp$age <- as.numeric(tmp$age)
+str(tmp)
+
+str(df_caa_summ)
+
+df_caa_tab_abun <- tmp[c("year", "age", "abundance_sum")] %>%
+     pivot_wider(id_cols = year, names_from = age, values_from = abundance_sum)
+df_caa_tab_abun
+
+df_caa_tab_mat <- tmp[c("year", "age", "prop_mat_mean")] %>%
+     pivot_wider(id_cols = year, names_from = age, values_from = prop_mat_mean)
+df_caa_tab_mat
+
 
 
 # Bundle data----
@@ -410,10 +460,10 @@ str(jags.data.m)
 
 # figure ----
 # create data frame to show realationships between mature/imm age 2, age 3 and age 4
-tmp1 <- as.data.frame(cbind(year = 1985:2021, age2 = jags.data.m$matI[1:37,1], perMat = jags.data.m$m[1:37]))
-tmp1$imm <- log(exp(tmp1$age2)*(1-tmp1$perMat))
-tmp1$mat <- log(exp(tmp1$age2)*tmp1$perMat)
-tmp <- as.data.frame(cbind(tmp1, age3 = lead(jags.data.m$matI[1:37,2]), age4 = lead(jags.data.m$matI[1:37,3], 2)))
+ tmp1 <- as.data.frame(cbind(year = 1985:2021, age2 = jags.data.m$matI[1:37,1], perMat = jags.data.m$matM[1:37,1]))
+ tmp1$imm <- log(exp(tmp1$age2)*(1-tmp1$perMat))
+ tmp1$mat <- log(exp(tmp1$age2)*tmp1$perMat)
+ tmp <- as.data.frame(cbind(tmp1, age3 = lead(jags.data.m$matI[1:37,2]), age4 = lead(jags.data.m$matI[1:37,3], 2)))
 
 tmp_long <- pivot_longer(tmp, cols = c("mat", "imm", "age3", "age4"))
 
@@ -422,7 +472,7 @@ tmp_long$name <- factor(tmp_long$name, levels=level_order)
 
 # whole time series
 p <- ggplot(data = tmp_long, aes (x = year, y = exp(value), fill = factor(name, level_order)))
-p <- p + geom_bar(stat="identity", position=position_dodge())
+p <- p + geom_bar(stat="identity", width = 1, position=position_dodge())
 p <- p + scale_fill_manual(values = c("black", "lightgoldenrod2", "darkgreen", "red"))
 p <- p + guides(fill=guide_legend(title="Age/Mat"))
 p <- p + theme_bw()
@@ -468,7 +518,7 @@ p <- ggplot(data = tmp_long[25:148,], aes (x = year, y = exp(value), fill = fact
 p <- p + geom_bar(stat="identity", position=position_dodge())
 p <- p + scale_fill_manual(values = c("black", "lightgoldenrod2", "darkgreen", "red"))
 p <- p + guides(fill=guide_legend(title="Age/Mat"))
-p <- p + theme_bw() 
+p <- p + theme_bw()
 p <- p + facet_zoom(ylim = c(0, 20000))
 p
 #ggsave("figs/recruitment1986_2020_facet.png", width = 7, height = 5)
