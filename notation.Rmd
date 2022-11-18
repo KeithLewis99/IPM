@@ -1,0 +1,203 @@
+---
+title: "Capelin SSM notation"
+output:
+  html_document:
+    df_print: paged
+---
+
+## Subscripts  
+a = age (2:4; not age 0 or 1)    
+t = time (year from start of spring acoustic survey)  
+s = survey (not currently used as only spring acoustic survey is part of the model)
+
+## Covariates 
+$TI_t$ = t~*ice*~ or timing of the ice retreat from most southerly latitude in the year of the spring acoustic survey; a proxy for stratification (1969-present)  
+$LD_{t-2}$ = larval density  (2001-present) two years prior to the acoustic survey  
+$CO_{t-1}$ = capelin condition in the fall prior to the acoustic survey
+
+### Process
+$N_{s,a,t}$ = natural log of population at age by survey and year  (s=1 in this case as only spring acoustic has been included)
+$S_{a,t}$ = survival  (only for age-2 and age-3)
+$R_{t}$ = recruits in the current year???  
+
+### Observation
+$I_{s,a,t}$ = natural log of observed population by age, year, and survey  (1985-present)  
+$m_{a,t}$ = percent mature at age and year  (1985-present)  
+$C_{a,t}$ = catch-at-age (1998-present but maybe more)  
+
+### Derived?
+Not included below
+$q_{s}$ = catchability by survey  
+
+
+
+
+
+## State Space Model ----
+
+### Priors
+Variance is dealt with as precision which is 1/variance.  All priors for variance follow the same format more or less and won't be repeated.  
+
+E.g. Variance for process (proc) error
+$$
+\sigma_{proc} \sim Unif(0.01, 20) \\
+\tau_{proc} = 1/\sigma^2_{proc}
+$$
+For maturity-at-age, *mat* is the raw data and *m* is the variable used in models below.
+
+$$
+mu.m_{a,t} = logit(mat_{a,t}) \\
+logit.m_{a,t} = N(mu.m_{a,t}, \tau_{mat}) \\
+m_{a,t} = ilogit(logit.m_{a,t})
+$$
+For parameters (see equations below):
+
+$$ 
+\alpha_a \sim N(0, 100^{-2}) \\
+\beta_a \sim N(0, 100^{-2}) \\
+\gamma_a \sim Unif(0.01, 100)  \\
+\delta_a \sim \Gamma(11.5, 5.7) \\
+\ E_a \sim N(0, 100^{-2}) \\
+$$
+
+
+### Process equations
+
+#### Age-2
+Following Murphy et al (2018):  
+
+$$
+\tag{1}
+N_{2,t} = \alpha_2 + \beta_2*LD_{t-2} + \epsilon_t
+$$
+where LD is larval density as calculated at Bellevue Beach two years earlier (time series: 2001-present), $\alpha_2$ and $\beta_2$ are parameters a $\tau$ ~ N(0, $\sigma{2})$. 
+
+Expanding upon this from Buren et al. (2014) and Lewis et al. (2019):
+
+$$
+\tag{2}
+N_{2,t} = \alpha_2 + \beta_2*LD_{t-2} + \gamma_2*TI_t*(1-TI_t/\delta_2) + \tau_t \\   
+N_{2,t} = \alpha_2 + \beta_2*LD_{t-2} + \gamma_2*TI_t*(1-TI_t/\delta_2) + \ E_2*CO_{t-1} + \tau_t 
+$$
+
+Where TI (or t~*ice*~) is timing of the ice retreat from the same calendar year and CO is the condition of capelin the previous fall.  For TI, the $gamma$ parameter is for Note that Buren et al. (2014) did not have an intercept in their equation in their dome-shaped model.  This was added by Lewis et al. (2019 - see Fig. 4) when combining the regression of Murphy et al. (2018) with the dome-shaped model.  
+
+So, currently, I am using this approach:
+
+$$
+\begin{equation*}
+\tag{3}
+  mu_{2,t} = \left\{ 
+  \begin{matrix}
+    \alpha_2 + \gamma_2*TI_t*(1-TI_t/\delta_2) & , & 1985-1995 \\ 
+    \alpha_2 + \gamma_2*TI_t*(1-TI_t/\delta_2) + \epsilon_2*CO_{t-1} & , & 1996-2002 \\ 
+    \alpha_2 + \beta_2*LD_{t-2} + \gamma_2*TI_t*(1-TI_t/\delta_2) + \ E_2*CO_{t-1} & , & 2003-present
+  \end{matrix}
+  \right\}
+\end{equation*}
+$$
+
+$$
+N_{2,t} \sim N(mu_{2,t}, 1/\sigma^2)
+$$
+Note that for stochastic variables, i'll present precision rather than variance to follow JAGS.  
+Note that this works well for the forecast model because it only ran from 2003 to the present so all these variables could be used.  Further, the forecast model was trying to predict biomass and there's a strong correlation between age-2 biomass and total biomass during this time period.  
+
+Note also that I really don't like the first two terms (1985-1995, and 1996-2002) because they miss the key variable which is LD.  It seems like LD provides the strength of the pulse of capelin which is modified by environmental conditions both directly through t~*ice*~ and indirectly through CO, i.e., food. But this is lacking from the earlier years^1^.
+**Perhaps one way to get at LD pre-2003 is to use the abundance as an indicator with a very loose prior? This assumes some sort of SRR which we don't have but perhaps it will put it in the ball park.  But perhaps a random walk will do the trick????**
+
+
+#### Age-3 and 4+
+I then reasoned that because t~*ice*~ and, to a lesser extent CO, were useful predictors of biomass, that they could also be useful predictors of survival as follows.   
+$$
+\begin{equation*}
+\tag{4}
+  x_{3,t} = \left\{ 
+  \begin{matrix}
+    \alpha_3 + \gamma*TI_t*(1-TI_t/\delta) & , & 1985-1995 \\ 
+    \alpha_3 + \gamma*TI_t*(1-TI_t/\delta) + \ E_2*CO_{t-1} & , & 2003-present
+  \end{matrix}
+  \right\}
+\end{equation*} \\
+  \\[1cm]
+S_{3,t} = ilogit(x_{3,t}) 
+$$
+Where *x* is a parameter used to calculate a survival rate *S*.  
+
+Note: Need a better term than "x" but "logit_s" as it is in the JAGS code is confusing. 
+
+Based on our discussion, we re-formulated the above as follows:
+$$
+\begin{equation*}
+\tag{5}
+  x_{3,t} = \left\{ 
+  \begin{matrix}
+    \gamma_2*TI_t*(1-TI_t/\delta_2) & , & 1985-1995 \\ 
+    \gamma_2*TI_t*(1-TI_t/\delta_2) + \ E_2*CO_{t-1} & , & 2003-present
+  \end{matrix}
+  \right\}
+\end{equation*} \\
+  \\[1cm]
+S_{3,t} = x_{3,t}/(\gamma_2*(\delta_2/2)*(1-\delta_2/2)/\delta_2)
+$$
+Then, a basic and more complicated equation to get from age-2[t] to age-3[t+1].  The latter equation was added because of the issues with gettng *S* = 1.0.   One explanation for this is that there are often more or ~ as many age-3[t+1] as age-2[t].  So, either the survey missed age-2 fish, the Trinity Bay fish are important, or lots of capelin recover.  However, the reformulated dome-model (eqn 5) has alleviated this issue somewhat. **Need to zero in on the "right" equation**
+
+$$\begin{aligned}
+& N_{3,t+1} \sim N(N_{2,t}*(1-m_t)*S_{2,t}, \tau_{proc}) \\
+& N_{3,t+1} \sim N(N_{2,t}*(1-m_t)*S_{2,t} + N^{TB}_2 + N_{2,t}*m_t*R^{sp}_{2,t}*S_{2,t}*a - C_{2,t}, \tau_{proc})\\
+\end{aligned}$$
+
+where *m* is the maturity.  In the second equation $N^{TB}$ is the Trinity Bay survey,   $R^{sp}$ is the percentage of post-spawning females in the fall survey (Flynn et al.), *a* is a constant to modify *S* for the fraction of the year that the mature fish is migrating and spawning, and *C* is catch-at-age. In someways, this makes more sense than for age-2.  Age-2 fish are predicted by larval density at a single beach.  But here, age-2 from the survey supplies the raw material for age-3 *from the survey*, we just need to kill off the appropriate amount assuming that the survey is finding the ages equally.
+
+Note that these equations do not have a term for spawning migration mortality which must be massive!
+Note that i'm only showing the equations for age-3 as the 4+ are identical.
+
+For reference, the above is similar to Schaekel et al. (1994).
+
+$$
+\tag{7}
+N_{a,t+1} = N_{a,t}*(1-m_t)*S_{i} + (N_{a,t} - C_{a,t})*S_m + \epsilon_{a+1, t+1}
+$$
+
+where $S_i$ and $S_m$ are survival for immature and mature capelin respectively.  These were arrived at through simple OLS regression.  
+
+
+### Observation equation
+
+I~a,t~ = acoustic survey abundance or biomass by age.
+
+$$
+I_{2,t}  \sim logNormal(N_2, \tau_{obs}) \\
+I_{3,t}  \sim logNormal(N_3, \tau_{obs}) \\
+I_{4+,t}  \sim logNormal(N_4, \tau_{obs}) \\
+$$ 
+
+Note that haven't incorporated survey variation into the model.  
+
+## Recrtuitment Model ----
+Larval density at Bellevue  
+
+I think this is redundant now but may be useful if we want to bring variation into the model.
+
+My reasoning here is that Larval Density (LD) is a reasonable predictor of age 2 capelin (Recruitment).  Age 1 are not well recruited to the survey.  A good point was raised the other day about how to scale this from larval density at Bellevue to the acoustic survey.
+
+$$
+N_{2_{t+2}} = LD_{a,t}S_{lar_{a}} + \epsilon_{LD_{t}} \\
+R_{y+2} \sim logNormal(LD_{a,y}, \sigma_{LD_{y}}) \\
+L_{R}(S_{lar}|LD) \\
+$$
+
+
+## Rant^1^
+
+We lack information on LD before 2001 but this is a critical component of the model which leads to a rant about using all data available: 
+
+> "In general, as long as a time series as possible should be used in establishing reference points for a stock... 
+
+> Many stocks will show substantial variation in productivity over a long time series, and this variation should be taken into account when setting the reference points. Scientifically sound ways have been established for dealing with the special cases when this variation appears to be structured as periods of consistently high or low productivity... 
+
+> These cases need to be evaluated individually, but as a general rule the only circumstances when reference points should be estimated using only information from a period of low productivity is when there is no expectation that the conditions consistent with higher productivity will ever recur naturally or be achievable through management.
+" DFO 2009 [https://www.dfo-mpo.gc.ca/reports-rapports/regs/sff-cpd/precaution-eng.htm
+]
+
+**The above needs serious consideration in the case of capelin because I believe it *may* be flawed in terms of theory, open DFO to serious criticism ito charges of hypocrisy, and may be fine when one has a last name of Cadigan or Varkey but not for some/many of us mortals.**
