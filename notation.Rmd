@@ -11,21 +11,24 @@ t = time (year from start of spring acoustic survey)
 s = survey (not currently used as only spring acoustic survey is part of the model)
 
 ## Covariates 
+<!-- PMR: simplified covariate symbols.  KL: I know Edwards recommends one letter per variable but C is also used for Catch-at-age and I wanted to keep the covariates consistent -->
 $TI_t$ = t~*ice*~ or timing of the ice retreat from most southerly latitude in the year of the spring acoustic survey; a proxy for stratification (1969-present)  
 $LD_{t-2}$ = larval density  (2001-present) two years prior to the acoustic survey  
 $CO_{t-1}$ = capelin condition in the fall prior to the acoustic survey
 
+**Note that all covariates are centered and scaled using function scale.**
+
 ### Process
-$N_{s,a,t}$ = natural log of population at age by survey and year  (s=1 in this case as only spring acoustic has been included)
+$N_{a,t}$ = natural log of population at age by survey and year  
 $S_{a,t}$ = survival  (only for age-2 and age-3)
 $R_{t}$ = recruits in the current year???  
 
 ### Observation
-$I_{s,a,t}$ = natural log of observed population by age, year, and survey  (1985-present)  
+$I_{s,a,t}$ = observed population by age, year, and survey  (1985-present); (s=1 in this case as only spring acoustic has been included) 
 $m_{a,t}$ = percent mature at age and year  (1985-present)  
 $C_{a,t}$ = catch-at-age (1998-present but maybe more)  
 
-### Derived?
+### Assumed?
 Not included below
 $q_{s}$ = catchability by survey  
 
@@ -43,13 +46,14 @@ $$
 \sigma_{proc} \sim Unif(0.01, 20) \\
 \tau_{proc} = 1/\sigma^2_{proc}
 $$
-For maturity-at-age, *mat* is the raw data and *m* is the variable used in models below.
+For maturity-at-age, *mat* is the raw data and *m* is the variable used in models below. $\tau_{mat}$ is estimated as above.
 
 $$
-mu.m_{a,t} = logit(mat_{a,t}) \\
-logit.m_{a,t} = N(mu.m_{a,t}, \tau_{mat}) \\
-m_{a,t} = ilogit(logit.m_{a,t})
+logit(\hat{m}_{a,t}) = N(logit(m_{a,t}), \tau_{m}) \\
+m_{a,t} = ilogit(N(logit.mat_{a,t})
 $$
+<!-- The first equation is Paul's correction to my attempt and its probably right.  I've added in my version just bc it makes more sense to me. -->
+
 For parameters (see equations below):
 
 $$ 
@@ -70,7 +74,7 @@ $$
 \tag{1}
 N_{2,t} = \alpha_2 + \beta_2*LD_{t-2} + \epsilon_t
 $$
-where LD is larval density as calculated at Bellevue Beach two years earlier (time series: 2001-present), $\alpha_2$ and $\beta_2$ are parameters a $\tau$ ~ N(0, $\sigma{2})$. 
+where LD <!-- PMR: is this logged? Maybe it should be.  KL: i'm not sure - I[a,t] is logged below so do we need to do it here??? --> is larval density as calculated at Bellevue Beach two years earlier (time series: 2001-present), $\alpha_2$ and $\beta_2$ are parameters a $\tau$ ~ N(0, $\sigma{2})$. 
 
 Expanding upon this from Buren et al. (2014) and Lewis et al. (2019):
 
@@ -105,7 +109,7 @@ Note that this works well for the forecast model because it only ran from 2003 t
 
 Note also that I really don't like the first two terms (1985-1995, and 1996-2002) because they miss the key variable which is LD.  It seems like LD provides the strength of the pulse of capelin which is modified by environmental conditions both directly through t~*ice*~ and indirectly through CO, i.e., food. But this is lacking from the earlier years^1^.
 **Perhaps one way to get at LD pre-2003 is to use the abundance as an indicator with a very loose prior? This assumes some sort of SRR which we don't have but perhaps it will put it in the ball park.  But perhaps a random walk will do the trick????**
-
+<!-- PMR: using abundance as a prior would be circular as you're using abundance as an input, so it is getting information on the size and variability of N2 from that. For those pre 2003 blocks, the alpha will provide a baseline level of abundance but a random walk or stock recruit function would allow for some variability. KL: sorry, that wasn't clear. As I wrote it, yes, it is circular.    What I meant was to use N2[t-1] as a prior for N2[t] and then got the idea for a rdm walk as I think the SRR would not be as good an approach.  -->
 
 #### Age-3 and 4+
 I then reasoned that because t~*ice*~ and, to a lesser extent CO, were useful predictors of biomass, that they could also be useful predictors of survival as follows.   
@@ -140,7 +144,38 @@ $$
   \\[1cm]
 S_{3,t} = x_{3,t}/(\gamma_2*(\delta_2/2)*(1-\delta_2/2)/\delta_2)
 $$
+Paul has also suggested 
+$$
+x_{3,t} = \gamma_2*4*TI_t/\delta_2*(1-TI_t/\delta_2)
+$$
+
+
 Then, a basic and more complicated equation to get from age-2[t] to age-3[t+1].  The latter equation was added because of the issues with gettng *S* = 1.0.   One explanation for this is that there are often more or ~ as many age-3[t+1] as age-2[t].  So, either the survey missed age-2 fish, the Trinity Bay fish are important, or lots of capelin recover.  However, the reformulated dome-model (eqn 5) has alleviated this issue somewhat. **Need to zero in on the "right" equation**
+
+*PMR: while the scaling to the max does resolve S issue to a degree, the gamma parameter no longer has an effect and S will equal 1 if ice timing is optimal. The condition effect may also produce S values > 1. We need to work out a better solution for a linear predictor of S.*
+*KL: Agreed.  I'll note that I did check for the scenario where S=1 when TI=delta/2 and didn't get exactly there results.*
+
+OK - thinking now that survival has been modelled incorrectly.  I keep getting high values but i've been trying to deterministically get at a survival rate and then applying this as part of a stochastically determined N[t+1].  We can consider adding an alpha back perhaps?? So
+**Krazy Keith** idea
+
+$$
+\begin{equation*}
+\tag{5a}
+  logit(p_{3,t}) = \left\{ 
+  \begin{matrix}
+    \gamma_2*TI_t*(1-TI_t/\delta_2) & , & 1985-1995 \\ 
+    \gamma_2*TI_t*(1-TI_t/\delta_2) + \ E_2*CO_{t-1} & , & 2003-present
+  \end{matrix}
+  \right\}
+\end{equation*} \\
+  \\[1cm]
+Ni_{2,t} \sim N(log(exp(N_{2,t}*(1-m_t))))      \\
+  \\[1cm]
+N_{3,t+1} \sim bin(p_{3,t}, Ni_{2,t}), \tau_{proc}) \\  
+$$
+where Ni is immature capelin and p is the probability of survival.
+
+Below is the way I have been doing things based on eqn 5. 
 
 $$\begin{aligned}
 & N_{3,t+1} \sim N(N_{2,t}*(1-m_t)*S_{2,t}, \tau_{proc}) \\
@@ -148,6 +183,8 @@ $$\begin{aligned}
 \end{aligned}$$
 
 where *m* is the maturity.  In the second equation $N^{TB}$ is the Trinity Bay survey,   $R^{sp}$ is the percentage of post-spawning females in the fall survey (Flynn et al.), *a* is a constant to modify *S* for the fraction of the year that the mature fish is migrating and spawning, and *C* is catch-at-age. In someways, this makes more sense than for age-2.  Age-2 fish are predicted by larval density at a single beach.  But here, age-2 from the survey supplies the raw material for age-3 *from the survey*, we just need to kill off the appropriate amount assuming that the survey is finding the ages equally.
+
+<!-- PMR: the use of Trinity Bay data would be better placed in the observation equations. KL: right - I forgot to put those in.  Have done so in the code - my bad. Will put this in the next iteration if we decide that's the way to go -->
 
 Note that these equations do not have a term for spawning migration mortality which must be massive!
 Note that i'm only showing the equations for age-3 as the 4+ are identical.
@@ -160,11 +197,11 @@ N_{a,t+1} = N_{a,t}*(1-m_t)*S_{i} + (N_{a,t} - C_{a,t})*S_m + \epsilon_{a+1, t+1
 $$
 
 where $S_i$ and $S_m$ are survival for immature and mature capelin respectively.  These were arrived at through simple OLS regression.  
-
+<!-- PMR: Is your basic demographic model a version of this? I would be really curious to see estimates from a state-space version of this. We could think of it as a NULL model compared to your more extensive IPM. KL: my basic model is the left half but I have done something similar to the whole equation in other runs but I have things like recovery in too. -->
 
 ### Observation equation
 
-I~a,t~ = acoustic survey abundance or biomass by age.
+I~a,t~ = natural logarithm of the acoustic survey abundance or biomass by age.
 
 $$
 I_{2,t}  \sim logNormal(N_2, \tau_{obs}) \\
@@ -201,3 +238,6 @@ We lack information on LD before 2001 but this is a critical component of the mo
 ]
 
 **The above needs serious consideration in the case of capelin because I believe it *may* be flawed in terms of theory, open DFO to serious criticism ito charges of hypocrisy, and may be fine when one has a last name of Cadigan or Varkey but not for some/many of us mortals.**
+
+*PMR: I think we're on the right track by using the whole series. There is still information on 'recruits' (inferred through age 2) coming from the survey through the historic period. Finally, capelin are pelagic and that group are known throughout the world to go through boom and bust cycles; we have been waiting on a boom phase, but there is no reason to expect we are stuck in the current state.*
+*KL: I really do hope that this works but feel like we need to "hope for the best and prepare for the worst".  And I think that the key word is "no expectation...will ever recur".  Maybe I don't understand the theory but I find this language problematic*
