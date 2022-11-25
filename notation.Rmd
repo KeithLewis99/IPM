@@ -94,6 +94,7 @@ $$
   mu_{2,t} = \left\{ 
   \begin{matrix}
     \alpha_2 + \gamma_2*TI_t*(1-TI_t/\delta_2) & , & 1985-1995 \\ 
+    \N_{t-1} + u & , & 1985-1995 \\ 
     \alpha_2 + \gamma_2*TI_t*(1-TI_t/\delta_2) + \epsilon_2*CO_{t-1} & , & 1996-2002 \\ 
     \alpha_2 + \beta_2*LD_{t-2} + \gamma_2*TI_t*(1-TI_t/\delta_2) + \ E_2*CO_{t-1} & , & 2003-present
   \end{matrix}
@@ -104,6 +105,8 @@ $$
 $$
 N_{2,t} \sim N(mu_{2,t}, 1/\sigma^2)
 $$
+where u is a normally distributed random walk with mean = 0 and a variance TBD.
+
 Note that for stochastic variables, i'll present precision rather than variance to follow JAGS.  
 Note that this works well for the forecast model because it only ran from 2003 to the present so all these variables could be used.  Further, the forecast model was trying to predict biomass and there's a strong correlation between age-2 biomass and total biomass during this time period.  
 
