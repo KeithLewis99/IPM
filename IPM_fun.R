@@ -10,67 +10,77 @@
 #' num_forecasts = 2 
 #' # 2 extra years jags.data <- ls_jag("yes", "yes")
 #' jd <- as.data.frame(jags.data)
-  ls_jag <- function(log, forecast, matrix = NULL){
-        #browser()
-        if(log == "yes" & forecast == "no"){
-                jags.data <- list(#year = df_dis_tab$year,
-                        #n.occasions = length(df_dis_tab$year) + num_forecasts,
-                        n.occasions = length(df_dis_tab$year),
-                        I2 =  df_dis_tabLog$I2,
-                        I3 =  df_dis_tabLog$I3,
-                        m = df_mat$mat,
-                        LD = df_ld$lnlarvae,
-                        TI = df_ice$tice,
-                        CO = df_con$meanCond
-                )
-        } else if (log == "no" & forecast == "no"){
-                jags.data <- list(#year = df_dis_tab$year,
-                        n.occasions = length(df_dis_tab$year),
-                        I2 =  df_dis_tab$I2,
-                        I3 =  df_dis_tab$I3,
-                        m = df_mat$mat,
-                        LD = df_ld$larvae,
-                        TI = df_ice$tice,
-                        CO = df_con$meanCond
-                )
-        } else if (log == "no" & forecast == "yes"){
-                jags.data <- list(#year = df_dis_tab$year,
-                        n.occasions = length(df_dis_tab$year) + num_forecasts,
-                        I2 =  c(df_dis_tab$I2, rep(NA, num_forecasts)),
-                        I3 =  c(df_dis_tab$I3, rep(NA, num_forecasts)),
-                        m = c(df_mat$mat, rep(mean(df_mat$mat), num_forecasts)),
-                        LD = c(df_ld$larvae, rep(mean(df_ld$larvae), num_forecasts)),
-                        TI = c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),
-                        CO = c(df_con$meanCond, rep(mean(df_ice$tice), num_forecasts))
-                )
-        } else if(log == "yes" & forecast == "yes" & matrix == "no"){
-                jags.data <- list(#year = df_dis_tab$year,
+ls_jag <- function(log, forecast, matrix = NULL){
+  #browser()
+  if(log == "yes" & forecast == "no"){
+    jags.data <- list(#year = df_dis_tab$year,
+            #n.occasions = length(df_dis_tab$year) + num_forecasts,
+            n.occasions = length(df_dis_tab$year),
+            I2 =  df_dis_tabLog$I2,
+            I3 =  df_dis_tabLog$I3,
+            m = df_mat$mat,
+            LD = df_ld$lnlarvae,
+            TI = df_ice$tice,
+            CO = df_con$meanCond
+    )
+  } else if (log == "no" & forecast == "no"){
+    jags.data <- list(#year = df_dis_tab$year,
+            n.occasions = length(df_dis_tab$year),
+            I2 =  df_dis_tab$I2,
+            I3 =  df_dis_tab$I3,
+            m = df_mat$mat,
+            LD = df_ld$larvae,
+            TI = df_ice$tice,
+            CO = df_con$meanCond
+    )
+  } else if (log == "no" & forecast == "yes"){
+    jags.data <- list(#year = df_dis_tab$year,
             n.occasions = length(df_dis_tab$year) + num_forecasts,
-            I2 =  c(df_dis_tabLog$I2, rep(NA, num_forecasts)),
-            I3 =  c(df_dis_tabLog$I3, rep(NA, num_forecasts)),
-            I4 =  c(df_dis_tabLog$I4, rep(NA, num_forecasts)),
+            I2 =  c(df_dis_tab$I2, rep(NA, num_forecasts)),
+            I3 =  c(df_dis_tab$I3, rep(NA, num_forecasts)),
             m = c(df_mat$mat, rep(mean(df_mat$mat), num_forecasts)),
-            LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts-1)),10)),
-            TI = as.vector(scale(c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),10)),
-            CO = as.vector(scale(c(df_con$meanCond, rep(mean(df_con$meanCond, na.rm = T), num_forecasts))))
-                )
-        } else if (log == "yes" & forecast == "yes" & matrix == "yes"){
-          #browser()
-          matI <- matrix(NA, nrow=39, ncol = 3)
-          matI[,1] <- c(df_dis_tabLog$I2, rep(NA, num_forecasts))
-          matI[,2] <- c(df_dis_tabLog$I3, rep(NA, num_forecasts))
-          matI[,3] <- c(df_dis_tabLog$I4, rep(NA, num_forecasts))
-          
-          jags.data <- list(#year = df_dis_tab$year,
-            n.occasions = length(df_dis_tab$year) + num_forecasts,
-            matI = matI,
-            m = c(df_mat$mat, rep(mean(df_mat$mat), num_forecasts)),
-            LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts-1)),10)), # the minus 1 is just a patch for now until I update the other data sets.
-            TI = as.vector(scale(c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),10)),
-            CO = as.vector(scale(c(df_con$meanCond, rep(mean(df_con$meanCond, na.rm = T), num_forecasts))))
-            )
-            }
-        return(jags.data)
+            LD = c(df_ld$larvae, rep(mean(df_ld$larvae), num_forecasts)),
+            TI = c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),
+            CO = c(df_con$meanCond, rep(mean(df_ice$tice), num_forecasts))
+    )
+  } else if(log == "yes" & forecast == "yes" & matrix == "no"){
+   jags.data <- list(#year = df_dis_tab$year,
+      n.occasions = length(df_dis_tab$year) + num_forecasts,
+      I2 =  c(df_dis_tabLog$I2, rep(NA, num_forecasts)),
+      I3 =  c(df_dis_tabLog$I3, rep(NA, num_forecasts)),
+      I4 =  c(df_dis_tabLog$I4, rep(NA, num_forecasts)),
+      m = c(df_mat$mat, rep(mean(df_mat$mat), num_forecasts)),
+      LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts-1)),10)),
+      TI = as.vector(scale(c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),10)),
+      CO = as.vector(scale(c(df_con$meanCond, rep(mean(df_con$meanCond, na.rm = T), num_forecasts))))
+      )
+  } else if (log == "yes" & forecast == "yes" & matrix == "yes"){
+    #browser()
+      matI <- matrix(NA, nrow=39, ncol = 3)
+      matI[,1] <- c(df_dis_tabLog$I2, rep(NA, num_forecasts))
+      matI[,2] <- c(df_dis_tabLog$I3, rep(NA, num_forecasts))
+      matI[,3] <- c(df_dis_tabLog$I4, rep(NA, num_forecasts))
+
+   # make a list of the observations and covariates
+    ## scale the covariates only
+      jags.data <- list(#year = df_dis_tab$year,
+         n.occasions = length(df_dis_tab$year) + num_forecasts,
+         ## observations
+         matI = matI,
+         matI_TB = matITB,
+         matM = m_matM, # not scaling this.  Its technically a covariate but its between zero and 1
+         maa_TB = m_maaTB,
+         matCAA = matCAA,
+        # matM = rbind(m_matM,matrix(data=NA, nrow = 2, ncol = 3)),
+        # m = c(df_mat$mat, rep(mean(df_mat$mat), num_forecasts)),                 
+         
+        ## covariates - scale these - see Zuur (Beginners Guide to GLM and GLMM - pg 55)
+        LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts-1)),10)), # the minus 1 is just a patch for now until I update the other data sets.
+         TI = as.vector(scale(c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),10)),
+         CO = as.vector(scale(c(df_con$meanCond, rep(mean(df_con$meanCond, na.rm = T), num_forecasts))))
+      )
+   }
+  return(jags.data)
 }
 
 
@@ -116,18 +126,18 @@ ls_med <- function(ls){
   # }
 
   for(i in 1:length(ls)){
-       if(is.matrix(ls[[i]])){ # is it a matrix?
-            
-            med = apply(ls[[i]],2,'median') # if yes, get the median
-            ls_med[[i]] <- med # put the median values in the list slot
-            names(ls_med)[i] <- names(ls)[i] # name the list slot
-       } else {
-            med = apply(ls[[i]],c(2,3),'median') # if its an array, get teh median of the column and the third dimension
-            #med_array <- rep(list(list()), ncol(med))
-            #for(a in ncol(med)){
-            ls_med[[i]] <- med
-            names(ls_med)[i] <- names(ls)[i]
-       }
+    if(is.matrix(ls[[i]])){ # is it a matrix?
+         
+         med = apply(ls[[i]],2,'median') # if yes, get the median
+         ls_med[[i]] <- med # put the median values in the list slot
+         names(ls_med)[i] <- names(ls)[i] # name the list slot
+    } else {
+         med = apply(ls[[i]],c(2,3),'median') # if its an array, get teh median of the column and the third dimension
+         #med_array <- rep(list(list()), ncol(med))
+         #for(a in ncol(med)){
+         ls_med[[i]] <- med
+         names(ls_med)[i] <- names(ls)[i]
+    }
   }  
   
   #browser()
