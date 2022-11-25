@@ -196,7 +196,7 @@ $$
 N_{a,t+1} = N_{a,t}*(1-m_t)*S_{i} + (N_{a,t} - C_{a,t})*S_m + \epsilon_{a+1, t+1}
 $$
 
-where $S_i$ and $S_m$ are survival for immature and mature capelin respectively.  These were arrived at through simple OLS regression.  
+where $S_i$ and $S_m$ are survival for immature and mature capelin respectively.  These were arrived at through simple OLS regression and have now been incorporated into a model.  
 <!-- PMR: Is your basic demographic model a version of this? I would be really curious to see estimates from a state-space version of this. We could think of it as a NULL model compared to your more extensive IPM. KL: my basic model is the left half but I have done something similar to the whole equation in other runs but I have things like recovery in too. -->
 
 ### Observation equation
