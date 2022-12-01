@@ -48,7 +48,7 @@ disaggregated <- "1985-present" # "1999-present"
 
 # load data----
 
-# aggregated data----
+## aggregated data----
 df_cap <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin-2021.csv")
 
 str(df_cap)
@@ -89,15 +89,19 @@ df_dis_strata <- df_dis %>%
 df_dis_summ <- df_dis %>%
      group_by(year, age) %>%
      filter(age != "Unknown") %>%
-     #summarise(mat = mean(prop_mat), biomass = sum(biomass))
-     summarise(mat = mean(prop_mat, na.rm = T), abun = sum(abundance), biomass = sum(biomass), varA = var(abundance, na.rm = T), varB = var(biomass, na.rm = T)) # SOMETHING WRONG WITH VAR(BIOMASS)
+        #summarise(mat = mean(prop_mat), biomass = sum(biomass))
+         summarise(mat = mean(prop_mat, na.rm = T), 
+         abun = sum(abundance), 
+         biomass = sum(biomass), 
+         varA = var(abundance, na.rm = T), 
+         varB = var(biomass, na.rm = T)) # SOMETHING WRONG WITH VAR(BIOMASS)
 
 df_dis_summ  
 str(df_dis_summ)
 
 #add missing years
 df_tmp <- df_dis_summ[1:3,]
-df_tmp[, 1:4] <- NA
+df_tmp[, 1:8] <- NA
 df_tmp$year[1:3] <- c(2006, 2016, 2020)
 df_tmp
 
@@ -123,7 +127,7 @@ df_dis_tab
 
 #incredibly, I can't figure out how to get pivot wider to fill in the missing years with NA!!!  So using this crude but proven method
 df_tmp <- df_dis_tab[1:3,]
-df_tmp[, 1:4] <- NA
+df_tmp[, 1:8] <- NA
 df_tmp$year[1:3] <- c(2006, 2016, 2020)
 df_tmp
 
@@ -153,6 +157,7 @@ if(disaggregated == "1985-present") {
         df_dis_tab
 } 
 
+#write.csv(df_dis_tab, "capelin_abundance_1985-2021.csv")
 # pivot the data - longer to wider with the disaggregated abundance as columns
 # abundance value in natural logarithms
 df_dis_tabLog <- df_dis_tab %>%
@@ -167,8 +172,10 @@ df_dis_tabLog
 range(df_dis_tabLog$var, na.rm = T)
 range(df_dis_tabLog$sd, na.rm = T)
 
+#geometric mean for low productivity leading to high one.
+exp(mean(log(df_dis_tabLog[c(15:25, 27:28), ]$I), na.rm=T))
 
-# imputation ----
+## imputation ----
 ## the below are two possible approaches to resolving the 2010 missing fish problem
 # First approach: calculate the difference between A2-A3 and A3-A4 fish make a dataframe
 df_23 <- df_dis_tabLog$I2[15:37] - lead(df_dis_tabLog$I3[15:37])
@@ -233,7 +240,52 @@ cbind(I2m = I2_2010min, I3m = I3_2010min, I4m = I4_2010min, Im = I2010min)
 # }
 
 
-# USSR data 1981-1992----
+## USSR data 1981-1992----
+
+## Trinity Bay ----
+df_tb <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/TB_abun_atAge.csv")
+str(df_tb, give.attr = F)
+head(df_tb)
+df_tb$age <- as.factor(df_tb$age)
+df_tb$stratum <- as.factor("TB")
+
+df_tb_NAA <- df_tb %>%
+     filter(age != "Unknown" & age != "1" & age != "5") %>%
+     filter(abundance >0) %>%
+     pivot_wider(id_cols = year, names_from = age, values_from = abundance, names_sort = T) %>%
+     rename(I2 = '2', I3 = '3', I4 = '4') %>%
+     mutate(I2 = log(I2), I3 = log(I3), I4 = log(I4))
+
+str(df_tb_NAA)
+df_tb_NAA
+
+# add missing years
+df_tmp <- df_tb_NAA[1:8,] 
+df_tmp[, 1:4] <- NA
+df_tmp$year[1:8] <- c(2006, 2014:2016, 2020:2023)
+df_tmp
+
+# bind summarized data with missing data
+df_tb_NAA <- bind_rows(df_tmp, df_tb_NAA) %>% 
+     arrange(year)
+str(df_tb_NAA)
+
+if(disaggregated == "1985-present") {
+     df_tmp <- as.data.frame(matrix(NA, 14, 4))
+     df_tmp[, 1] <- c(1985:1998)
+     names(df_tmp) <- names(df_tb_NAA)
+     df_tb_NAA <- rbind(df_tmp, df_tb_NAA)
+} else {
+     df_con <- df_con %>%
+          slice(5:27)
+} 
+
+# impute
+imp <- colMeans(df_tb_NAA[,2:4], na.rm = T)
+df_tb_NAA[c(22,30:32, 36:39), 2:4] <- imp
+
+
+matITB <- as.matrix(df_tb_NAA[, 2:4])
 
 ## maturity ----
 ## note that variable 'mat' is as a proportion, not a percent - so no need to divide by 100
@@ -292,6 +344,8 @@ df_tmp$year[1:4] <- c(2020:2023)
 
 df_matM <- rbind(df_matM, df_tmp)
 
+df_matM[19,4] <- 99
+
 # crude imputation for age 2 maturity - this is weakest for age-2, a bit better for age 3, and probably a good approximation for age-4.  Note, no NA in pre-collapse period
 for (i in seq_along(df_matM$age2)){
      if(is.na(df_matM$age2[i])){
@@ -321,6 +375,43 @@ m_matM <- as.matrix(cbind(df_matM$age2/100, df_matM$age3/100, df_matM$age4/100))
 
 # could also do this with density dependent approach
 
+## TB maturity ----
+df_tb_matAA <- df_tb %>%
+     filter(age != "Unknown" & age != "1" & age != "5") %>%
+     pivot_wider(id_cols = year, names_from = age, values_from = prop_mat, names_sort = T) %>%
+     rename(m2 = '2', m3 = '3', m4 = '4')
+
+# add missing years
+df_tmp <- df_tb_matAA[1:8,] 
+df_tmp[, 1:4] <- NA
+df_tmp$year[1:8] <- c(2006, 2014:2016, 2020:2023)
+df_tmp
+
+
+# bind summarized data with missing data
+df_tb_matAA <- bind_rows(df_tmp, df_tb_matAA) %>% 
+     arrange(year)
+str(df_tb_matAA)
+
+if(disaggregated == "1985-present") {
+     df_tmp <- as.data.frame(matrix(NA, 14, 4))
+     df_tmp[, 1] <- c(1985:1998)
+     names(df_tmp) <- names(df_tb_matAA)
+     df_tb_matAA <- rbind(df_tmp, df_tb_matAA)
+} else {
+     df_con <- df_con %>%
+          slice(5:27)
+} 
+
+
+# impute
+imp <- colMeans(df_tb_matAA[,2:4], na.rm = T)
+df_tb_matAA[c(22,30:32, 36:39), 2:4] <- imp
+
+# change '1' to high percentage
+df_tb_matAA[,3][df_tb_matAA[,3] == 1] <- 0.995
+     
+m_maaTB <- as.matrix(df_tb_matAA[,2:4])
 
 
 ## larval density ----
@@ -398,8 +489,6 @@ if(disaggregated == "1985-present") {
 ## catch-at-age----
 df_caa <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/catchAtAge1998_2021.csv")
 str(df_caa)
-
-
 df_caa
 
 tmp <- df_caa %>% 
@@ -409,15 +498,51 @@ tmp <- df_caa %>%
 tmp$age <- as.numeric(tmp$age)
 str(tmp)
 
-str(df_caa_summ)
-
 df_caa_tab_abun <- tmp[c("year", "age", "abundance_sum")] %>%
-     pivot_wider(id_cols = year, names_from = age, values_from = abundance_sum)
+     pivot_wider(id_cols = year, names_from = age, values_from = abundance_sum, names_sort = T) %>%
+      rename(c1 = '1', c2 = '2', c3 = '3', c4 = '4', c5 = '5', c6 = '6') %>%
+     select(year, c2, c3, c4)
+
 df_caa_tab_abun
 
-df_caa_tab_mat <- tmp[c("year", "age", "prop_mat_mean")] %>%
-     pivot_wider(id_cols = year, names_from = age, values_from = prop_mat_mean)
-df_caa_tab_mat
+df_tmp <- as.data.frame(matrix(NA, 15, 4))
+df_tmp[, 1] <- c(1985:1997, 2022:2023)
+names(df_tmp) <- names(df_caa_tab_abun)
+df_caa_tab_abun <- rbind(df_tmp, df_caa_tab_abun)
+df_caa_tab_abun <- df_caa_tab_abun %>%
+     arrange(year) 
+
+imp <- colMeans(df_caa_tab_abun[,2:4], na.rm = T)
+df_caa_tab_abun[1:13, 2] <- imp[1]*.1
+df_caa_tab_abun[38:39, 2] <- imp[1] # I put this in as a fudge factor because otherwise, I was getting negative values in Schaekel model
+df_caa_tab_abun[1:13, 3] <- imp[2]*.1
+df_caa_tab_abun[38:39, 3] <- imp[2]
+df_caa_tab_abun[c(1:13, 38:39), 4] <- imp[3]
+
+matCAA <- as.matrix(df_caa_tab_abun[, 2:4])
+
+# df_caa_tab_mat <- tmp[c("year", "age", "prop_mat_mean")] %>%
+#      pivot_wider(id_cols = year, names_from = age, values_from = prop_mat_mean, names_sort = T) %>%
+#      rename(cm1 = '1', cm2 = '2', cm3 = '3', cm4 = '4', cm5 = '5', cm6 = '6') %>%
+#      select(year, cm2, cm3, cm4)
+# 
+# df_caa_tab_mat
+# 
+# df_tmp <- as.data.frame(matrix(NA, 15, 4))
+# df_tmp[, 1] <- c(1985:1997, 2022:2023)
+# names(df_tmp) <- names(df_caa_tab_mat)
+# df_caa_tab_mat <- rbind(df_tmp, df_caa_tab_mat)
+# df_caa_tab_mat <- df_caa_tab_mat %>%
+#      arrange(year) 
+# 
+# df_caa_tab_mat[, 2:4][df_caa_tab_mat[, 2:4] == 1] <- 0.995
+# 
+# imp <- colMeans(df_caa_tab_mat[,2:4], na.rm = T)
+# df_caa_tab_mat[c(1:13, 38:39), 2:4] <- imp
+# 
+# 
+# matCAA_m <- as.matrix(df_caa_tab_mat[, 2:4])
+
 
 
 
@@ -458,9 +583,9 @@ str(jags.data.m)
 
 
 
-# figure ----
+# Cohort-maturity----
 # create data frame to show realationships between mature/imm age 2, age 3 and age 4
- tmp1 <- as.data.frame(cbind(year = 1985:2021, age2 = jags.data.m$matI[1:37,1], perMat = jags.data.m$matM[1:37,1]))
+tmp1 <- as.data.frame(cbind(year = 1985:2021, age2 = jags.data.m$matI[1:37,1], perMat = jags.data.m$matM[1:37,1]))
  tmp1$imm <- log(exp(tmp1$age2)*(1-tmp1$perMat))
  tmp1$mat <- log(exp(tmp1$age2)*tmp1$perMat)
  tmp <- as.data.frame(cbind(tmp1, age3 = lead(jags.data.m$matI[1:37,2]), age4 = lead(jags.data.m$matI[1:37,3], 2)))
@@ -509,17 +634,37 @@ p <- p + theme_bw()
 p
 #ggsave("figs/recruitment1990_2020_modified.png", width = 7, height = 5)
 
-# trying to zoom in without the 2014 outlier
 
-#install.packages("ggforce")                   # Install & load ggforce package
-library("ggforce")
+# redo but with the age2 in as well.
+tmp_long <- pivot_longer(tmp, cols = c("mat", "imm", "age2", "age3", "age4"))
+str(tmp_long)
+tmp_long$name <- as.factor(tmp_long$name)
+tmp_long$name1 <- as.factor(tmp_long$name)
 
-p <- ggplot(data = tmp_long[25:148,], aes (x = year, y = exp(value), fill = factor(name, level_order)))
+level_order <- c("age2", "mat", "imm", "age3", "age4")
+tmp_long$name <- factor(tmp_long$name, levels=level_order)
+
+p <- ggplot(data = tmp_long, aes (x = year, y = exp(value), fill = factor(name, level_order)))
 p <- p + geom_bar(stat="identity", position=position_dodge())
-p <- p + scale_fill_manual(values = c("black", "lightgoldenrod2", "darkgreen", "red"))
+p <- p + scale_fill_manual(values = c("orange", "black", "lightgoldenrod2", "darkgreen", "red"))
 p <- p + guides(fill=guide_legend(title="Age/Mat"))
 p <- p + theme_bw()
-p <- p + facet_zoom(ylim = c(0, 20000))
 p
-#ggsave("figs/recruitment1986_2020_facet.png", width = 7, height = 5)
 
+
+p <- ggplot(data = tmp_long[31:185,], aes (x = year, y = exp(value), fill = factor(name, level_order)))
+p <- p + geom_bar(stat="identity", position=position_dodge())
+p <- p + scale_fill_manual(values = c("orange", "black", "lightgoldenrod2", "darkgreen", "red"))
+p <- p + guides(fill=guide_legend(title="Age/Mat"))
+p <- p + theme_bw()
+p
+
+
+# Z & M Barents Sea (BS) style----
+## See Notation.Rmd in C:\Users\lewiske\Documents\capelin_LRP\analyses\capelinLRP
+
+df_dis_tab$Z <- -log(lead(df_dis_tab$I3,1)/
+                    (df_dis_tab$I2*(1-df_matM$age2[1:37]*0.01)))
+df_dis_tab$M <- -log((lead(df_dis_tab$I3,1) + lead(matCAA[1:37,2],1) + matCAA[1:37,1])/
+                    (df_dis_tab$I2*(1-df_matM$age2[1:37]*0.01)))                                                                                          
+# remove outliers as per BS
