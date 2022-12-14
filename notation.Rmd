@@ -282,26 +282,3 @@ We lack information on LD before 2001 but this is a critical component of the mo
 
 *PMR: I think we're on the right track by using the whole series. There is still information on 'recruits' (inferred through age 2) coming from the survey through the historic period. Finally, capelin are pelagic and that group are known throughout the world to go through boom and bust cycles; we have been waiting on a boom phase, but there is no reason to expect we are stuck in the current state.*
 *KL: I really do hope that this works but feel like we need to "hope for the best and prepare for the worst".  And I think that the key word is "no expectation...will ever recur".  Maybe I don't understand the theory but I find this language problematic*
-
-
-
-# ignore for now
-OK - thinking now that survival has been modelled incorrectly.  I keep getting high values but i've been trying to deterministically get at a survival rate and then applying this as part of a stochastically determined N[t+1].  We can consider adding an alpha back perhaps?? So
-**Krazy Keith** idea
-
-$$
-\begin{equation*}
-\tag{5a}
-  logit(p_{3,t}) = \left\{ 
-  \begin{matrix}
-    \gamma_2*TI_t*(1-TI_t/\delta_2) & , & 1985-1995 \\ 
-    \gamma_2*TI_t*(1-TI_t/\delta_2) + \ E_2*CO_{t-1} & , & 2003-present
-  \end{matrix}
-  \right\}
-\end{equation*} \\
-  \\[1cm]
-Ni_{2,t} \sim N(log(exp(N_{2,t}*(1-m_t))))      \\
-  \\[1cm]
-N_{3,t+1} \sim bin(p_{3,t}, Ni_{2,t}), \tau_{proc}) \\  
-$$
-where Ni is immature capelin and p is the probability of survival.
