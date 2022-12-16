@@ -196,6 +196,7 @@ where *m* is the maturity.  In the second equation $N^{TB}$ is the Trinity Bay s
 Note that these equations do not have a term for spawning migration mortality which must be massive!
 Note that i'm only showing the equations for age-3 as the 4+ are identical.
 
+#### Schaekell eqns
 For reference, the above is similar to Schaekel et al. (1994).
 
 $$
@@ -216,7 +217,7 @@ split N2 into mature and immature and when a >= 2,
 
 $$
 \tag{8}
-N_{a,t+1} = (N_{a,t}*(1-m_t)+ NTB_{a,t})*(1-mTB)*S_{i} + (N_{a,t} - C_{a,t})*S_m + \epsilon_{a+1, t+1}
+N_{a,t+1} = [(N_{a,t}*(1-m_t)+ NTB_{a,t}*(1-mTB)]*S_{i} + (N_{a,t} - C_{a,t})*S_m + \epsilon_{a+1, t+1}
 $$
 Where TB is the Trinity Bay fish (assume all immature (but check this) and the Schaekel equation allows for fish to survive spawning
 
