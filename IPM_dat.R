@@ -574,29 +574,36 @@ df_caa_tab_abun[26, 2:4] <- imp_post
 # matCAA <- as.matrix(df_caa_all[, 2:4])
 # str(matCAA)
 
+# note that this actually goes to 1998
 df_caa1982_1997 <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/Fran/catchAtAge1982_1997abun.csv")
 str(df_caa1982_1997, give.attr = FALSE)
+
 
 tmp_caa <- df_caa1982_1997 %>%
    group_by(year) %>%
    summarize(across(age1:age6, sum)) %>%
+   mutate_at(vars(age1:age6), ~ ./ 1000) %>%
    rename(c1 = 'age1', c2 = 'age2', c3 = 'age3', c4 = 'age4', c5 = 'age5', c6 = 'age6') %>%
    select(year, c2, c3, c4)
 
 # Note that we don't need 1982 or 1983, 1984 and 1989, 1991, 1992 are missing, and 1995 had no fishery.  Add 2022 and 2023
 
-df_tmp <- as.data.frame(matrix(NA, 3, 4))
-df_tmp[, 1] <- c(1989, 1991, 1992)
+df_tmp <- as.data.frame(matrix(NA, 4, 4))
+df_tmp[, 1] <- c(1984, 1989, 1991, 1992)
 names(df_tmp) <- names(tmp_caa)
 df_caa_tab_1985_1997 <- (rbind(df_tmp, tmp_caa))
 df_caa_tab_1985_1997 <- df_caa_tab_1985_1997[order(df_caa_tab_1985_1997$year),]
 
 # average of precollapse years
 imp_pre <- colMeans(df_caa_tab_1985_1997[1:7, 2:4], na.rm = T)
-df_caa_tab_1985_1997[7, 2:4] <- imp_pre
-df_caa_tab_1985_1997[9:10, 2:4] <- 0
+df_caa_tab_1985_1997[3, 2:4] <- imp_pre
+df_caa_tab_1985_1997[8, 2:4] <- imp_pre
+df_caa_tab_1985_1997[c(10:11, 14), 2:4] <- 0
+
 
 df_caa_all <- rbind(df_caa_tab_1985_1997[3:15,], df_caa_tab_abun)
+
+write.csv(df_caa_all, "data/CAA.csv")
 
 matCAA <- as.matrix(df_caa_all[, 2:4])
 str(matCAA)
@@ -624,8 +631,7 @@ str(matCAA)
 # matCAA_m <- as.matrix(df_caa_tab_mat[, 2:4])
 
 p <- ggplot(data = df_caa_all, aes(x = year))
-p <- p + geom_line(aes(y = log10(c2)), colour = 
-                      "red")
+p <- p + geom_line(aes(y = log10(c2)), colour = "red")
 p <- p + geom_line(aes(y = log10(c3)), colour = "green")
 p <- p + geom_line(aes(y = log10(c4)), colour = "blue")
 p <- p + geom_line(aes(y = log10(c2+c3+c4)))
@@ -748,6 +754,7 @@ p
 
 # Z & M Barents Sea (BS) style----
 ## See Notation.Rmd in C:\Users\lewiske\Documents\capelin_LRP\analyses\capelinLRP
+### Have asked Ale and Hannah about getting the proper equestions here.  Both have responded but do not have the actual equations.
 
 df_dis_tab$Z <- -log(lead(df_dis_tab$I3,1)/
                     (df_dis_tab$I2*(1-df_matM$age2[1:37]*0.01)))
@@ -783,3 +790,4 @@ SSB <- as.data.frame(cbind(year=year,
                            I4mat = I4mat[1:35]))
 
 write.csv(SSB, "data/SSB.csv")
+
