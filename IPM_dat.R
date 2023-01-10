@@ -70,10 +70,12 @@ log(347000)
 
 ##disaggregated data----
 # units in millions
+## 1999 2021
 df_dis <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/age-disaggregated-2022.csv")
 str(df_dis)
 
 # bring in the historical data - ideally, this should all be in one step
+## 1985 2017
 df_dis_all <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin_age_disaggregate_abundance.csv")
 str(df_dis_all)
 
@@ -97,16 +99,16 @@ df_dis_summ <- df_dis %>%
          varB = var(biomass, na.rm = T)) # SOMETHING WRONG WITH VAR(BIOMASS)
 
 df_dis_summ  
-str(df_dis_summ)
+str(df_dis_summ, give.attr = FALSE)
 
-#add missing years
+#add missing years - note that this is not great programming as its repetitive with L 131 but need it for the maturity data
 df_tmp <- df_dis_summ[1:3,]
 df_tmp[, 1:8] <- NA
 df_tmp$year[1:3] <- c(2006, 2016, 2020)
 df_tmp
 
 # bind summarized data with missing data
-df_dis_summ <- bind_rows(df_tmp, df_dis_summ) %>% 
+df_dis_summ <- bind_rows(df_tmp, df_dis_summ) %>%
      arrange(year)
 
 
@@ -463,17 +465,17 @@ if(disaggregated == "1985-present") {
 
 ## condition ----
 #Note that I added in dummy data for 2021
-df_con <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/data/condition_ag1_2_MF_out.csv"
-)
+#df_con <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/data/condition_ag1_2_MF_out.csv")
+df_con <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/condition_2JK_ag1_2_MF_2022.csv")
 str(df_con)
 
-df_tmp <- df_con[1:3,]
-df_tmp[, 1:2] <- NA
-df_tmp$year[1:3] <- c(2019,2020, 2021)
-df_tmp
-imp <- mean(df_con$meanCond, na.rm = T) 
-df_tmp$meanCond[1:3] <- imp
-df_con <- rbind(df_con, df_tmp)
+# df_tmp <- df_con[1:2,]
+# df_tmp[, 1:2] <- NA
+# df_tmp$year[1:2] <- c(2022:2023)
+# df_tmp
+# imp <- mean(df_con$meanCond, na.rm = T) 
+# df_tmp$meanCond[1:2] <- imp
+# df_con <- rbind(df_con, df_tmp)
 
 if(disaggregated == "1985-present") {
         df_tmp <- as.data.frame(matrix(NA, 10, 2))
@@ -484,19 +486,20 @@ if(disaggregated == "1985-present") {
         df_con <- df_con %>%
                 slice(5:27)
         } 
-
+str(df_con)
 
 ## catch-at-age----
+# CAA 1998-2021
 df_caa <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/catchAtAge1998_2021.csv")
-str(df_caa)
+str(df_caa, give.attr = FALSE)
 df_caa
 
-tmp <- df_caa %>% 
+tmp <- df_caa %>%
      group_by(year, age) %>%
      filter(age != "Unknown") %>%
      summarise(abundance_sum = sum(N_millions), prop_mat_mean = mean(prop_mat))
 tmp$age <- as.numeric(tmp$age)
-str(tmp)
+str(tmp, give.attr = FALSE)
 
 df_caa_tab_abun <- tmp[c("year", "age", "abundance_sum")] %>%
      pivot_wider(id_cols = year, names_from = age, values_from = abundance_sum, names_sort = T) %>%
@@ -505,21 +508,98 @@ df_caa_tab_abun <- tmp[c("year", "age", "abundance_sum")] %>%
 
 df_caa_tab_abun
 
-df_tmp <- as.data.frame(matrix(NA, 15, 4))
-df_tmp[, 1] <- c(1985:1997, 2022:2023)
+# insert 2022 and 2023 as average of last 10 years
+df_tmp <- as.data.frame(matrix(NA, 2, 4))
+df_tmp[, 1] <- c(2022, 2023)
 names(df_tmp) <- names(df_caa_tab_abun)
-df_caa_tab_abun <- rbind(df_tmp, df_caa_tab_abun)
-df_caa_tab_abun <- df_caa_tab_abun %>%
-     arrange(year) 
+df_caa_tab_abun <- as.data.frame(rbind(df_caa_tab_abun, df_tmp))
 
-imp <- colMeans(df_caa_tab_abun[,2:4], na.rm = T)
-df_caa_tab_abun[1:13, 2] <- imp[1]*.1
-df_caa_tab_abun[38:39, 2] <- imp[1] # I put this in as a fudge factor because otherwise, I was getting negative values in Schaekel model
-df_caa_tab_abun[1:13, 3] <- imp[2]*.1
-df_caa_tab_abun[38:39, 3] <- imp[2]
-df_caa_tab_abun[c(1:13, 38:39), 4] <- imp[3]
+imp_post <- colMeans(df_caa_tab_abun[14:24, 2:4], na.rm = T)
+df_caa_tab_abun[25, 2:4] <- imp_post
+df_caa_tab_abun[26, 2:4] <- imp_post
 
-matCAA <- as.matrix(df_caa_tab_abun[, 2:4])
+# tmp <- df_caa %>% 
+#    group_by(year, age) %>%
+#    filter(age != "Unknown") %>%
+#    summarise(biomass_sum = sum(weight_tonnes), prop_mat_mean = mean(prop_mat))
+# tmp$age <- as.numeric(tmp$age)
+# str(tmp, give.attr = FALSE)
+# 
+# df_caa_tab_bio <- tmp[c("year", "age", "biomass_sum")] %>%
+#    pivot_wider(id_cols = year, names_from = age, values_from = biomass_sum, names_sort = T) %>%
+#    rename(c1 = '1', c2 = '2', c3 = '3', c4 = '4', c5 = '5', c6 = '6') %>%
+#    select(year, c2, c3, c4)
+# 
+# df_caa_tab_bio
+
+# insert 2022 and 2023 as average of last 10 years
+# df_tmp <- as.data.frame(matrix(NA, 2, 4))
+# df_tmp[, 1] <- c(2022, 2023)
+# names(df_tmp) <- names(df_caa_tab_bio)
+# df_caa_tab_bio <- as.data.frame(rbind(df_caa_tab_bio, df_tmp))
+# 
+# imp_post <- colMeans(df_caa_tab_bio[14:24, 2:4], na.rm = T)
+# df_caa_tab_bio[25, 2:4] <- imp_post
+# df_caa_tab_bio[26, 2:4] <- imp_post
+
+# CAA 1982-1997 in landings (tonnes) by age
+# df_caa1982_1997 <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/Fran/catchAtAge1982_1997bio.csv")
+# str(df_caa1982_1997, give.attr = FALSE)
+
+
+# summ and clean up
+# originally did this for boimass which doesn't match with what I did for the post-collapse nor does it match with the SSM. I think that biomass makes more sense but since I don't have that yet, sticking to abundance. 
+
+# tmp_caa <- df_caa1982_1997 %>%
+#    group_by(year) %>%
+#    summarize(across(age1:total, sum)) %>%
+#    rename(c1 = 'age1', c2 = 'age2', c3 = 'age3', c4 = 'age4', c5 = 'age5', c6 = 'age6') %>%
+#    select(year, c2, c3, c4)
+# 
+# # Note that we don't need 1982 or 1983, 1984 and 1989, 1991, 1992 are missing, and 1995 had no fishery.  Add 2022 and 2023
+# 
+# df_tmp <- as.data.frame(matrix(NA, 3, 4))
+# df_tmp[, 1] <- c(1989, 1991, 1992)
+# names(df_tmp) <- names(tmp_caa)
+# df_caa_tab_1985_1997 <- (rbind(df_tmp, tmp_caa))
+# df_caa_tab_1985_1997 <- df_caa_tab_1985_1997[order(df_caa_tab_1985_1997$year),]
+# 
+# # average of precollapse years
+# imp_pre <- colMeans(df_caa_tab_1985_1997[1:7, 2:4], na.rm = T)
+# df_caa_tab_1985_1997[7, 2:4] <- imp_pre
+# df_caa_tab_1985_1997[9:10, 2:4] <- 0
+# 
+# df_caa_all <- rbind(df_caa_tab_1985_1997[3:15,], df_caa_tab_bio)
+# 
+# matCAA <- as.matrix(df_caa_all[, 2:4])
+# str(matCAA)
+
+df_caa1982_1997 <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/Fran/catchAtAge1982_1997abun.csv")
+str(df_caa1982_1997, give.attr = FALSE)
+
+tmp_caa <- df_caa1982_1997 %>%
+   group_by(year) %>%
+   summarize(across(age1:age6, sum)) %>%
+   rename(c1 = 'age1', c2 = 'age2', c3 = 'age3', c4 = 'age4', c5 = 'age5', c6 = 'age6') %>%
+   select(year, c2, c3, c4)
+
+# Note that we don't need 1982 or 1983, 1984 and 1989, 1991, 1992 are missing, and 1995 had no fishery.  Add 2022 and 2023
+
+df_tmp <- as.data.frame(matrix(NA, 3, 4))
+df_tmp[, 1] <- c(1989, 1991, 1992)
+names(df_tmp) <- names(tmp_caa)
+df_caa_tab_1985_1997 <- (rbind(df_tmp, tmp_caa))
+df_caa_tab_1985_1997 <- df_caa_tab_1985_1997[order(df_caa_tab_1985_1997$year),]
+
+# average of precollapse years
+imp_pre <- colMeans(df_caa_tab_1985_1997[1:7, 2:4], na.rm = T)
+df_caa_tab_1985_1997[7, 2:4] <- imp_pre
+df_caa_tab_1985_1997[9:10, 2:4] <- 0
+
+df_caa_all <- rbind(df_caa_tab_1985_1997[3:15,], df_caa_tab_abun)
+
+matCAA <- as.matrix(df_caa_all[, 2:4])
+str(matCAA)
 
 # df_caa_tab_mat <- tmp[c("year", "age", "prop_mat_mean")] %>%
 #      pivot_wider(id_cols = year, names_from = age, values_from = prop_mat_mean, names_sort = T) %>%
@@ -543,14 +623,20 @@ matCAA <- as.matrix(df_caa_tab_abun[, 2:4])
 # 
 # matCAA_m <- as.matrix(df_caa_tab_mat[, 2:4])
 
-
+p <- ggplot(data = df_caa_all, aes(x = year))
+p <- p + geom_line(aes(y = log10(c2)), colour = 
+                      "red")
+p <- p + geom_line(aes(y = log10(c3)), colour = "green")
+p <- p + geom_line(aes(y = log10(c4)), colour = "blue")
+p <- p + geom_line(aes(y = log10(c2+c3+c4)))
+p
 
 
 # Bundle data----
 num_forecasts = 2 # 2 extra years
 jags.data <- ls_jag("yes", "yes", "no")
 str(jags.data)
-jd <- as.data.frame(jags.data)
+jd <- as.data.frame(jags.data[2:8])
 
 # get lengths of jags.data
 leng_jd <- rep(NA, 8)
@@ -665,6 +751,35 @@ p
 
 df_dis_tab$Z <- -log(lead(df_dis_tab$I3,1)/
                     (df_dis_tab$I2*(1-df_matM$age2[1:37]*0.01)))
-df_dis_tab$M <- -log((lead(df_dis_tab$I3,1) + lead(matCAA[1:37,2],1) + matCAA[1:37,1])/
-                    (df_dis_tab$I2*(1-df_matM$age2[1:37]*0.01)))                                                                                          
+
+df_dis_tab$M <- -log((lead(df_dis_tab$I3,1) + lead(matCAA[1:37,2],1) + matCAA[1:37,1])/(df_dis_tab$I2*(1-df_matM$age2[1:37]*0.01)))                    
+
+# something is wrong here.  The matCAA is supposed to be immatures but too many negatives.  The problem is that there are basically no imature age 3 so I've modified the equation
+df_dis_tab$M3 <- -log((lead(df_dis_tab$I4,1) + lead(matCAA[1:37,3],1) + matCAA[1:37,2])/(df_dis_tab$I3*(1-df_matM$age3[1:37]*0.01)))  
+-log((lead(df_dis_tab$I4,1) + lead(matCAA[1:37,3],1) + matCAA[1:37,2])/(df_dis_tab$I3))  
+
+df_dis_tab$Mi <- -log((lead(df_dis_tab$I3,1) + lead(matCAA[1:37,2],1) + matCAA[1:37,1])/(df_dis_tab$I2))                    
+
+year <- c(1985:2021)
+
+mortTab <- df_dis_tab[, c(1, 9:12)]
+
 # remove outliers as per BS
+
+
+
+# "SSB"----
+## create a "SSB" data set for use in simpleLRP_calc
+
+year <- 1985:2019
+I2mat <- exp(jags.data.m$matI[,1]*jags.data.m$matM[,1])
+I3mat <- exp(jags.data.m$matI[,2]*jags.data.m$matM[,2])
+I4mat <- exp(jags.data.m$matI[,3]*jags.data.m$matM[,3])
+
+# Need this in biomass, not abundance - waiting for Adamack!!!!
+SSB <- as.data.frame(cbind(year=year, 
+                           I2mat = I2mat[1:35], 
+                           I3mat = I3mat[1:35], 
+                           I4mat = I4mat[1:35]))
+
+write.csv(SSB, "data/SSB.csv")

@@ -14,16 +14,16 @@ library(plotly)
 library(ggplot2)
 library(crosstalk)
 source("IPM_EDA.R")
+#source("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/simpleLRP_FUN.R")
 ```
-
 
 # Abundance by age
 
 Column {.tabset}
 -------------------------------------
-
+   
 ### abundance by age and strata
-
+   
 ```{r fig-01}
 ggplotly(p01)
 ```
@@ -59,18 +59,18 @@ p
 
 Column
 -------------------------------------
-
+   
 ### I2 -> I
-
+   
 ```{r fig-02}
 ggplotly(p4)
 ```
 
 Column
 -------------------------------------
-
+   
 ### I3 -> lead(I)
-
+   
 ```{r fig-03}
 ggplotly(p5)
 ```
@@ -81,13 +81,112 @@ ggplotly(p5)
 ggplotly(p8)
 ```
 
-# Schaekell survial
+
+# Age-2 {data-navmenu="Abundance-at-age"}
+=====
+   
+Column
+-------------------------------------
+   
+```{r}
+Scatter1(df = df_aaa, xaxis = avg_densityt_2, yaxis = I2, colour = year, 
+         c1 = "Year: ", c2 = "Larval density: ", c3 = "Abundance: ", 
+         xlab = "Larval Density (#/m^-3: t-2)", ylab = "Capelin abundance (billions)",
+         filename = "figs/2-cond-rank-year.pdf", save = "no")
+```
+
+
+```{r}
+Scatter1(df = df_aaa, xaxis = tice , yaxis = I2, colour = year, 
+         c1 = "Year: ", c2 = "Ice retreat: ", c3 = "Abundance: ", 
+         xlab = "Ice retreat (tice - DOY: t)", ylab = "Capelin abundance (billions)",
+         filename = "figs/2-cond-rank-year.pdf", save = "no")
+```
+
+Column
+-------------------------------------
+   
+```{r}
+Scatter1(df = df_aaa, xaxis = condt_1, yaxis = I2, colour = year, 
+         c1 = "Year: ", c2 = "Condition: ", c3 = "Abundance: ", 
+         xlab = "Condition [t-1]", ylab = "Capelin abundance (billions)",
+         filename = "figs/2-cond-rank-year.pdf", save = "no")
+```
+
+
+```{r}
+
+```
+
+# Age-3 {data-navmenu="Abundance-at-age"}
+=====
 
 Column
 -------------------------------------
 
-### I2 -> I3
+Could do larval density at t-3 but this has no relevance for the IPM   
+```{r}
+```
 
+
+```{r}
+Scatter1(df = df_aaa, xaxis = tice , yaxis = I3, colour = year, 
+         c1 = "Year: ", c2 = "Ice retreat: ", c3 = "Abundance: ", 
+         xlab = "Ice retreat (tice - DOY: t)", ylab = "Capelin abundance (billions)",
+         filename = "figs/2-cond-rank-year.pdf", save = "no")
+```
+
+Column
+-------------------------------------
+
+Need to get condition for the right age
+```{r}
+```
+
+
+```{r}
+
+```
+   
+   
+# Age-4 {data-navmenu="Abundance-at-age"}
+=====
+   
+Column
+-------------------------------------
+
+Could do larval density at t-4 but this has no relevance for the IPM   
+```{r}
+```
+
+
+```{r}
+Scatter1(df = df_aaa, xaxis = tice , yaxis = I4, colour = year, 
+         c1 = "Year: ", c2 = "Ice retreat: ", c3 = "Abundance: ", 
+         xlab = "Ice retreat (tice - DOY: t)", ylab = "Capelin abundance (billions)",
+         filename = "figs/2-cond-rank-year.pdf", save = "no")
+```
+
+Column
+-------------------------------------
+
+Need to get condition for the right age
+```{r}
+```
+
+
+```{r}
+
+```
+
+   
+# Schaekell survial
+   
+Column
+-------------------------------------
+   
+### I2 -> I3
+   
 ```{r fig-1}
 ggplotly(p1)
 ```
@@ -100,9 +199,9 @@ ggplotly(p6)
 
 Column
 -------------------------------------
-  
+   
 ### I2 -> I4
-
+   
 ```{r fig-3}
 ggplotly(p3)
 ```
@@ -113,9 +212,9 @@ ggplotly(p3)
 
 Column
 -------------------------------------
-
+   
 ### Abundance by age
-
+   
 ```{r fig-4}
 ggplotly(p21)
 ```
@@ -131,9 +230,9 @@ ggplotly(p22)
 
 Column
 -------------------------------------
-
+   
 ### LD -> I2
-
+   
 ```{r fig-40}
 ggplotly(p10)
 ```
@@ -147,9 +246,9 @@ ggplotly(p11)
 
 Column
 -------------------------------------
-
+   
 ### L3 -> I3
-
+   
 ```{r fig-50}
 ggplotly(p12)
 ```
@@ -158,26 +257,30 @@ ggplotly(p12)
 
 Column
 -------------------------------------
-
+   
 ### year v maturity
+
 ```{r fig-60}
 ggplotly(p60)
 ```
 
 ### I2 -> mat
+
 ```{r fig-61}
 ggplotly(p61)
 ```
 
 Column
 -------------------------------------
-
+   
 ### I3 -> mat
+
 ```{r fig-62}
 ggplotly(p62)
 ```
 
 ### I -> mat
+
 ```{r fig-63}
 ggplotly(p63)
 ```
@@ -187,6 +290,7 @@ ggplotly(p63)
 
 Column
 -------------------------------------
+
 ### I3 -> mat
 ```{r fig-64}
 ggplotly(p64)

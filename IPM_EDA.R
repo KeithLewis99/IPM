@@ -118,7 +118,7 @@ ggplot(df_ld, aes(x = year, y = larvae)) + geom_point() + theme_bw()
 range(df_ld$larvae, na.rm = T)
 
 # 2018 doesn't match but condition the best ever that year, 2021 doesn't match but survey incomplete, 2010 doesn't match but survey known to be low.keith
-jd$year <- 1999:2023
+jd$year <- 1985:2023
 
 p10 <- ggplot(jd, aes(x = lag(LD,2) , y = I2)) + geom_point()
 
@@ -126,8 +126,8 @@ p10 <- ggplot(jd, aes(x = lag(LD,2) , y = I2)) + geom_point()
 p11 <- ggplot(jdy, aes(x = lag(log10(LD),2) , y = log10(I2), text = paste("year: ", year, "\n", sep = ""))) + geom_point()
 ggplotly(p11)
 
-p11a <- ggplot(jd_raw, aes(x = lag(log10(LD),2) , y = log10(I2), text = paste("year: ", year, "\n", sep = ""))) + geom_point()
-ggplotly(p11a)
+#p11a <- ggplot(jd_raw, aes(x = lag(log10(LD),2) , y = log10(I2), text = paste("year: ", year, "\n", sep = ""))) + geom_point()
+#ggplotly(p11a)
 
 
 
@@ -167,4 +167,25 @@ plot(density(x_I3u)) # density approaces zero at 0 & 16
 #So, if sd^2 = 9, then precision is 1/9
 
 
+# abundance-at-age ----
+source("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/simpleLRP_FUN.R")
+df_lag <- read.csv("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/data/lag.csv")
+df_lag <- df_lag[, c(2, 6:8, 10)]
+
+# df_aaa <- jags.data.m %>%
+#    #select(as.data.frame (matI)) %>%
+#    bind_rows() %>%
+#    select(matI, LD, TI, CO) %>%
+#    mutate_if(is.numeric, round, 2)
+# #   rename(a1 = matI[,1])
+# df_aaa$year <- as.numeric(1985:2023)
+
+df_aaa <- left_join(df_lag, round(df_dis_tabLog[, 1:5], 2), by = "year")
+
+str(df_aaa)
+
+# Scatter1(df = df_aaa, xaxis = avg_densityt_2, yaxis = I2, colour = year,
+#          c1 = "Year: ", c2 = "Larval density: ", c3 = "Abundance: ",
+#          xlab = "Year", ylab = "Capelin abundance (billions)",
+#          filename = "figs/2-cond-rank-year.pdf", save = "no")
 
