@@ -48,7 +48,7 @@ disaggregated <- "1985-present" # "1999-present"
 
 # load data----
 
-## aggregated data----
+## abund aggregated ----
 df_cap <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin-2021.csv")
 
 str(df_cap)
@@ -68,7 +68,7 @@ log(347)
 log(347000)
 
 
-##disaggregated data----
+## abund disaggregated data----
 # units in millions
 ## 1999 2021
 df_dis <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/age-disaggregated-2022.csv")
@@ -137,6 +137,7 @@ df_tmp
 df_dis_tab <- bind_rows(df_tmp, df_dis_tab) %>% 
      arrange(year)
 
+# bring in the 1985-2017 data
 df_dis_1998 <- df_dis_all[1:14, c(1, 3:6, 8:9)] #remove age 1 and age 6
 
 # rename the columns and multiply by 1000 to match the scale of the earlier data set
@@ -240,6 +241,96 @@ cbind(I2m = I2_2010min, I3m = I3_2010min, I4m = I4_2010min, Im = I2010min)
 #         df_dis_tabLog[11,4]  <- I4_2010min 
 #         
 # }
+
+## biomass disagregated ----
+# biomass-at-age-1985-2012 - from FRan
+## units (kt)
+df_baa_FM <- read_csv("data/baa-1985-2012.csv")
+df_baa_FM[,2:7] <- round(df_baa_FM[, 2:7], 1)
+str(df_baa_FM, give.attr = F)
+
+# biomass-at-age 1999-present - from Aaron and teh Shiny App 
+## Units - tonnes
+df_baa_AA <- read_csv("data/initial biomass by age.csv")
+str(df_baa_AA, give.attr = F)
+
+# remove Unknowns and Age-1
+df_baa_filter <- df_baa_AA %>%
+   group_by(year, age) %>%
+   filter(age != "Unknown" & age != 1) %>% 
+   select(year, age,
+          bio = med.bm.age.fran, 
+          bio.lci = low.bm.age.fran, bio.uci = up.bm.age.fran, 
+          matbio = med.mat.bm.age.fran, 
+          matbio.lci = low.mat.bm.age.fran, matbio.uci = up.mat.bm.age.fran
+) %>%
+   mutate_at(vars(bio:matbio.uci), ~ ./ 1000) # convert units to kt
+
+
+
+# pivot the data - longer to wider with the disaggregated abundance as columns
+# get abundance/biomass by age
+# these values are close to those in df_cap but not exact.  
+df_baa_tab <- df_baa_filter[, c(1:3)] %>%
+   #  filter(age != 1 & age != 5) %>%
+   filter(age != 1) %>%
+   #pivot_wider(names_from = age, values_from = biomass) %>%
+   pivot_wider(names_from = age, values_from = bio) %>%
+   #rename(a2 = '2', a3 = '3', a4 = '4')
+   rename(bio2 = '2', bio3 = '3', bio4 = '4', bio5 = '5') %>%
+   mutate(biomass = sum(c_across(starts_with("b")), na.rm = T)) %>%
+   mutate(var = var(c_across(starts_with("b")), na.rm = T))  %>%
+   mutate(sd = sd(c_across(starts_with("b")), na.rm = T))
+df_baa_tab
+
+#incredibly, I can't figure out how to get pivot wider to fill in the missing years with NA!!!  So using this crude but proven method
+df_tmp <- df_baa_tab[1:3,]
+df_tmp[, 1:8] <- NA
+df_tmp$year[1:3] <- c(2006, 2016, 2020)
+df_tmp
+
+# bind the blank years (NAs) with the data
+df_baa_tab <- bind_rows(df_tmp, df_baa_tab) %>% 
+   arrange(year)
+df_baa_tab$bio6 <- NA
+df_baa_tab <- df_baa_tab[,c(1:5, 9, 6)]
+str(df_baa_tab, give.attr = F)
+
+# create a total biomass column, get relevant rows, and fill in NAs
+df_baa_FM$biomass <- rowSums(df_baa_FM[, 3:7], na.rm = T)
+df_baa_1985 <- df_baa_FM[1:14, ]
+df_baa_1985[c(9:11, 13:14), 8] <- NA
+
+
+# combine the data sets as needed.
+if(disaggregated == "1985-present") {
+   df_baa_tab <- rbind(df_baa_1985[, c(1, 3:8)], df_baa_tab)
+} else {
+   df_baa_tab
+} 
+
+#write.csv(df_dis_tab, "capelin_abundance_1985-2021.csv")
+# pivot the data - longer to wider with the disaggregated abundance as columns
+# abundance value in natural logarithms
+df_dis_tabLog <- df_dis_tab %>%
+   #  mutate(loga2 = log(a2), loga3 = log(a3), loga4 = log(a4)) %>%
+   # select(year, loga2, loga3, loga4)
+   mutate(I2 = log(I2), I3 = log(I3), I4 = log(I4), I = log(I)) %>%
+   mutate(var = log(var), na.rm = T) %>%
+   mutate(sd = log(sd), na.rm = T) %>%
+   select(year, I2, I3, I4, I, var, sd)
+
+df_dis_tabLog
+range(df_dis_tabLog$var, na.rm = T)
+range(df_dis_tabLog$sd, na.rm = T)
+
+#geometric mean for low productivity leading to high one.
+exp(mean(log(df_dis_tabLog[c(15:25, 27:28), ]$I), na.rm=T))
+
+
+
+
+
 
 
 ## USSR data 1981-1992----
@@ -775,19 +866,58 @@ mortTab <- df_dis_tab[, c(1, 9:12)]
 
 
 
-# "SSB"----
-## create a "SSB" data set for use in simpleLRP_calc
+# mature biomass----
+## not sure what this is good for at this point.
+# biomass-at-age-1985-2012 - from FRan
 
-year <- 1985:2019
-I2mat <- exp(jags.data.m$matI[,1]*jags.data.m$matM[,1])
-I3mat <- exp(jags.data.m$matI[,2]*jags.data.m$matM[,2])
-I4mat <- exp(jags.data.m$matI[,3]*jags.data.m$matM[,3])
+df_ssb_FM <- read_csv("data/ssb.csv")
+plot(df_ssb_FM$ssb, lag(df_ssb_FM$abundance, 2))
 
-# Need this in biomass, not abundance - waiting for Adamack!!!!
-SSB <- as.data.frame(cbind(year=year, 
-                           I2mat = I2mat[1:35], 
-                           I3mat = I3mat[1:35], 
-                           I4mat = I4mat[1:35]))
 
-write.csv(SSB, "data/SSB.csv")
+# pivot the data - longer to wider with the disaggregated abundance as columns
+# get abundance/biomass by age
+# these values are close to those in df_cap but not exact.  
+df_ssb_tab <- df_baa_filter[, c(1:2, 6)] %>%
+   #  filter(age != 1 & age != 5) %>%
+   filter(age != 1) %>%
+   #pivot_wider(names_from = age, values_from = biomass) %>%
+   pivot_wider(names_from = age, values_from = matbio) %>%
+   #rename(a2 = '2', a3 = '3', a4 = '4')
+   rename(ssb2 = '2', ssb3 = '3', ssb4 = '4', ssb5 = '5') %>%
+   mutate(ssb = sum(c_across(starts_with("s")), na.rm = T)) %>%
+   mutate(var = var(c_across(starts_with("s")), na.rm = T))  %>%
+   mutate(sd = sd(c_across(starts_with("s")), na.rm = T))
+df_ssb_tab
 
+#incredibly, I can't figure out how to get pivot wider to fill in the missing years with NA!!!  So using this crude but proven method
+df_tmp <- df_ssb_tab[1:3,]
+df_tmp[, 1:8] <- NA
+df_tmp$year[1:3] <- c(2006, 2016, 2020)
+df_tmp
+
+# bind the blank years (NAs) with the data
+df_ssb_tab <- bind_rows(df_tmp, df_ssb_tab) %>% 
+   arrange(year)
+df_ssb_tab$bio6 <- NA
+df_ssb_tab <- df_ssb_tab[,c(1:5, 9, 6)]
+str(df_ssb_tab, give.attr = F)
+
+srr_1998 <- left_join(df_ssb_tab, df_dis_tab, by = "year") %>%
+   rename(abundance = I2) %>%
+   mutate_at(vars(abundance), ~ ./ 1000)
+
+
+# combine the data sets as needed.
+if(disaggregated == "1985-present") {
+   df_ssb <- rbind(df_ssb_FM[1:14,], srr_1998[,c(1,8,7)])
+} else {
+   df_ssb
+} 
+
+
+
+
+
+df_ssb$abundance_tp2 <- lead(df_ssb$abundance,2)
+
+write.csv(df_ssb, "data/ssb_all.csv")
