@@ -60,6 +60,11 @@ ls_jag <- function(log, forecast, matrix = NULL){
       matI[,1] <- c(df_dis_tabLog$I2, rep(NA, num_forecasts))
       matI[,2] <- c(df_dis_tabLog$I3, rep(NA, num_forecasts))
       matI[,3] <- c(df_dis_tabLog$I4, rep(NA, num_forecasts))
+      
+      matB <- matrix(NA, nrow=39, ncol = 3)
+      matB[,1] <- c(df_baa_tabLog$B2[1:37], rep(NA, num_forecasts))
+      matB[,2] <- c(df_baa_tabLog$B3[1:37], rep(NA, num_forecasts))
+      matB[,3] <- c(df_baa_tabLog$B4[1:37], rep(NA, num_forecasts))
 
    # make a list of the observations and covariates
     ## scale the covariates only
@@ -67,6 +72,7 @@ ls_jag <- function(log, forecast, matrix = NULL){
          n.occasions = length(df_dis_tab$year) + num_forecasts,
          ## observations
          matI = matI,
+         matB = matB,
          matI_TB = matITB,
          matM = m_matM, # not scaling this.  Its technically a covariate but its between zero and 1
          maa_TB = m_maaTB,
