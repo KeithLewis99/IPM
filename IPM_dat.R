@@ -34,7 +34,7 @@ library(plotly)
 library(purrr)
 
 
-#rm(list=ls())
+# rm(list=ls())
 options(dplyr.print_max = 1e9)
 
 
@@ -176,6 +176,7 @@ range(df_dis_tabLog$var, na.rm = T)
 range(df_dis_tabLog$sd, na.rm = T)
 
 #geometric mean for low productivity leading to high one.
+## https://en.wikipedia.org/wiki/Geometric_mean see this for rationale...even though log numbers, you are taking the product of all numbers exponentiated to 1/n.  Or, you an do sum of ln (n_i)*1/n and exponentiate
 exp(mean(log(df_dis_tabLog[c(15:25, 27:28), ]$I), na.rm=T))
 
 ## imputation ----
@@ -251,7 +252,7 @@ str(df_baa_FM, give.attr = F)
 
 # biomass-at-age 1999-present - from Aaron and teh Shiny App 
 ## Units - tonnes
-df_baa_AA <- read_csv("data/initial biomass by age.csv")
+df_baa_AA <- read_csv("data/abundance and biomass by age and year.csv")
 str(df_baa_AA, give.attr = F)
 
 # remove Unknowns and Age-1
@@ -309,29 +310,25 @@ if(disaggregated == "1985-present") {
    df_baa_tab
 } 
 
-#write.csv(df_dis_tab, "capelin_abundance_1985-2021.csv")
+#write.csv(df_baa_tab, "capelin_biomass_1985-2021.csv")
+
 # pivot the data - longer to wider with the disaggregated abundance as columns
 # abundance value in natural logarithms
-df_dis_tabLog <- df_dis_tab %>%
+df_baa_tabLog <- df_baa_tab %>%
    #  mutate(loga2 = log(a2), loga3 = log(a3), loga4 = log(a4)) %>%
    # select(year, loga2, loga3, loga4)
-   mutate(I2 = log(I2), I3 = log(I3), I4 = log(I4), I = log(I)) %>%
-   mutate(var = log(var), na.rm = T) %>%
-   mutate(sd = log(sd), na.rm = T) %>%
-   select(year, I2, I3, I4, I, var, sd)
+   mutate(B2 = log(bio2), B3 = log(bio3), B4 = log(bio4), B = log(biomass)) %>%
+   #mutate(var = log(var), na.rm = T) %>%
+   #mutate(sd = log(sd), na.rm = T) %>%
+   select(year, B2, B3, B4, B)
 
-df_dis_tabLog
-range(df_dis_tabLog$var, na.rm = T)
-range(df_dis_tabLog$sd, na.rm = T)
+df_baa_tabLog
+#range(df_baa_tabLog$var, na.rm = T)
+#range(df_baa_tabLog$sd, na.rm = T)
 
 #geometric mean for low productivity leading to high one.
-exp(mean(log(df_dis_tabLog[c(15:25, 27:28), ]$I), na.rm=T))
-
-
-
-
-
-
+## https://en.wikipedia.org/wiki/Geometric_mean see this for rationale...even though log numbers, you are taking the product of all numbers exponentiated to 1/n.  Or, you an do sum of ln (n_i)*1/n and exponentiate
+exp(mean(log(df_baa_tabLog[c(15:25, 27:28), ]$B), na.rm=T))
 
 ## USSR data 1981-1992----
 
@@ -867,9 +864,7 @@ mortTab <- df_dis_tab[, c(1, 9:12)]
 
 
 # mature biomass----
-## not sure what this is good for at this point.
-# biomass-at-age-1985-2012 - from FRan
-
+# biomass-at-age-1985-2012 - from FRan -> put these values in ssb_calculator and then 
 df_ssb_FM <- read_csv("data/ssb.csv")
 plot(df_ssb_FM$ssb, lag(df_ssb_FM$abundance, 2))
 
@@ -913,9 +908,6 @@ if(disaggregated == "1985-present") {
 } else {
    df_ssb
 } 
-
-
-
 
 
 df_ssb$abundance_tp2 <- lead(df_ssb$abundance,2)
