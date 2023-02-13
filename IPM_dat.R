@@ -34,7 +34,7 @@ library(plotly)
 library(purrr)
 
 
-# rm(list=ls())
+rm(list=ls())
 options(dplyr.print_max = 1e9)
 
 
@@ -48,88 +48,111 @@ disaggregated <- "1985-present" # "1999-present"
 
 # load data----
 
-## abund aggregated ----
-df_cap <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin-2021.csv")
-
-str(df_cap)
-head(df_cap)
-# add extra years to end the time series
-df_tmp <- df_cap[1:4,]
-df_tmp[, 1:8] <- NA
-df_tmp$year[1:4] <- c(2020:2023)
-df_tmp
-df_cap <- rbind(df_cap, df_tmp)
-
-df_cap$var_abun <- (df_cap$abundance_med*(log(df_cap$ab_lci)-log(df_cap$abundance_med))/1.96)^2
-
-# priors for full data set - get mean of the values from 1985-1990 on ln scale
-log(mean(c(456,239,149,409,366,464)))
-log(347)
-log(347000)
+## abund aggregated
+##### This doesn't appear to be used anymore so coding it out for now
+# df_cap <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin-2021.csv")
+# 
+# str(df_cap)
+# head(df_cap)
+# # add extra years to end the time series
+# df_tmp <- df_cap[1:4,]
+# df_tmp[, 1:8] <- NA
+# df_tmp$year[1:4] <- c(2020:2023)
+# df_tmp
+# df_cap <- rbind(df_cap, df_tmp)
+# 
+# df_cap$var_abun <- (df_cap$abundance_med*(log(df_cap$ab_lci)-log(df_cap$abundance_med))/1.96)^2
+# 
+# # priors for full data set - get mean of the values from 1985-1990 on ln scale
+# log(mean(c(456,239,149,409,366,464)))
+# log(347)
+# log(347000)
 
 
 ## abund disaggregated data----
-# units in millions
-## 1999 2021
-df_dis <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/age-disaggregated-2022.csv")
+## 1999 2021 but with proportion mature
+# df_dis <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/age-disaggregated-2022.csv")
+# most of the above commented out code below was for the old data set "age-disaggregated-2022.csv" - the uncommented code is for the data set with the 2014 correction
+## maturity is as abundance or biomass mature
+### Units millions
+df_dis <- read_csv("data/abundance and biomass by age and year2.csv")
 str(df_dis)
 
 # bring in the historical data - ideally, this should all be in one step
-## 1985 2017
-df_dis_all <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin_age_disaggregate_abundance.csv")
-str(df_dis_all)
+## 1985 2017 - # in billions
+df_dis_1985 <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin_age_disaggregate_abundance.csv")
+str(df_dis_1985)
 
 # Manipulate 1999-2021 data first, then 1985-2021
 
 # this is just to get a breakdown by age and stratum
-df_dis_strata <- df_dis %>%
-     group_by(year, age) %>%
-     filter(age != "Unknown" & age != 1 & age !=5)
+# df_dis_strata <- df_dis %>%
+#      group_by(year, age) %>%
+#      # filter(age != "Unknown" & age != 1 & age !=5)
+#    filter(age != "Unknown")
 
 # summarize maturity and abudnance
 # Note that this variance is based on variance among strata.
+# df_dis_summ <- df_dis %>%
+#      group_by(year, age) %>%
+#      filter(age != "Unknown") %>%
+#         #summarise(mat = mean(prop_mat), biomass = sum(biomass))
+#          summarise(mat = mean(prop_mat, na.rm = T), 
+#          abun = sum(abundance), 
+#          biomass = sum(biomass), 
+#          varA = var(abundance, na.rm = T), 
+#          varB = var(biomass, na.rm = T)) # SOMETHING WRONG WITH VAR(BIOMASS)
+
+
 df_dis_summ <- df_dis %>%
-     group_by(year, age) %>%
-     filter(age != "Unknown") %>%
-        #summarise(mat = mean(prop_mat), biomass = sum(biomass))
-         summarise(mat = mean(prop_mat, na.rm = T), 
-         abun = sum(abundance), 
-         biomass = sum(biomass), 
-         varA = var(abundance, na.rm = T), 
-         varB = var(biomass, na.rm = T)) # SOMETHING WRONG WITH VAR(BIOMASS)
+   group_by(year, age) %>%
+   #filter(age != "Unknown") %>%
+   #summarise(mat = mean(prop_mat), biomass = sum(biomass))
+   select(year, age,
+          abun = med.abund.age.fran, 
+          abun.lci = low.abund.age.fran, abun.uci = up.abund.age.fran, 
+          matabun = med.mat.abund.age.fran, 
+          matabun.lci = low.mat.abund.age.fran, matabun.uci = up.mat.abund.age.fran
+   ) %>%
+   mutate_at(vars(abun:matabun.uci), ~ ./ 1000) %>% # convert to billions
+   mutate_at(vars(abun:matabun.uci), funs(round(., 2)))
 
 df_dis_summ  
 str(df_dis_summ, give.attr = FALSE)
 
 #add missing years - note that this is not great programming as its repetitive with L 131 but need it for the maturity data
-df_tmp <- df_dis_summ[1:3,]
-df_tmp[, 1:8] <- NA
-df_tmp$year[1:3] <- c(2006, 2016, 2020)
-df_tmp
+# df_tmp <- df_dis_summ[1:3,]
+# df_tmp[, 1:8] <- NA
+# df_tmp$year[1:3] <- c(2006, 2016, 2020)
+# df_tmp
 
 # bind summarized data with missing data
-df_dis_summ <- bind_rows(df_tmp, df_dis_summ) %>%
-     arrange(year)
+# df_dis_summ <- bind_rows(df_tmp, df_dis_summ) %>%
+#      arrange(year)
 
 
 # pivot the data - longer to wider with the disaggregated abundance as columns
 # get abundance/biomass by age
 # these values are close to those in df_cap but not exact.  
-df_dis_tab <- df_dis_summ[, c(1:2,4)] %>%
+df_dis_tab <- df_dis_summ[, c(1:3)] %>%
      #  filter(age != 1 & age != 5) %>%
-     filter(age != 1) %>%
+     #filter(age != 1) %>%
      #pivot_wider(names_from = age, values_from = biomass) %>%
      pivot_wider(names_from = age, values_from = abun) %>%
      #rename(a2 = '2', a3 = '3', a4 = '4')
-     rename(I2 = '2', I3 = '3', I4 = '4', I5 = '5') %>%
-     mutate(I = sum(c_across(starts_with("I")), na.rm = T)) %>%
-     mutate(var = var(c_across(starts_with("I")), na.rm = T))  %>%
-     mutate(sd = sd(c_across(starts_with("I")), na.rm = T))
+     rename(I1 = '1', I2 = '2', I3 = '3', I4 = '4', I5 = '5') %>%
+     # mutate(I = sum(c_across(starts_with("I")), na.rm = T)) %>%
+     # mutate(var = var(c_across(starts_with("I")), na.rm = T))  %>%
+     # mutate(sd = sd(c_across(starts_with("I")), na.rm = T))
+   mutate(I = rowSums(across(I1:Unknown), na.rm = T)) %>%
+   mutate(var = var(c_across(I1:Unknown), na.rm = T))  %>%
+   mutate(sd = sd(c_across(I1:Unknown), na.rm = T))
 df_dis_tab
+
 
 #incredibly, I can't figure out how to get pivot wider to fill in the missing years with NA!!!  So using this crude but proven method
 df_tmp <- df_dis_tab[1:3,]
-df_tmp[, 1:8] <- NA
+df_tmp[, 1:length(df_tmp)] <- NA
 df_tmp$year[1:3] <- c(2006, 2016, 2020)
 df_tmp
 
@@ -137,30 +160,35 @@ df_tmp
 df_dis_tab <- bind_rows(df_tmp, df_dis_tab) %>% 
      arrange(year)
 
-# bring in the 1985-2017 data
-df_dis_1998 <- df_dis_all[1:14, c(1, 3:6, 8:9)] #remove age 1 and age 6
 
-# rename the columns and multiply by 1000 to match the scale of the earlier data set
+# bring in the 1985-2017 data
+df_dis_1998 <- df_dis_1985[1:14,] 
+
+# rename the columns to match the scale of the earlier data set
+## coded this out because we want these to be in billions!!!!
 df_dis_1998 <- df_dis_1998 %>%
-        rename("mature" = "age2PerMat", "I2" = "age2", "I3" = "age3", "I4" = "age4", "I5" = "age5") %>%
-        mutate(I2 = I2*1000) %>%
-        mutate(I3 = I3*1000) %>%
-        mutate(I4 = I4*1000) %>%
-        mutate(I5 = I5*1000)
+        rename("mature" = "age2PerMat", I1 = "age1", "I2" = "age2", "I3" = "age3", "I4" = "age4", "I5" = "age5", "I6" = "age6") # %>%
+        # mutate(I2 = I2) %>%
+        # mutate(I3 = I3) %>%
+        # mutate(I4 = I4) %>%
+        # mutate(I5 = I5) %>%
+        #  mutate(I6 = I6)
 
 # create a total I column and blanks for variance and SD        
-df_dis_1998$I <- rowSums(df_dis_1998[, 2:5], na.rm = T)
+df_dis_1998$I <- rowSums(df_dis_1998[, 2:7], na.rm = T)
 df_dis_1998$var <- NA
 df_dis_1998$sd <- NA
 
 # combine the data sets as needed.
 if(disaggregated == "1985-present") {
-        df_dis_tab <- rbind(df_dis_1998[, c(1:5, 8:10)], df_dis_tab)
+        df_dis_tab <- rbind(df_dis_1998[, c(1:6, 10:12)], df_dis_tab[, c(1:6, 8:10)])
 } else {
         df_dis_tab
 } 
 
 #write.csv(df_dis_tab, "capelin_abundance_1985-2021.csv")
+write.csv(df_dis_tab, "data/capelin_abundance_1985-2022.csv")
+
 # pivot the data - longer to wider with the disaggregated abundance as columns
 # abundance value in natural logarithms
 df_dis_tabLog <- df_dis_tab %>%
@@ -178,6 +206,35 @@ range(df_dis_tabLog$sd, na.rm = T)
 #geometric mean for low productivity leading to high one.
 ## https://en.wikipedia.org/wiki/Geometric_mean see this for rationale...even though log numbers, you are taking the product of all numbers exponentiated to 1/n.  Or, you an do sum of ln (n_i)*1/n and exponentiate
 exp(mean(log(df_dis_tabLog[c(15:25, 27:28), ]$I), na.rm=T))
+
+### abun aggreg ----
+## aggregate age-disagregated data >= 1999
+### - note that these are 5th and 95th percentiles and not CIs!!!!!
+df_ag_1999 <- df_dis_summ[, c(1:5)] %>%
+   group_by(year) %>%
+   summarize(abundance_med = sum(abun), ab_lci = sum(abun.lci), ab_uci = sum(abun.uci))
+ 
+## aggregate age-disagregated data < 1999
+### - note that that I don't have the 5th and 95th percentiles for these and they only go back to 1988
+
+df_ag_1985 <- df_dis_1998[, c(1, 10)] 
+colnames(df_ag_1985)[2] <- "abundance_med"
+df_ag_1985$ab_lci <- NA
+df_ag_1985$ab_uci <- NA
+
+# combine the data sets as needed.
+df_agg <- rbind(df_ag_1985, df_ag_1999)
+
+df_tmp <- df_agg[1:3,]
+df_tmp[, 1:length(df_tmp)] <- NA
+df_tmp$year[1:3] <- c(2006, 2016, 2020)
+df_tmp
+
+df_agg <- bind_rows(df_tmp, df_agg) %>% 
+   arrange(year)
+
+#write.csv(df_dis_tab, "capelin_abundance_1985-2021.csv")
+write_csv(df_agg, "data/capelin_aggregated_abundance_1985-2022.csv")
 
 ## imputation ----
 ## the below are two possible approaches to resolving the 2010 missing fish problem
@@ -258,14 +315,15 @@ str(df_baa_AA, give.attr = F)
 # remove Unknowns and Age-1
 df_baa_filter <- df_baa_AA %>%
    group_by(year, age) %>%
-   filter(age != "Unknown" & age != 1) %>% 
+   #filter(age != "Unknown") %>% 
    select(year, age,
           bio = med.bm.age.fran, 
           bio.lci = low.bm.age.fran, bio.uci = up.bm.age.fran, 
           matbio = med.mat.bm.age.fran, 
           matbio.lci = low.mat.bm.age.fran, matbio.uci = up.mat.bm.age.fran
 ) %>%
-   mutate_at(vars(bio:matbio.uci), ~ ./ 1000) # convert units to kt
+   mutate_at(vars(bio:matbio.uci), ~ ./ 1000) %>% # convert units to kt
+   mutate_at(vars(bio:matbio.uci), funs(round(., 2)))
 
 
 
@@ -274,43 +332,45 @@ df_baa_filter <- df_baa_AA %>%
 # these values are close to those in df_cap but not exact.  
 df_baa_tab <- df_baa_filter[, c(1:3)] %>%
    #  filter(age != 1 & age != 5) %>%
-   filter(age != 1) %>%
+   #filter(age != 1) %>%
    #pivot_wider(names_from = age, values_from = biomass) %>%
    pivot_wider(names_from = age, values_from = bio) %>%
-   #rename(a2 = '2', a3 = '3', a4 = '4')
-   rename(bio2 = '2', bio3 = '3', bio4 = '4', bio5 = '5') %>%
-   mutate(biomass = sum(c_across(starts_with("b")), na.rm = T)) %>%
-   mutate(var = var(c_across(starts_with("b")), na.rm = T))  %>%
-   mutate(sd = sd(c_across(starts_with("b")), na.rm = T))
+   rename(bio1 = '1', bio2 = '2', bio3 = '3', bio4 = '4', bio5 = '5') %>%
+   # mutate(biomass = sum(c_across(starts_with("b")), na.rm = T)) %>%
+   # mutate(var = var(c_across(starts_with("b")), na.rm = T))  %>%
+   # mutate(sd = sd(c_across(starts_with("b")), na.rm = T))
+   mutate(biomass = rowSums(across(bio1:Unknown), na.rm = T)) %>%
+   mutate(var = var(c_across(bio1:Unknown), na.rm = T))  %>%
+   mutate(sd = sd(c_across(bio1:Unknown), na.rm = T))
 df_baa_tab
 
 #incredibly, I can't figure out how to get pivot wider to fill in the missing years with NA!!!  So using this crude but proven method
 df_tmp <- df_baa_tab[1:3,]
-df_tmp[, 1:8] <- NA
+df_tmp[, 1:length(df_tmp)] <- NA
 df_tmp$year[1:3] <- c(2006, 2016, 2020)
 df_tmp
 
 # bind the blank years (NAs) with the data
-df_baa_tab <- bind_rows(df_tmp, df_baa_tab) %>% 
+df_baa_tab <- bind_rows(df_tmp, df_baa_tab[, c(1:8, 9:10)]) %>% 
    arrange(year)
 df_baa_tab$bio6 <- NA
-df_baa_tab <- df_baa_tab[,c(1:5, 9, 6)]
+df_baa_tab <- df_baa_tab[,c(1:6, 11, 7:8)]
 str(df_baa_tab, give.attr = F)
 
 # create a total biomass column, get relevant rows, and fill in NAs
-df_baa_FM$biomass <- rowSums(df_baa_FM[, 3:7], na.rm = T)
+df_baa_FM$biomass <- rowSums(df_baa_FM[, 2:7], na.rm = T)
 df_baa_1985 <- df_baa_FM[1:14, ]
 df_baa_1985[c(9:11, 13:14), 8] <- NA
 
 
 # combine the data sets as needed.
 if(disaggregated == "1985-present") {
-   df_baa_tab <- rbind(df_baa_1985[, c(1, 3:8)], df_baa_tab)
+   df_baa_tab <- rbind(df_baa_1985, df_baa_tab[, -8])
 } else {
    df_baa_tab
 } 
 
-#write.csv(df_baa_tab, "capelin_biomass_1985-2021.csv")
+write.csv(df_baa_tab, "data/capelin_biomass_1985-2022.csv", row.names = F)
 
 # pivot the data - longer to wider with the disaggregated abundance as columns
 # abundance value in natural logarithms
@@ -330,9 +390,40 @@ df_baa_tabLog
 ## https://en.wikipedia.org/wiki/Geometric_mean see this for rationale...even though log numbers, you are taking the product of all numbers exponentiated to 1/n.  Or, you an do sum of ln (n_i)*1/n and exponentiate
 exp(mean(log(df_baa_tabLog[c(15:25, 27:28), ]$B), na.rm=T))
 
+### biomass agg ----
+
+## aggregate age-disagregated data >= 1999
+### - note that these are 5th and 95th percentiles and not CIs!!!!!
+df_ag_bio_1999 <- df_baa_filter[, c(1:5)] %>%
+   group_by(year) %>%
+   summarize(biomass_med = sum(bio), bm_lci = sum(bio.lci), bm_uci = sum(bio.uci))
+
+## aggregate age-disagregated data < 1999
+### - note that that I don't have the 5th and 95th percentiles for these and they only go back to 1988
+
+df_ag_bio_1985 <- df_baa_1985[, c(1, 8)] 
+colnames(df_ag_bio_1985)[2] <- "biomass_med"
+df_ag_bio_1985$bm_lci <- NA
+df_ag_bio_1985$bm_uci <- NA
+
+# combine the data sets as needed.
+df_agg_bio <- rbind(df_ag_bio_1985, df_ag_bio_1999)
+df_tmp <- df_agg_bio[1:3,]
+df_tmp[, 1:length(df_tmp)] <- NA
+df_tmp$year[1:3] <- c(2006, 2016, 2020)
+df_tmp
+
+df_agg_bio <- bind_rows(df_tmp, df_agg_bio) %>% 
+   arrange(year)
+
+#write.csv(df_dis_tab, "capelin_abundance_1985-2021.csv")
+write_csv(df_agg_bio, "data/capelin_aggregated_biomass_1985-2022.csv")
+
+
 ## USSR data 1981-1992----
 
 ## Trinity Bay ----
+### 1999-2019 (update when needed)
 df_tb <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/TB_abun_atAge.csv")
 str(df_tb, give.attr = F)
 head(df_tb)
@@ -379,23 +470,24 @@ matITB <- as.matrix(df_tb_NAA[, 2:4])
 
 ## maturity ----
 ## note that variable 'mat' is as a proportion, not a percent - so no need to divide by 100
+## this is from the spring acoustic and Shiny app 1999-2022
 df_mat <- df_dis_summ %>%
      filter(age == 2 | is.na(age))
 #df_mat$mat[19] <- 0.3 # this is just a place holder until we figure out what is going on.
-str(df_mat)
+str(df_mat, give.attr=F)
 
 #impute data - place holder
-imp <- mean(df_mat$mat, na.rm = T) 
+imp <- mean(df_mat$matabun, na.rm = T) 
 #df_mat$mat[7] <- imp
-df_mat$mat[8] <- imp
-df_mat$mat[18] <- imp
-df_mat$mat[22] <- imp
+# df_mat$matabun[8] <- imp
+# df_mat$matabun[18] <- imp
+# df_mat$matabun[22] <- imp
 
 # this yields the same as imp but for some reason, you need the group_by() and you don't need it above.........this is the inconsistency with tidyverse that is frustrating
 
 tmp <- df_mat %>%
      group_by() %>%
-     summarise(meanMat = mean(mat, na.rm=T))
+     summarise(meanMat = mean(matabun, na.rm=T))
 tmp 
 
 # create an identical data frame to df_mat for years 1985:1998 and append them to more recent data.  
@@ -417,10 +509,55 @@ if(disaggregated == "1985-present") {
 plot(df_mat$year, df_mat$mat)
 plot(df_dis_1998$year, df_dis_1998$perAge2)
 
+## mat - diaggregated ----
+### USE THIS ONE, NOT CODE UNDER maturity or mat-matrix
+## 1999-present - abundance mature based on import from AA file
+df_mat_tab <- df_dis_summ[, c(1:2, 6)] %>%
+   #  filter(age != 1 & age != 5) %>%
+   filter(age != 1) %>%
+   #pivot_wider(names_from = age, values_from = biomass) %>%
+   pivot_wider(names_from = age, values_from = matabun) %>%
+   #rename(a2 = '2', a3 = '3', a4 = '4')
+   rename(mat2 = '2', mat3 = '3', mat4 = '4', mat5 = '5') %>%
+   mutate(matureAbun = sum(c_across(starts_with("m")), na.rm = T)) %>%
+   mutate(var = var(c_across(starts_with("m")), na.rm = T))  %>%
+   mutate(sd = sd(c_across(starts_with("m")), na.rm = T))
+df_mat_tab
+str(df_mat_tab, give.attr=F)
+
+# create empty rows
+df_tmp <- df_mat_tab[1:3,]
+df_tmp[, 1:length(df_tmp)] <- NA
+df_tmp$year[1:3] <- c(2006, 2016, 2020)
+df_tmp
+
+# bind the blank years (NAs) with the data
+df_mat_tab <- bind_rows(df_tmp, df_mat_tab) %>% 
+   arrange(year)
+
+## 1985-2012 - abundance mature
+### based on file from the biochar file (BIOCHAR FROM ACOUSTICS_revised to use Monte Carlo abundnace for 1988-1996 in annual page (003).xls; C:\Users\lewiske\Documents\capelin_LRP\IPM\data)  
+df_mat_1985 <- read_csv("data/matAbun.csv")
+str(df_mat_1985, give.attr = F)
+
+
+
+# this is the mature abundance for age-2 to -5 and total (includes unknowns and 6s)
+df_mat1 <- rbind(df_mat_1985[1:14, c(-2, -7)], df_mat_tab[,c(1:5, 7)])
+str(df_mat1, give.attr = F)
+
+
+df_mat1_per <- cbind(df_mat1[1], df_mat1[-1]/df_dis_tab[c(3:7)]*100)
+str(df_mat1_per, give.attr = F)
+write.csv(df_mat1_per, "data/capelin_perMat_1985-2022.csv", row.names = F)
+
 ## mat- matrix----
+#### 1985-2019
+#### These are percentages; this file is used in LRP_dat but only for age2
 df_matM  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/data/springAcoustics-percentMature.csv")
-str(df_matM)
+str(df_matM, give.attr = F)
 head(df_matM) # these are percentages
+tail(df_matM)
 
 # check data - just look for NA in one age class
 df_matM$age2[is.na(df_matM$age2)]
@@ -434,6 +571,7 @@ df_tmp$year[1:4] <- c(2020:2023)
 
 df_matM <- rbind(df_matM, df_tmp)
 
+# just so that its not a zero leading to no age4 fish
 df_matM[19,4] <- 99
 
 # crude imputation for age 2 maturity - this is weakest for age-2, a bit better for age 3, and probably a good approximation for age-4.  Note, no NA in pre-collapse period
@@ -872,6 +1010,7 @@ plot(df_ssb_FM$ssb, lag(df_ssb_FM$abundance, 2))
 # pivot the data - longer to wider with the disaggregated abundance as columns
 # get abundance/biomass by age
 # these values are close to those in df_cap but not exact.  
+# 1999-present
 df_ssb_tab <- df_baa_filter[, c(1:2, 6)] %>%
    #  filter(age != 1 & age != 5) %>%
    filter(age != 1) %>%
@@ -884,7 +1023,7 @@ df_ssb_tab <- df_baa_filter[, c(1:2, 6)] %>%
    mutate(sd = sd(c_across(starts_with("s")), na.rm = T))
 df_ssb_tab
 
-#incredibly, I can't figure out how to get pivot wider to fill in the missing years with NA!!!  So using this crude but proven method
+#incredibly, I can't figure out how to get pivot_wider to fill in the missing years with NA!!!  So using this crude but proven method
 df_tmp <- df_ssb_tab[1:3,]
 df_tmp[, 1:8] <- NA
 df_tmp$year[1:3] <- c(2006, 2016, 2020)
@@ -893,7 +1032,7 @@ df_tmp
 # bind the blank years (NAs) with the data
 df_ssb_tab <- bind_rows(df_tmp, df_ssb_tab) %>% 
    arrange(year)
-df_ssb_tab$bio6 <- NA
+df_ssb_tab$ssb6 <- NA
 df_ssb_tab <- df_ssb_tab[,c(1:5, 9, 6)]
 str(df_ssb_tab, give.attr = F)
 
@@ -904,7 +1043,7 @@ srr_1998 <- left_join(df_ssb_tab, df_dis_tab, by = "year") %>%
 
 # combine the data sets as needed.
 if(disaggregated == "1985-present") {
-   df_ssb <- rbind(df_ssb_FM[1:14,], srr_1998[,c(1,8,7)])
+   df_ssb <- rbind(df_ssb_FM[1:14,], srr_1998[,c(1,9,7)])
 } else {
    df_ssb
 } 
