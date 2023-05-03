@@ -26,8 +26,8 @@ source("IPM_JAGS-settings.R")
 
 # MCMC settings
 #ni <- 1000; nt <- 6; nb <- 50; nc <- 3
-#ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
-ni <- 200000; nt <- 60; nb <- 30000; nc <- 3
+ ni <- 20000; nt <- 6; nb <- 5000; nc <- 3
+# ni <- 200000; nt <- 60; nb <- 30000; nc <- 3
 # ni <- 2000000; nt <- 600; nb <- 300000; nc <- 3
 # ni <- 5000000; nt <- 1000; nb <- 300000; nc <- 3 # this produces really nice ACFs!!!!
 
@@ -39,7 +39,8 @@ ni <- 200000; nt <- 60; nb <- 30000; nc <- 3
 #     jags.data.m$q <- 2
 # }
 
-jags.data.m$Ni <- 3
+jags.data.m$Ni <- 3 # ages
+jags.data.m$M <- 3 # maturity in matrix matM
 
 # these are values to make the JAGS code more generalized, i.e., that the indices are not hard coded.  Currently applies only to cap.v20.
 # jags.data.m$n.occasions <- 6
@@ -92,34 +93,116 @@ if(matrix == "no") {
     # out$sims.list$osa_sd4 <- out$sims.list$osa_sd[,,3]
 }
 
+# all of this is to find out why i'm getting negative values which we then, can't take the log of - starting to wonder if log is a good idea
+
+#Shaekel only
+# looking for values < 0 in JAGS output - abundance * maturity
+exp(out$sims.list$N[,,1])*(1-out$sims.list$m[,,1])
+str(out$sims.list$N[,,1]*(1-out$sims.list$m[,,1]))
+tmp <- exp(out$sims.list$N[,,1])*(1-out$sims.list$m[,,1])
+tmp[tmp < 0]
+
+# looking for values < 0 in JAGS output - abundance * maturity - catch (not in all models)
+exp(out$sims.list$N[,,1])*out$sims.list$m[,,1] - out$sims.list$C[,,1]
+str(out$sims.list$N[,,1]*(out$sims.list$m[,,1]))
+tmp <- exp(out$sims.list$N[,,1])*out$sims.list$m[,,1] - out$sims.list$C[,,1]
+tmp <- log(exp(out$sims.list$N[,,1])*out$sims.list$m[,,1]- out$sims.list$C[,,1])
+str(tmp)
+rownames(tmp) <- 1:length(tmp[,1])
+
+tmp[rowSums(is.nan(tmp[,1:39]))>1,]
+
+# search for problem runs
+x <-1480
+y <- 25
+z <- 1
+
+exp(out$sims.list$N[x,y,z])*out$sims.list$m[x,y,z] - out$sims.list$C[x,y,z]
+exp(out$sims.list$N[x,y,z])*out$sims.list$m[x,y,z]
+exp(out$sims.list$N[x,y,z])
+out$sims.list$m[x,y,z]
+log(exp(out$sims.list$N[x,y,z])*out$sims.list$m[x,y,z])
+log(exp(out$sims.list$N[x,y,z]))
+log(out$sims.list$C[x,y,z])
+plot(density(log(exp(out$sims.list$N[,y,z])*out$sims.list$m[,y,z])))
+
+# doing the same but with the actual data
+exp(jags.data.m$matI[25,1])*jags.data.m$matM[25,1]
+log(exp(jags.data.m$matI[25,1])*jags.data.m$matM[25,1])
+jags.data.m$matCAA[25,1]
+log(jags.data.m$matCAA[25,1])
+jags.data.m$matI-log(jags.data.m$matCAA)
+
+
+plot(density(out$sims.list$si[,1]))
+plot(density(out$sims.list$sm[,1]))
+plot(density(out$sims.list$si[,2]))
+plot(density(out$sims.list$sm[,2]))
+
+apply(out$sims.list$si, 2, 'median')
+apply(out$sims.list$sm, 2, 'median')
+
+# calculations but with assummed mortalities
+exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + (exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1])*.5    
+
+exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 
+(exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1])*.5
+log((exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1])*.5)
+
+
+exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + (exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1])*.5
+
+exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]*.5
+
+
+log(exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + (exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1])*.5)
+
+log(exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]*.5)
+
+(exp(jags.data.m$matI[,2])*jags.data.m$matM[,2]-jags.data.m$matCAA[,2])*.5
+log((exp(jags.data.m$matI[,2])*jags.data.m$matM[,2]-jags.data.m$matCAA[,2])*.5)
+
+
+# look at survival values - all 
 str(out$sims.list)
-plot(density(head(out$sims.list$s[,,1])))
+#plot(density(head(out$sims.list$s[,,1])))
+plot(density(out$sims.list$s[,,1]))
 head(out$sims.list$s[,,1])
 apply(head(out$sims.list$s[,,1]), 2, 'median')
-apply(head(out$sims.list$s[,,1]), 2, 'mean')
+apply(out$sims.list$s[,,1], 2, 'median')
+apply(out$sims.list$s[,,1], 2, 'mean')
 plot(density(head(out$sims.list$logit_s[,,1])))
+plot(density(out$sims.list$logit_s[,,1]))
 
+apply(head(out$sims.list$m[,,1]), 2, 'median')
+apply(head(out$sims.list$m[,,2]), 2, 'median')
+plot(density(out$sims.list$m[,,1]))
+plot(density(out$sims.list$m[,,2]))
 
-plot(density(head(out$sims.list$s[,,2])))
+#plot(density(head(out$sims.list$s[,,2])))
+plot(density(out$sims.list$s[,,2]))
 apply(head(out$sims.list$s[,,2]), 2, 'median')
 apply(head(out$sims.list$s[,,2]), 2, 'mean')
 plot(density(head(out$sims.list$logit_s[,,2])))
+
+apply(out$sims.list$alpha, 2, 'median')
 
 
 age2 = apply(out$sims.list$N[,,1], 2, 'median')
 age3 = apply(out$sims.list$N[,,2], 2, 'median')
 age4 = apply(out$sims.list$N[,,3], 2, 'median')
 
+# cohort graphs ----
 tmp2 <- as.data.frame(cbind(year = 1985:2023, N2=age2, N3 = lead(age3), N4=lead(age4, 2)))
-tmp2$immN <- log(exp(tmp2$N2)*(1-jags.data.m$m))
-tmp2$matN <- log(exp(tmp2$N2)*jags.data.m$m)
+tmp2$immN <- log(exp(tmp2$N2)*(1-jags.data.m$matM[,1]))
+tmp2$matN <- log(exp(tmp2$N2)*jags.data.m$matM[,1])
 
 tmp2_long <- pivot_longer(tmp2, cols = c("N2", "matN", "immN", "N3", "N4"))
 level_order <- c("N2", "matN", "immN", "N3", "N4")
 tmp2_long$name <- factor(tmp2_long$name, levels=level_order)
 
 # whole time series
-p <- ggplot(data = tmp2_long, aes (x = year, y = exp(value), fill = factor(name, level_order)))
+p <- ggplot(data = tmp2_long, aes (x = year, y = value, fill = factor(name, level_order)))
 p <- p + geom_bar(stat="identity", position=position_dodge())
 p <- p + scale_fill_manual(values = c("orange", "black", "lightgoldenrod2", "darkgreen", "red"))
 p <- p + guides(fill=guide_legend(title="Age/Mat"))
@@ -127,9 +210,164 @@ p <- p + theme_bw()
 p
 
 
+# post collapse
 p <- ggplot(data = tmp2_long[31:195,], aes (x = year, y = exp(value), fill = factor(name, level_order)))
 p <- p + geom_bar(stat="identity", position=position_dodge())
 p <- p + scale_fill_manual(values = c("orange", "black", "lightgoldenrod2", "darkgreen", "red"))
+p <- p + guides(fill=guide_legend(title="Age/Mat"))
+p <- p + theme_bw()
+p
+
+# post collapse; N2-N4 only
+p <- ggplot(data = tmp2_long[31:195,] %>% filter(name == "N2" | name == "N3" | name == "N4"), aes (x = year, y = value, fill = factor(name, level_order)))
+p <- p + geom_bar(stat="identity", position=position_dodge())
+p <- p + scale_fill_manual(values = c("lightgoldenrod2", "darkgreen", "red"))
+p <- p + guides(fill=guide_legend(title="Age/Mat"))
+p <- p + theme_bw()
+p
+
+# Mariano exercise
+tmp <- as.data.frame(cbind(year = 1985:2023, I2 = jags.data.m$matI[,1], I3 = lead(jags.data.m$matI[,2], 1), I4 = lead(jags.data.m$matI[,3], 2)))
+
+str(tmp)
+
+tmp3_long <- tmp %>% 
+     pivot_longer(cols = c("I2", "I3", "I4"))
+str(tmp3_long)
+
+tmp3_long$exp <- rep(NA, 117)
+M <- 0.6
+N_ <- NA
+for (i in seq_along(tmp3_long$exp)){
+     if(tmp3_long$name[i] == "I2"){
+          N_[i] <- tmp3_long$value[i]
+     } else if (tmp3_long$name[i] == "I3") {
+          N_[i] <- tmp3_long$value[i-1]*exp(-M)
+     } else{
+          N_[i] <- tmp3_long$value[i-2]*exp(-M*2)
+     }
+     tmp3_long$exp[i] <- N_[i]
+}
+
+str(tmp3_long)
+head(tmp3_long, 20)
+
+p <- ggplot()
+p <- p + geom_bar(data = tmp3_long, aes (x = name, y = value, fill = factor(name), group=1), stat="identity", position=position_dodge())
+p <- p + scale_fill_manual(values = c("lightgoldenrod2", "darkgreen", "red"))
+#p <- p + guides(fill=guide_legend(title="Age/Mat"))
+p <- p + theme_bw()
+#p <- p + geom_line(aes(x = name, y = exp)) 
+p <- p + facet_wrap(~ year)
+p
+
+# trying for the above but with immature sepearted from amture
+tmp_mat <- as.data.frame(cbind(
+   year = 1985:2023, 
+   I2 = jags.data.m$matI[,1]*jags.data.m$matM[,1], 
+   I3 = lead(jags.data.m$matI[,2],1)*lead(jags.data.m$matM[,1], 1), 
+   I4 = lead(jags.data.m$matI[,3],1)*lead(jags.data.m$matM[,1], 2)))
+
+tmp_mat_long <- tmp_imm %>% 
+   pivot_longer(cols = c("I2", "I3", "I4"))
+str(tmp_mat_long)
+
+tmp3_long$mat <- "all"
+tmp_mat_long$mat <- "mat"
+tmp_mat_long$exp <- NA
+tmp_test <- rbind(tmp3_long, tmp_mat_long)
+tmp_test$mat <- as.factor(tmp_test$mat)
+str(tmp_test)
+
+p <- ggplot(data = tmp_test, aes (x = name, y = value, fill=mat, colour = mat, alpha=mat))
+p <- p + geom_col(position=position_identity())
+p <- p + scale_colour_manual(values=c("lightblue", "pink"))
+p <- p + scale_fill_manual(values=c("lightblue","pink"))
+p <- p + theme_bw()
+p <- p + geom_line(data = tmp_test[!is.na(tmp_test$exp),], aes(x = name, y = exp)) 
+p <- p + facet_wrap(~ year)
+p
+
+p <- ggplot(data = tmp_test %>%
+          filter(year == 1985), aes (x = name, y = value, fill=mat, colour = mat, alpha=mat))
+p <- p + geom_col(position=position_identity())
+p <- p + scale_colour_manual(values=c("lightblue", "pink"))
+p <- p + scale_fill_manual(values=c("lightblue","pink"))
+p <- p + theme_bw()
+p <- p + geom_line(data = tmp_test[!is.na(tmp_test$exp),], aes(x = name, y = exp)) 
+#p <- p + facet_wrap(~ year)
+p
+
+p <- ggplot(data = tmp_test[!is.na(tmp_test$exp),], aes(x = name, y = exp))
+p <- p + geom_line()
+p
+
+
+p <- ggplot()
+p <- p + geom_col(data = tmp_test[tmp_test$mat == "all",] %>%
+                     filter(year == 1985), aes (x = name, y = value, fill=mat, colour = mat, alpha=mat), position=position_identity())
+p <- p + geom_col(data = tmp_test[tmp_test$mat == "mat",] %>%
+                     filter(year == 1985), aes (x = name, y = value, fill=mat, colour = mat, alpha=mat), position=position_identity())
+p <- p + scale_colour_manual(values=c("lightblue", "pink"))
+p <- p + scale_fill_manual(values=c("lightblue","pink"))
+p <- p + theme_bw()
+p <- p + geom_line(data = tmp_test[!is.na(tmp_test$exp),], aes(x = name, y = exp)) 
+p <- p + facet_wrap(~ year)
+p
+
+p <- ggplot()
+p <- p + geom_col(data = tmp_test[tmp_test$mat == "all",], aes (x = name, y = value, fill=mat, colour = mat, alpha=mat), position=position_identity())
+p <- p + geom_col(data = tmp_test[tmp_test$mat == "mat",], aes (x = name, y = value, fill=mat, colour = mat, alpha=mat), position=position_identity())
+p <- p + scale_colour_manual(values=c("lightblue", "pink"))
+p <- p + scale_fill_manual(values=c("lightblue","pink"))
+p <- p + theme_bw()
+p <- p + geom_line(data = tmp_test[!is.na(tmp_test$exp),], aes(x = name, y = exp)) 
+p <- p + facet_wrap(~ year)
+p
+
+
+# compare I and N----
+
+tmp2 <- as.data.frame(cbind(year = 1985:2023, N2=age2, N3 = lead(age3), N4=lead(age4, 2)))
+tmp2$immN <- log(exp(tmp2$N2)*(1-jags.data.m$matM[,1]))
+tmp2$matN <- log(exp(tmp2$N2)*jags.data.m$matM[,1])
+
+names_matI <- c()
+tmp4 <- as.data.frame(jags.data.m$matI) |> rename(I2 = V1, I3 = V2, I4 = V3)
+tmp4$immI <- log(exp(tmp4$I2)*(1-jags.data.m$matM[,1]))
+tmp4$matI <- log(exp(tmp4$I2)*jags.data.m$matM[,1])
+
+tmp4
+tmp5 <- as.data.frame(cbind(tmp2, tmp4))
+
+tmp5_long <- pivot_longer(tmp5, cols = c("N2", "matN", "immN", "N3", "N4", "I2", "I3", "I4", "immI", "matI"))
+#level_order <- c("N2", "matN", "immN", "N3", "N4", "I2", "I3", "I4", "immI", "matI")
+level_order <- c("I2", "immI", "N2", "immN" , "I3", "N3")
+
+tmp6_long <- tmp5_long %>%
+   filter(name %in% level_order) 
+
+tmp6_long$name <- factor(tmp6_long$name, levels=level_order)
+
+p <- ggplot(data = tmp6_long, aes (x = year, y = exp(value), fill = factor(name, level_order)))
+p <- p + geom_bar(stat="identity", position=position_dodge())
+p <- p + scale_fill_manual(values = c("orange", "black", "lightgoldenrod2", "red", "darkgreen", "gray"))
+p <- p + guides(fill=guide_legend(title="Age/Mat"))
+p <- p + theme_bw()
+p
+
+
+p <- ggplot(data = tmp6_long[1:36,], aes (x = year, y = exp(value), fill = factor(name, level_order)))
+p <- p + geom_bar(stat="identity", position=position_dodge())
+p <- p + scale_fill_manual(values = c("orange", "black", "lightgoldenrod2", "red", "darkgreen", "gray"))
+p <- p + guides(fill=guide_legend(title="Age/Mat"))
+p <- p + theme_bw()
+p
+
+
+p <- ggplot(data = tmp6_long[37:234,], aes (x = year, y = exp(value), fill = factor(name, level_order)))
+p <- p + geom_bar(stat="identity", position=position_dodge())
+p <- p + scale_fill_manual(values = c("orange", "black", "lightgoldenrod2", "red", "darkgreen", "gray"))
 p <- p + guides(fill=guide_legend(title="Age/Mat"))
 p <- p + theme_bw()
 p
@@ -140,6 +378,37 @@ p
 raw <- ls_out(out)
 str(raw)
 
+plot(density(raw$logit_s[,,1]/raw$gamma[1]*(raw$delta[1]/2)*(1-(raw$delta[1]/2)/raw$delta[1])))
+
+tmp <- (exp(raw$N[,29:32,1])*(1-raw$m[,29:32,1])+ raw$Ntb[,15:18,1])*0.5
+tmp1 <- log((exp(raw$N[,30:31,1])*(1-raw$m[,30:31,1])+ raw$Ntb[,16:17,1])*.5)
+tmp2 <- log((exp(raw$N[,30:31,1])*(1-raw$m[,30:31,1]))*.5)
+tmp <- exp(raw$N[,13,1])*(1-raw$m[,13,1])-raw$C[,13,1]
+tmp <- cbind(exp(raw$N[,14,1]), raw$m[,14,1], raw$C[,14,1])
+subset(tmp, tmp[,1]*tmp[,2]<tmp[,3])
+str(tmp)
+test <- ifelse(tmp[,1]*tmp[,2]-tmp[,3]<=1, 1, tmp[,1]*tmp[,2]-tmp[,3])
+tt <- cbind(tmp, test)
+tt[tt[,4] < 1]
+tt[tt[,4] < 1,]
+tt[,5] <- rep(NA, length(tt))
+str(tt)
+log(tt[,4])
+
+plot(density(tmp[tmp<1000]))
+x <- "[,3]"
+raw$m[raw$m <= 0]
+raw[[x]][raw[[x]] <= 0]
+exp(raw[[x]][raw[[x]] <= 0])
+raw$C[,13,1][raw$C[,13,1] <=0]
+raw[[x]][is.na(raw[[x]])]
+raw[[x]][is.nan(raw[[x]])]
+
+tmp[tmp<0]
+log(tmp)
+mean(log(tmp))
+var(log(tmp))
+plot(density)
 # this worked by taking the mu1 out of the N2 equation.  It was still calculated.  
 
 raw$mu[raw$mu < 0]
@@ -222,7 +491,7 @@ tmpN3_plot <- ipm_plot(df_med = calc$N3, df_cri = cri$N3_cri, df_pri = pri$I3.re
     
 tmpN3_plot <- tmpN3_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = I3, x = year),
-                                      shape = 16, size = 2)
+                                                                                                                                     shape = 16, size = 2)
 tmpN3_plot 
 
 
