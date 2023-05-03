@@ -118,15 +118,18 @@ parms7 <- c("tau.proc",  "tau.obs", "sigma2.proc",
 
 # parms8-----
 parms8 <- c("tau.proc",  "tau.obs", "sigma2.proc",
-            "N", "R",
+            "N", 
+            "NI", "Ntb", "NM",
             #"eps", "osa", "osa_mean", "osa_sd",
             #"posa", "pe",
-             "logit_s", "s", 
+            # "logit_s", 
+            "m",
             "beta",  "gamma", "delta",
-            "alpha", "epsilon",  "tauRW.proc",
+            "alpha", "epsilon", #"tauRW.proc",
             #"N8",
-           # "mu",
-            #"u",
+            "mu",
+           # "u", 
+          "si", "sm", "C"
             #"pe",
             #"eta", "ar_mean", 
             #"zeta", "ma_mean",
@@ -135,7 +138,7 @@ parms8 <- c("tau.proc",  "tau.obs", "sigma2.proc",
    #         "Dssm.rep",
     #        "Dmape.rep",
      #       "Tturn.rep",
-            "I2.rep", "I3.rep", "I4.rep", "I.rep"
+         #   "I2.rep", "I3.rep", "I4.rep", "I.rep"
        #     "Tt1.rep",
         #    "Tt2.rep"
 )
