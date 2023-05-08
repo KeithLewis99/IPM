@@ -174,68 +174,7 @@ df_agg <- bind_rows(df_tmp, df_agg) %>%
 
 write_csv(df_agg, "data/derived/capelin_aggregated_abundance_1985-2022.csv")
 
-## imputation ----
-## the below are two possible approaches to resolving the 2010 missing fish problem
-# First approach: calculate the difference between A2-A3 and A3-A4 fish make a dataframe
-df_23 <- df_dis_tabLog$I2[15:37] - lead(df_dis_tabLog$I3[15:37])
-df_34 <- df_dis_tabLog$I3[15:37] - lead(df_dis_tabLog$I4[15:37])
 
-df_tmp <- as.data.frame(cbind(year = 1999:2021, I2_3 = df_23, I3_4 = df_34))
-
-# What is the mean difference in the above table
-df_mean <- df_tmp %>%
-        filter(year != 2010) %>%
-        summarise(I23 = mean(I2_3, na.rm = T), I34 = mean(I3_4, na.rm = T))
-df_mean
-
-# extract the value for the age at year from teh above dataframe
-if(disaggregated == "1985-present") {
-        I2_2009 <- df_dis_tabLog$I2[26] 
-        I3_2011 <- df_dis_tabLog$I3[28]
-        I3_2009 <- df_dis_tabLog$I3[26]
-        
-} else {
-        I2_2009 <- df_dis_tabLog$I2[11] 
-        I3_2011 <- df_dis_tabLog$I3[13]
-        I3_2009 <- df_dis_tabLog$I3[11]
-}
-
-# add or subtract the mean values from the above age at year to get estimate of missing fish
-I2_2010 <- as.numeric(I3_2011 + df_mean[1])
-I3_2010 <- as.numeric(I2_2009 - df_mean[1])
-I4_2010 <- as.numeric(I3_2009 - df_mean[2])
-       
-# total estimate for 2010
-I2010 <- log(exp(I3_2010) + exp(I2_2010) + exp(I4_2010))
-# create oject to compare to min values below.
-cbind(I2 = I2_2010, I3 = I3_2010, I4 = I4_2010, I = I2010)
-
-# Second approach: What is the max or minimum difference in the above table.  The goal here is to mimic a really poor year bc 2010 had terrible ice and terrible condition
-df_max <- df_tmp %>%
-        filter(year != 2010 & year != 2012) %>%
-        summarise(I23 = max(I2_3, na.rm = T), I34 = max(I3_4, na.rm = T), I23min = min(I2_3, na.rm = T))
-
-# add or subtract the max/min values from the above age at year to get estimate of missing fish
-I2_2010min <- as.numeric(I3_2011 + df_max[3])  # this is really a min to make for smallest increase possible
-I3_2010min <- as.numeric(I2_2009 - df_max[1])
-I4_2010min <- as.numeric(I3_2009 - df_max[2])
-
-# total estimate for 2010
-I2010min <- log(exp(I3_2010min) + exp(I2_2010min) + exp(I4_2010min))
-# create oject to compare to min values below.
-cbind(I2m = I2_2010min, I3m = I3_2010min, I4m = I4_2010min, Im = I2010min)
-
-
-# if(disaggregated == "1985-present") {
-#         df_dis_tabLog[26,2]  <- I2_2010 
-#         df_dis_tabLog[26,3]  <- I3_2010 
-#         df_dis_tabLog[26,4]  <- I4_2010 
-# } else {
-#         df_dis_tabLog[11,2]  <- I2_2010min 
-#         df_dis_tabLog[11,3]  <- I3_2010min 
-#         df_dis_tabLog[11,4]  <- I4_2010min 
-#         
-# }
 
 ## biomass disagregated ----
 # biomass-at-age-1985-2012 - from FRan
