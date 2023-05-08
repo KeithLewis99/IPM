@@ -49,7 +49,8 @@ disaggregated <- "1985-present" # "1999-present"
 # load data----
 
 ## disaggregated abund/biomass age data----
-## 1999-2022 age-disaggregated abundance and biomass but alsom with mature abundance and biomass.  All have lower and upper CIs.  
+## 1999-2022 abundance- and biomass-at-age but also with mature abundance- and biomass-at-age.  All have lower and upper CIs.  
+###from Aaron and the Shiny App 
 
 ### Units millions
 df_dis <- read_csv("data/abundance and biomass by age and year2.csv")
@@ -72,7 +73,7 @@ df_dis_summ <- df_dis %>%
           matabun.lci = low.mat.abund.age.fran, matabun.uci = up.mat.abund.age.fran
    ) %>% # select and rename 
    mutate_at(vars(abun:matabun.uci), ~ ./ 1000) %>% # convert to billions
-   mutate_at(vars(abun:matabun.uci), round, 2) # round
+   mutate_at(vars(abun:matabun.uci), round, 2) # round - this may be causing a slight discrepancy between my values and Aarons.
 
 df_dis_summ  
 str(df_dis_summ, give.attr = FALSE)
@@ -114,17 +115,20 @@ for(i in 1:length(df_dis_1998$I)){
 # create blank columns
 df_dis_1998$var <- NA
 df_dis_1998$sd <- NA
+df_dis_tab$I6 <- NA
 
-# combine the data sets as needed.
+# combine the data sets 
+## filter out Unknowns, mature, perAge2, var, and sd 
 if(disaggregated == "1985-present") {
         df_dis_tab <- rbind(df_dis_1998[, c(1:7, 11:13)], df_dis_tab[, c(1:6, 11, 8:10)])
 } else {
         df_dis_tab
 } 
 
+# abundance-at-age 1985-2022
 write.csv(df_dis_tab, "data/derived/capelin_abundance_1985-2022.csv")
 
-# convert abundance value to natural logarithms
+# # abundance-at-age 1985-2022 in natural logarithms
 ## NOTE THAT this is only I2-I4 because that is what the state space model deals with
 df_dis_tabLog <- df_dis_tab %>%
      mutate(I2 = log(I2), I3 = log(I3), I4 = log(I4), I = log(I)) %>%
@@ -184,53 +188,36 @@ df_baa_FM[,2:7] <- round(df_baa_FM[, 2:7], 1)
 str(df_baa_FM, give.attr = F)
 
 
-## biomass for 1982-1999
-
-vec_bio <- c(446, NA, NA, 3426, 3697, 2576, 4285, 3712, 5783, 138, 138, NA, NA, NA, 47, NA, NA
-)
-length(vec_bio)
-df_bio_agg_1982 <- data.frame(cbind(seq(1982, 1998), vec_bio)) %>%
-   rename(year = V1, biomass = vec_bio)
-
-
-# biomass-at-age 1999-present - from Aaron and teh Shiny App 
+# biomass-at-age 1999-present - from Aaron and the Shiny App 
+## from the abundance import above df_dis <- read_csv("data/abundance and biomass by age and year2.csv")
 ## Units - tonnes
-df_baa_AA <- read_csv("data/abundance and biomass by age and year2.csv")
-str(df_baa_AA, give.attr = F)
+###All have lower and upper CIs.  
 
 # remove Unknowns and Age-1
-df_baa_filter <- df_baa_AA %>%
+df_baa_filter <- df_dis %>%
    group_by(year, age) %>%
-   #filter(age != "Unknown") %>% 
    select(year, age,
           bio = med.bm.age.fran, 
           bio.lci = low.bm.age.fran, bio.uci = up.bm.age.fran, 
           matbio = med.mat.bm.age.fran, 
           matbio.lci = low.mat.bm.age.fran, matbio.uci = up.mat.bm.age.fran
-) %>%
+) %>%  # select and rename
    mutate_at(vars(bio:matbio.uci), ~ ./ 1000) %>% # convert units to kt
-   mutate_at(vars(bio:matbio.uci), funs(round(., 2)))
-
+   mutate_at(vars(bio:matbio.uci), round, 2) # round - this may be causing a slight discrepancy between my values and Aarons.
 
 
 # pivot the data - longer to wider with the disaggregated abundance as columns
 # get abundance/biomass by age
-# these values are close to those in df_cap but not exact.  
+# these values are close to those in df_cap but not exact - perhaps due to rounding?  
 df_baa_tab <- df_baa_filter[, c(1:3)] %>%
-   #  filter(age != 1 & age != 5) %>%
-   #filter(age != 1) %>%
-   #pivot_wider(names_from = age, values_from = biomass) %>%
    pivot_wider(names_from = age, values_from = bio) %>%
    rename(bio1 = '1', bio2 = '2', bio3 = '3', bio4 = '4', bio5 = '5') %>%
-   # mutate(biomass = sum(c_across(starts_with("b")), na.rm = T)) %>%
-   # mutate(var = var(c_across(starts_with("b")), na.rm = T))  %>%
-   # mutate(sd = sd(c_across(starts_with("b")), na.rm = T))
    mutate(biomass = rowSums(across(bio1:Unknown), na.rm = T)) %>%
    mutate(var = var(c_across(bio1:Unknown), na.rm = T))  %>%
    mutate(sd = sd(c_across(bio1:Unknown), na.rm = T))
 df_baa_tab
 
-#incredibly, I can't figure out how to get pivot wider to fill in the missing years with NA!!!  So using this crude but proven method
+# create a df with missing years
 df_tmp <- df_baa_tab[1:3,]
 df_tmp[, 1:length(df_tmp)] <- NA
 df_tmp$year[1:3] <- c(2006, 2016, 2020)
@@ -243,10 +230,10 @@ df_baa_tab$bio6 <- NA
 df_baa_tab <- df_baa_tab[,c(1:6, 11, 7:8)]
 str(df_baa_tab, give.attr = F)
 
-# create a total biomass column, get relevant rows, and fill in NAs
+# create a total biomass column for the 1985-2012 data, get relevant rows, and fill in NAs
 df_baa_FM$biomass <- NA
 df_baa_FM$Unknown <- NA
-df_baa_1985 <- df_baa_FM[1:14, c(1:7, 9, 8)]
+df_baa_1985 <- df_baa_FM[1:14, c(1:7, 9, 8)] # just 1985-1998 and relevant columns
 df_baa_1985 <- left_join(df_baa_1985[, 1:8], df_bio_agg_1982, "year")
 #df_baa_1985[c(9:11, 13:14), 8] <- NA
 
@@ -279,6 +266,14 @@ df_baa_tabLog
 exp(mean(log(df_baa_tabLog[c(15:25, 27:28), ]$B), na.rm=T))
 
 ### biomass agg ----
+
+## age-aggregated biomass for 1982-1999
+
+vec_bio <- c(446, NA, NA, 3426, 3697, 2576, 4285, 3712, 5783, 138, 138, NA, NA, NA, 47, NA, NA
+)
+length(vec_bio)
+df_bio_agg_1982 <- data.frame(cbind(seq(1982, 1998), vec_bio)) %>%
+   rename(year = V1, biomass = vec_bio)
 
 ## aggregate age-disagregated data >= 1999
 ### - note that these are 5th and 95th percentiles and not CIs!!!!!
