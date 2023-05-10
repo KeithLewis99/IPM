@@ -52,12 +52,13 @@ disaggregated <- "1985-present" # "1999-present"
 ## 1999-2022 abundance- and biomass-at-age but also with mature abundance- and biomass-at-age.  All have lower and upper CIs.  
 ###from Aaron and the Shiny App 
 
-### Units millions
+### Units millions -> convert to billions below
+### Units in tonnes -> convert to kilotonnes below
 df_dis <- read_csv("data/abundance and biomass by age and year2.csv")
 str(df_dis)
 
 # bring in the historical data - 
-## 1985 2017 - # in billions
+## 1985 2017 - abundance: # in billions
 df_dis_1985 <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin_age_disaggregate_abundance1.csv")
 str(df_dis_1985)
 
@@ -156,7 +157,7 @@ df_ag_1999 <- df_dis_summ[, c(1:5)] %>%
 ## aggregate age-disagregated data < 1999
 ### - note that that I don't have the 5th and 95th percentiles for these and they only go back to 1988 (or is it 1998?)
 
-##### BUT FRAN SEEMS TO HAVE AGGREGATED CIS TO 1988 - SO NEED TO DIG INTO THIS FURTHER***************************************************
+##### BUT FRAN SEEMS TO HAVE AGGREGATED CIS TO 1988 - SO NEED TO DIG INTO THIS FURTHER*************************************************** see biomass agg below
 
 df_ag_1985 <- df_dis_1998[, c(1, 11)] 
 colnames(df_ag_1985)[2] <- "abundance_med"
@@ -244,6 +245,7 @@ length(vec_bio)
 df_bio_agg_1982 <- data.frame(cbind(seq(1982, 1998), vec_bio)) %>%
    rename(year = V1, biomass = vec_bio)
 
+# join the age disaagregated biomass to the aggregated biomass.
 df_baa_1985 <- left_join(df_bio_agg_1982, df_baa_1985[, 1:8], "year")
 
 
@@ -254,7 +256,8 @@ if(disaggregated == "1985-present") {
    df_baa_tab
 } 
 
-write.csv(df_baa_tab[-9], "data/capelin_biomass_1985-2022.csv", row.names = F)
+# save just the baa for 1985-present because no age disaggregated for 1982-1984.
+write.csv(df_baa_tab[4:40, -9], "data/capelin_biomass_1985-2022.csv", row.names = F)
 
 # pivot the data - longer to wider with the disaggregated abundance as columns
 # abundance value in natural logarithms
@@ -263,12 +266,7 @@ df_baa_tabLog <- df_baa_tab %>%
    select(year, B2, B3, B4, B)
 
 df_baa_tabLog
-#range(df_baa_tabLog$var, na.rm = T)
-#range(df_baa_tabLog$sd, na.rm = T)
 
-#geometric mean for low productivity leading to high one.
-## https://en.wikipedia.org/wiki/Geometric_mean see this for rationale...even though log numbers, you are taking the product of all numbers exponentiated to 1/n.  Or, you an do sum of ln (n_i)*1/n and exponentiate
-exp(mean(log(df_baa_tabLog[c(15:25, 27:28), ]$B), na.rm=T))
 
 ### biomass agg ----
 #### note that I brought in the aggregated data from 1982-present above in a vector - this was a quick and dirty solution for some of the work I did on LRPs right before the RAP - may want to fix.
@@ -300,58 +298,14 @@ df_tmp
 df_agg_bio <- bind_rows(df_tmp, df_agg_bio) %>% 
    arrange(year)
 
+##### BUT FRAN SEEMS TO HAVE AGGREGATED CIS TO 1988 - SO NEED TO DIG INTO THIS FURTHER***************************************************
+
 write_csv(df_agg_bio, "data/capelin_aggregated_biomass_1985-2022.csv")
 
 
 ## USSR data 1981-1992----
 ### This will take a lot of attention from Divya or maybe a M.Sc student.  It is beyond me to try and determine how to compare the spatial and temproal coverages of the various Soviet surveys and how they calculate the biomass and abundance given these discrepancies.
 
-
-## Trinity Bay ----
-### 1999-2019 (update when needed)
-df_tb <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/TB_abun_atAge.csv")
-str(df_tb, give.attr = F)
-head(df_tb)
-df_tb$age <- as.factor(df_tb$age)
-df_tb$stratum <- as.factor("TB")
-
-df_tb_NAA <- df_tb %>%
-     filter(age != "Unknown" & age != "1" & age != "5") %>%
-     filter(abundance >0) %>%
-     pivot_wider(id_cols = year, names_from = age, values_from = abundance, names_sort = T) %>%
-     rename(I2 = '2', I3 = '3', I4 = '4') %>%
-     mutate(I2 = log(I2), I3 = log(I3), I4 = log(I4))
-
-str(df_tb_NAA)
-df_tb_NAA
-
-# add missing years
-df_tmp <- df_tb_NAA[1:8,] 
-df_tmp[, 1:4] <- NA
-df_tmp$year[1:8] <- c(2006, 2014:2016, 2020:2023)
-df_tmp
-
-# bind summarized data with missing data
-df_tb_NAA <- bind_rows(df_tmp, df_tb_NAA) %>% 
-     arrange(year)
-str(df_tb_NAA)
-
-if(disaggregated == "1985-present") {
-     df_tmp <- as.data.frame(matrix(NA, 14, 4))
-     df_tmp[, 1] <- c(1985:1998)
-     names(df_tmp) <- names(df_tb_NAA)
-     df_tb_NAA <- rbind(df_tmp, df_tb_NAA)
-} else {
-     df_con <- df_con %>%
-          slice(5:27)
-} 
-
-# impute
-imp <- colMeans(df_tb_NAA[,2:4], na.rm = T)
-df_tb_NAA[c(22,30:32, 36:39), 2:4] <- imp
-
-
-matITB <- as.matrix(df_tb_NAA[, 2:4])
 
 ## maturity ----
 ## note that variable 'mat' is as a proportion, not a percent - so no need to divide by 100
@@ -487,6 +441,53 @@ m_matM <- as.matrix(cbind(df_matM$age2/100, df_matM$age3/100, df_matM$age4/100))
 
 
 # could also do this with density dependent approach
+
+## Trinity Bay ----
+### 1999-2019 (update when needed)
+df_tb <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/TB_abun_atAge.csv")
+str(df_tb, give.attr = F)
+head(df_tb)
+df_tb$age <- as.factor(df_tb$age)
+df_tb$stratum <- as.factor("TB")
+
+df_tb_NAA <- df_tb %>%
+   filter(age != "Unknown" & age != "1" & age != "5") %>%
+   filter(abundance >0) %>%
+   pivot_wider(id_cols = year, names_from = age, values_from = abundance, names_sort = T) %>%
+   rename(I2 = '2', I3 = '3', I4 = '4') %>%
+   mutate(I2 = log(I2), I3 = log(I3), I4 = log(I4))
+
+str(df_tb_NAA)
+df_tb_NAA
+
+# add missing years
+df_tmp <- df_tb_NAA[1:8,] 
+df_tmp[, 1:4] <- NA
+df_tmp$year[1:8] <- c(2006, 2014:2016, 2020:2023)
+df_tmp
+
+# bind summarized data with missing data
+df_tb_NAA <- bind_rows(df_tmp, df_tb_NAA) %>% 
+   arrange(year)
+str(df_tb_NAA)
+
+if(disaggregated == "1985-present") {
+   df_tmp <- as.data.frame(matrix(NA, 14, 4))
+   df_tmp[, 1] <- c(1985:1998)
+   names(df_tmp) <- names(df_tb_NAA)
+   df_tb_NAA <- rbind(df_tmp, df_tb_NAA)
+} else {
+   df_con <- df_con %>%
+      slice(5:27)
+} 
+
+# impute
+imp <- colMeans(df_tb_NAA[,2:4], na.rm = T)
+df_tb_NAA[c(22,30:32, 36:39), 2:4] <- imp
+
+
+matITB <- as.matrix(df_tb_NAA[, 2:4])
+
 
 ## TB maturity ----
 df_tb_matAA <- df_tb %>%
