@@ -193,7 +193,8 @@ str(df_baa_FM, give.attr = F)
 ## Units - tonnes
 ###All have lower and upper CIs.  
 
-# remove Unknowns and Age-1
+# Select columns, change names, and convert units to kt and round
+## note that rounding may cause some discrepancies between these values and Adamack when they are aggregated
 df_baa_filter <- df_dis %>%
    group_by(year, age) %>%
    select(year, age,
@@ -234,13 +235,21 @@ str(df_baa_tab, give.attr = F)
 df_baa_FM$biomass <- NA
 df_baa_FM$Unknown <- NA
 df_baa_1985 <- df_baa_FM[1:14, c(1:7, 9, 8)] # just 1985-1998 and relevant columns
-df_baa_1985 <- left_join(df_baa_1985[, 1:8], df_bio_agg_1982, "year")
-#df_baa_1985[c(9:11, 13:14), 8] <- NA
+
+## age-aggregated biomass for 1982-1999 - from Mariano I think
+### see notes below - this may not be a great long term way to deal with this.
+vec_bio <- c(446, NA, NA, 3426, 3697, 2576, 4285, 3712, 5783, 138, 138, NA, NA, NA, 47, NA, NA
+)
+length(vec_bio)
+df_bio_agg_1982 <- data.frame(cbind(seq(1982, 1998), vec_bio)) %>%
+   rename(year = V1, biomass = vec_bio)
+
+df_baa_1985 <- left_join(df_bio_agg_1982, df_baa_1985[, 1:8], "year")
 
 
 # combine the data sets as needed.
 if(disaggregated == "1985-present") {
-   df_baa_tab <- rbind(df_baa_1985, df_baa_tab)
+   df_baa_tab <- rbind(df_baa_1985[,c(1, 3:9, 2)], df_baa_tab)
 } else {
    df_baa_tab
 } 
@@ -250,11 +259,7 @@ write.csv(df_baa_tab[-9], "data/capelin_biomass_1985-2022.csv", row.names = F)
 # pivot the data - longer to wider with the disaggregated abundance as columns
 # abundance value in natural logarithms
 df_baa_tabLog <- df_baa_tab %>%
-   #  mutate(loga2 = log(a2), loga3 = log(a3), loga4 = log(a4)) %>%
-   # select(year, loga2, loga3, loga4)
    mutate(B2 = log(bio2), B3 = log(bio3), B4 = log(bio4), B = log(biomass)) %>%
-   #mutate(var = log(var), na.rm = T) %>%
-   #mutate(sd = log(sd), na.rm = T) %>%
    select(year, B2, B3, B4, B)
 
 df_baa_tabLog
@@ -266,17 +271,11 @@ df_baa_tabLog
 exp(mean(log(df_baa_tabLog[c(15:25, 27:28), ]$B), na.rm=T))
 
 ### biomass agg ----
-
-## age-aggregated biomass for 1982-1999
-
-vec_bio <- c(446, NA, NA, 3426, 3697, 2576, 4285, 3712, 5783, 138, 138, NA, NA, NA, 47, NA, NA
-)
-length(vec_bio)
-df_bio_agg_1982 <- data.frame(cbind(seq(1982, 1998), vec_bio)) %>%
-   rename(year = V1, biomass = vec_bio)
+#### note that I brought in the aggregated data from 1982-present above in a vector - this was a quick and dirty solution for some of the work I did on LRPs right before the RAP - may want to fix.
 
 ## aggregate age-disagregated data >= 1999
-### - note that these are 5th and 95th percentiles and not CIs!!!!!
+### - note that these are 5th and 95th percentiles which is a bootstrap CI!!!!!
+#### note that this step is a bit redundant, i.e., Fran/Aaron have probably already done this but I want my own so that I don't have to continutally ask for data, i.e, I just want to be able to get age-disaggregated data with maturities and run the analysis.
 df_ag_bio_1999 <- df_baa_filter[, c(1:5)] %>%
    group_by(year) %>%
    summarize(biomass_med = sum(bio), bm_lci = sum(bio.lci), bm_uci = sum(bio.uci))
@@ -284,30 +283,29 @@ df_ag_bio_1999 <- df_baa_filter[, c(1:5)] %>%
 ## aggregate age-disagregated data < 1999
 ### - note that that I don't have the 5th and 95th percentiles for these and they only go back to 1988
 
-# df_ag_bio_1985 <- df_baa_1985[, c(1, 8)] 
-# colnames(df_ag_bio_1985)[2] <- "biomass_med"
-# df_ag_bio_1985$bm_lci <- NA
-# df_ag_bio_1985$bm_uci <- NA
-
 colnames(df_bio_agg_1982)[2] <- "biomass_med"
 df_bio_agg_1982$bm_lci <- NA
 df_bio_agg_1982$bm_uci <- NA
 
 # combine the data sets as needed.
 df_agg_bio <- rbind(df_bio_agg_1982, df_ag_bio_1999)
+
+# create a df with missing years
 df_tmp <- df_agg_bio[1:3,]
 df_tmp[, 1:length(df_tmp)] <- NA
 df_tmp$year[1:3] <- c(2006, 2016, 2020)
 df_tmp
 
+# bind the blank years (NAs) with the data
 df_agg_bio <- bind_rows(df_tmp, df_agg_bio) %>% 
    arrange(year)
 
-#write.csv(df_dis_tab, "capelin_abundance_1985-2021.csv")
 write_csv(df_agg_bio, "data/capelin_aggregated_biomass_1985-2022.csv")
 
 
 ## USSR data 1981-1992----
+### This will take a lot of attention from Divya or maybe a M.Sc student.  It is beyond me to try and determine how to compare the spatial and temproal coverages of the various Soviet surveys and how they calculate the biomass and abundance given these discrepancies.
+
 
 ## Trinity Bay ----
 ### 1999-2019 (update when needed)
