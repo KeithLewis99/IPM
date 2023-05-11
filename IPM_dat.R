@@ -309,45 +309,6 @@ write_csv(df_agg_bio, "data/capelin_aggregated_biomass_1985-2022.csv")
 
 
 ## maturity ----
-## note that variable 'mat' is as a proportion, not a percent - so no need to divide by 100
-## this is from the spring acoustic and Shiny app 1999-2022
-df_mat <- df_dis_summ %>%
-     filter(age == 2 | is.na(age))
-#df_mat$mat[19] <- 0.3 # this is just a place holder until we figure out what is going on.
-str(df_mat, give.attr=F)
-
-#impute data - place holder
-imp <- mean(df_mat$matabun, na.rm = T) 
-#df_mat$mat[7] <- imp
-# df_mat$matabun[8] <- imp
-# df_mat$matabun[18] <- imp
-# df_mat$matabun[22] <- imp
-
-# this yields the same as imp but for some reason, you need the group_by() and you don't need it above.........this is the inconsistency with tidyverse that is frustrating
-
-tmp <- df_mat %>%
-     group_by() %>%
-     summarise(meanMat = mean(matabun, na.rm=T))
-tmp 
-
-# create an identical data frame to df_mat for years 1985:1998 and append them to more recent data.  
-if(disaggregated == "1985-present") {
-        df_tmp <- df_mat[1:14,]
-        df_tmp[, c(1, 3:7)] <- NA
-        df_tmp$year <- c(1985:1998)
-        df_tmp$mat <- df_dis_1998$mature/100 # maturity is a percentage here so divide by 100
-        df_mat <- rbind(df_tmp, df_mat)
-        # get a mean maturity form 1991:1999
-        imp90 <- mean(df_mat$mat[7:15], na.rm = T) 
-        #df_mat$mat[7] <- imp
-        df_mat$mat[c(9:11, 13:14)] <- imp90
-} else {
-        df_mat
-} 
-
-# check the relationships
-plot(df_mat$year, df_mat$mat)
-plot(df_dis_1998$year, df_dis_1998$perAge2)
 
 ## mat - diaggregated ----
 ### USE THIS ONE, NOT CODE UNDER maturity or mat-matrix
@@ -391,57 +352,6 @@ df_mat1_per <- cbind(df_mat1[1], df_mat1[-1]/df_dis_tab[c(3:7)]*100)
 str(df_mat1_per, give.attr = F)
 write.csv(df_mat1_per, "data/capelin_perMat_1985-2022.csv", row.names = F)
 
-## mat- matrix----
-#### 1985-2019
-#### These are percentages; this file is used in LRP_dat but only for age2
-df_matM  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/data/springAcoustics-percentMature.csv")
-str(df_matM, give.attr = F)
-head(df_matM) # these are percentages
-tail(df_matM)
-
-# check data - just look for NA in one age class
-df_matM$age2[is.na(df_matM$age2)]
-is.na(df_matM$age2)
-df_matM$age3[is.na(df_matM$age3)]
-df_matM[,1:3]
-
-df_tmp <- df_matM[1:4,]
-df_tmp[, 1:7] <- NA
-df_tmp$year[1:4] <- c(2020:2023)
-
-df_matM <- rbind(df_matM, df_tmp)
-
-# just so that its not a zero leading to no age4 fish
-df_matM[19,4] <- 99
-
-# crude imputation for age 2 maturity - this is weakest for age-2, a bit better for age 3, and probably a good approximation for age-4.  Note, no NA in pre-collapse period
-for (i in seq_along(df_matM$age2)){
-     if(is.na(df_matM$age2[i])){
-          df_matM$age2[i] <- mean(df_matM$age2[12:35], na.rm = T)
-     }
-}
-
-for (i in seq_along(df_matM$age3)){
-     if(is.na(df_matM$age3[i])){
-          df_matM$age3[i] <- mean(df_matM$age3[12:35], na.rm = T)
-     }
-}
-
-for (i in seq_along(df_matM$age4)){
-     if(is.na(df_matM$age4[i])){
-          df_matM$age4[i] <- mean(df_matM$age4[12:35], na.rm = T)
-     }
-}
-
-
-# confirm above works
-df_matM[,1:3]
-df_matM[,1:5]
-
-m_matM <- as.matrix(cbind(df_matM$age2/100, df_matM$age3/100, df_matM$age4/100))
-
-
-# could also do this with density dependent approach
 
 ## Trinity Bay ----
 ### 1999-2019 (update when needed)
