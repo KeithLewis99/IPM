@@ -155,17 +155,18 @@ df_ag_1999 <- df_dis_summ[, c(1:5)] %>%
    summarize(abundance_med = sum(abun), ab_lci = sum(abun.lci), ab_uci = sum(abun.uci))
  
 ## aggregate age-disagregated data < 1999
-### - note that that I don't have the 5th and 95th percentiles for these and they only go back to 1988 (or is it 1998?)
+### - note that that I don't have the 5th and 95th percentiles for df_dis_1998 so I have to import a new data set
 
-##### BUT FRAN SEEMS TO HAVE AGGREGATED CIS TO 1988 - SO NEED TO DIG INTO THIS FURTHER*************************************************** see biomass agg below
-
-df_ag_1985 <- df_dis_1998[, c(1, 11)] 
-colnames(df_ag_1985)[2] <- "abundance_med"
-df_ag_1985$ab_lci <- NA
-df_ag_1985$ab_uci <- NA
+# df_ag_1985 <- df_dis_1998[, c(1, 11)] 
+# colnames(df_ag_1985)[2] <- "abundance_med"
+# df_ag_1985$ab_lci <- NA
+# df_ag_1985$ab_uci <- NA
+# units in billions and kilotonnes - note that I don't have the 1982 abundance - i'll add the biomass below
+df_ag_1985 <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin-2021.csv")
+str(df_ag_1985)
 
 # combine the 1985-1998 and 1999-present.
-df_agg <- rbind(df_ag_1985, df_ag_1999)
+df_agg <- rbind(df_ag_1985[1:14, 1:4], df_ag_1999)
 
 # add years with no data
 df_tmp <- df_agg[1:3,]
@@ -238,10 +239,12 @@ df_baa_FM$Unknown <- NA
 df_baa_1985 <- df_baa_FM[1:14, c(1:7, 9, 8)] # just 1985-1998 and relevant columns
 
 ## age-aggregated biomass for 1982-1999 - from Mariano I think
+## just adding this so that the age-disaggregated biomass has a biomass column and this may be easier than summing the biomass and then expanding the df for the 1982 values.
 ### see notes below - this may not be a great long term way to deal with this.
 vec_bio <- c(446, NA, NA, 3426, 3697, 2576, 4285, 3712, 5783, 138, 138, NA, NA, NA, 47, NA, NA
 )
 length(vec_bio)
+
 df_bio_agg_1982 <- data.frame(cbind(seq(1982, 1998), vec_bio)) %>%
    rename(year = V1, biomass = vec_bio)
 
@@ -281,30 +284,28 @@ df_ag_bio_1999 <- df_baa_filter[, c(1:5)] %>%
 ## aggregate age-disagregated data < 1999
 ### - note that that I don't have the 5th and 95th percentiles for these and they only go back to 1988
 
-colnames(df_bio_agg_1982)[2] <- "biomass_med"
-df_bio_agg_1982$bm_lci <- NA
-df_bio_agg_1982$bm_uci <- NA
+# commented out lines are for if I use the 1982 onwards, biomass only
+# colnames(df_bio_agg_1982)[2] <- "biomass_med"
+# df_bio_agg_1982$bm_lci <- NA
+# df_bio_agg_1982$bm_uci <- NA
+
+df_ag_1985[, c(1, 5:8)]
 
 # combine the data sets as needed.
-df_agg_bio <- rbind(df_bio_agg_1982, df_ag_bio_1999)
+df_agg_bio <- rbind(df_ag_1985[1:14, c(1, 5:7)], df_ag_bio_1999)
 
 # create a df with missing years
-df_tmp <- df_agg_bio[1:3,]
-df_tmp[, 1:length(df_tmp)] <- NA
-df_tmp$year[1:3] <- c(2006, 2016, 2020)
+df_tmp <- df_agg_bio[1:6,]
+df_tmp[1:length(df_tmp$year), ] <- NA
+df_tmp$year <- c(1982:1984, 2006, 2016, 2020)
+df_tmp[1:3, 2] <- df_bio_agg_1982[1:3, 2]
 df_tmp
 
 # bind the blank years (NAs) with the data
 df_agg_bio <- bind_rows(df_tmp, df_agg_bio) %>% 
    arrange(year)
 
-##### BUT FRAN SEEMS TO HAVE AGGREGATED CIS TO 1988 - SO NEED TO DIG INTO THIS FURTHER***************************************************
-
 write_csv(df_agg_bio, "data/capelin_aggregated_biomass_1985-2022.csv")
-
-
-## USSR data 1981-1992----
-### This will take a lot of attention from Divya or maybe a M.Sc student.  It is beyond me to try and determine how to compare the spatial and temproal coverages of the various Soviet surveys and how they calculate the biomass and abundance given these discrepancies.
 
 
 ## maturity ----
@@ -526,6 +527,9 @@ df_tb_matAA[c(22,30:32, 36:39), 2:4] <- imp
 df_tb_matAA[,3][df_tb_matAA[,3] == 1] <- 0.995
      
 m_maaTB <- as.matrix(df_tb_matAA[,2:4])
+
+## USSR data 1981-1992----
+### This will take a lot of attention from Divya or maybe a M.Sc student.  It is beyond me to try and determine how to compare the spatial and temproal coverages of the various Soviet surveys and how they calculate the biomass and abundance given these discrepancies.
 
 
 ## larval density ----
