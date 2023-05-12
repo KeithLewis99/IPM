@@ -347,11 +347,14 @@ str(df_mat1, give.attr = F)
 # this is just taking the year column separately, then, dividing the mature abundance by the total mature and multiplyint by 100 to get a percentage.
 df_mat1_per <- cbind(df_mat1[1], df_mat1[-1]/df_dis_tab[c(3:7)]*100)
 str(df_mat1_per, give.attr = F)
-write.csv(df_mat1_per, "data/capelin_perMat_1985-2022.csv", row.names = F)
+write.csv(df_mat1_per, "data/derived/capelin_perMat_1985-2022.csv", row.names = F)
 
 
 ## Trinity Bay ----
 ### 1999-2019 (update when needed)
+### Note that thie below is for abundance only.  I have not done similar work for biomass altough it would be the same as above.
+### Units millions -> convert to billions below
+### Units in tonnes -> convert to kilotonnes below
 df_tb <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/TB_abun_atAge.csv")
 str(df_tb, give.attr = F)
 head(df_tb)
@@ -359,19 +362,18 @@ df_tb$age <- as.factor(df_tb$age)
 df_tb$stratum <- as.factor("TB")
 
 df_tb_NAA <- df_tb %>%
-   filter(age != "Unknown" & age != "1" & age != "5") %>%
+   # filter(age != "Unknown" & age != "1" & age != "5") %>%
    filter(abundance >0) %>%
    pivot_wider(id_cols = year, names_from = age, values_from = abundance, names_sort = T) %>%
-   rename(I2 = '2', I3 = '3', I4 = '4') %>%
-   mutate(I2 = log(I2), I3 = log(I3), I4 = log(I4))
-
+   rename(I1 = '1', I2 = '2', I3 = '3', I4 = '4', I5 = '5') %>%
+   mutate_at(vars(I1:Unknown), ~ ./ 1000)  
 str(df_tb_NAA)
 df_tb_NAA
 
 # add missing years
-df_tmp <- df_tb_NAA[1:8,] 
-df_tmp[, 1:4] <- NA
-df_tmp$year[1:8] <- c(2006, 2014:2016, 2020:2023)
+df_tmp <- df_tb_NAA[1:7,] 
+df_tmp[, 1:7] <- NA
+df_tmp$year[1:7] <- c(2006, 2014:2016, 2020:2022)
 df_tmp
 
 # bind summarized data with missing data
@@ -380,7 +382,7 @@ df_tb_NAA <- bind_rows(df_tmp, df_tb_NAA) %>%
 str(df_tb_NAA)
 
 if(disaggregated == "1985-present") {
-   df_tmp <- as.data.frame(matrix(NA, 14, 4))
+   df_tmp <- as.data.frame(matrix(NA, 14, 7))
    df_tmp[, 1] <- c(1985:1998)
    names(df_tmp) <- names(df_tb_NAA)
    df_tb_NAA <- rbind(df_tmp, df_tb_NAA)
@@ -390,11 +392,17 @@ if(disaggregated == "1985-present") {
 } 
 
 # impute
-imp <- colMeans(df_tb_NAA[,2:4], na.rm = T)
+## Note that this works but do we really want to impute???  No I think.
+imp <- colMeans(df_tb_NAA[,2:7], na.rm = T)
 df_tb_NAA[c(22,30:32, 36:39), 2:4] <- imp
 
 
 matITB <- as.matrix(df_tb_NAA[, 2:4])
+
+
+df_tb_NAALog <- df_tb_NAA %>%
+   mutate(I1 = log(I1), I2 = log(I2), I3 = log(I3), I4 = log(I4), I5 = log(I5))
+
 
 
 ## TB maturity ----
@@ -404,9 +412,9 @@ df_tb_matAA <- df_tb %>%
      rename(m2 = '2', m3 = '3', m4 = '4')
 
 # add missing years
-df_tmp <- df_tb_matAA[1:8,] 
-df_tmp[, 1:4] <- NA
-df_tmp$year[1:8] <- c(2006, 2014:2016, 2020:2023)
+df_tmp <- df_tb_matAA[1:7,] 
+df_tmp[1:7, ] <- NA
+df_tmp$year[1:7] <- c(2006, 2014:2016, 2020:2022)
 df_tmp
 
 
@@ -427,6 +435,7 @@ if(disaggregated == "1985-present") {
 
 
 # impute
+## Note that this works but do we really want to impute???  No I think.
 imp <- colMeans(df_tb_matAA[,2:4], na.rm = T)
 df_tb_matAA[c(22,30:32, 36:39), 2:4] <- imp
 
