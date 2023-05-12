@@ -314,11 +314,8 @@ write_csv(df_agg_bio, "data/capelin_aggregated_biomass_1985-2022.csv")
 ### USE THIS ONE, NOT CODE UNDER maturity or mat-matrix
 ## 1999-present - abundance mature based on import from AA file
 df_mat_tab <- df_dis_summ[, c(1:2, 6)] %>%
-   #  filter(age != 1 & age != 5) %>%
-   filter(age != 1) %>%
-   #pivot_wider(names_from = age, values_from = biomass) %>%
+   filter(age != 1) %>% # because they aren't mature
    pivot_wider(names_from = age, values_from = matabun) %>%
-   #rename(a2 = '2', a3 = '3', a4 = '4')
    rename(mat2 = '2', mat3 = '3', mat4 = '4', mat5 = '5') %>%
    mutate(matureAbun = sum(c_across(starts_with("m")), na.rm = T)) %>%
    mutate(var = var(c_across(starts_with("m")), na.rm = T))  %>%
@@ -333,6 +330,7 @@ df_tmp$year[1:3] <- c(2006, 2016, 2020)
 df_tmp
 
 # bind the blank years (NAs) with the data
+## this is mature-abundance-at-age
 df_mat_tab <- bind_rows(df_tmp, df_mat_tab) %>% 
    arrange(year)
 
@@ -342,12 +340,11 @@ df_mat_1985 <- read_csv("data/matAbun.csv")
 str(df_mat_1985, give.attr = F)
 
 
-
 # this is the mature abundance for age-2 to -5 and total (includes unknowns and 6s)
 df_mat1 <- rbind(df_mat_1985[1:14, c(-2, -7)], df_mat_tab[,c(1:5, 7)])
 str(df_mat1, give.attr = F)
 
-
+# this is just taking the year column separately, then, dividing the mature abundance by the total mature and multiplyint by 100 to get a percentage.
 df_mat1_per <- cbind(df_mat1[1], df_mat1[-1]/df_dis_tab[c(3:7)]*100)
 str(df_mat1_per, give.attr = F)
 write.csv(df_mat1_per, "data/capelin_perMat_1985-2022.csv", row.names = F)
