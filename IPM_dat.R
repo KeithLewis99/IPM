@@ -466,11 +466,6 @@ if(disaggregated == "1985-present") {
         df_ld <- rbind(df_tmp, df_ld)
 } 
 
-# change column names
-# df_ld <- df_ld %>% rename(year = SurveyYear,
-#                           larvae = `Bellevue_larvae_m-3`,
-#                           log_larvae = `log_Bellevue_larvae_m-3`)
-# df_ld$lnlarvae <- log(df_ld$larvae)
 
 df_ld <- df_ld %>% rename(year = `Year`,
                           larvae = `Larval densities_ind_m-3`,
@@ -501,13 +496,6 @@ if(disaggregated == "1985-present") {
 df_con <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/condition_2JK_ag1_2_MF_2022.csv")
 str(df_con)
 
-# df_tmp <- df_con[1:2,]
-# df_tmp[, 1:2] <- NA
-# df_tmp$year[1:2] <- c(2022:2023)
-# df_tmp
-# imp <- mean(df_con$meanCond, na.rm = T) 
-# df_tmp$meanCond[1:2] <- imp
-# df_con <- rbind(df_con, df_tmp)
 
 if(disaggregated == "1985-present") {
         df_tmp <- as.data.frame(matrix(NA, 10, 2))
