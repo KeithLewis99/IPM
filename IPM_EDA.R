@@ -189,6 +189,10 @@ str(df_aaa)
 #          xlab = "Year", ylab = "Capelin abundance (billions)",
 #          filename = "figs/2-cond-rank-year.pdf", save = "no")
 
+
+
+## Added the below from IPM_dat.  This is not in the dashboard
+
 # Cohort-maturity----
 # create data frame to show realationships between mature/imm age 2, age 3 and age 4
 tmp1 <- as.data.frame(cbind(year = 1985:2021, age2 = jags.data.m$matI[1:37,1], perMat = jags.data.m$matM[1:37,1]))
