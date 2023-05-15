@@ -539,6 +539,8 @@ imp_post <- colMeans(df_caa_tab_abun[14:24, 2:4], na.rm = T)
 df_caa_tab_abun[25, 2:4] <- imp_post
 df_caa_tab_abun[26, 2:4] <- imp_post
 
+## this is the same as the above but for biomass
+### i'm going to leave the commented out code for CAA because I may use this at some point
 # tmp <- df_caa %>% 
 #    group_by(year, age) %>%
 #    filter(age != "Unknown") %>%
@@ -563,6 +565,7 @@ df_caa_tab_abun[26, 2:4] <- imp_post
 # df_caa_tab_bio[25, 2:4] <- imp_post
 # df_caa_tab_bio[26, 2:4] <- imp_post
 
+# CAA 1982-1997 biomass
 # CAA 1982-1997 in landings (tonnes) by age
 # df_caa1982_1997 <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/Fran/catchAtAge1982_1997bio.csv")
 # str(df_caa1982_1997, give.attr = FALSE)
@@ -595,6 +598,7 @@ df_caa_tab_abun[26, 2:4] <- imp_post
 # matCAA <- as.matrix(df_caa_all[, 2:4])
 # str(matCAA)
 
+# CAA 1982-1997 abundance
 # note that this actually goes to 1998
 df_caa1982_1997 <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/Fran/catchAtAge1982_1997abun.csv")
 str(df_caa1982_1997, give.attr = FALSE)
@@ -629,6 +633,9 @@ write.csv(df_caa_all, "data/CAA.csv")
 matCAA <- as.matrix(df_caa_all[, 2:4])
 str(matCAA)
 
+## this is the mature CAA - probably not relevant since most fish caught are mature, at least in more recent times.  Perhaps this was not true pre-2000 when lots of discarding.
+### i'm going to leave the commented out code for CAA because I may use this at some point
+
 # df_caa_tab_mat <- tmp[c("year", "age", "prop_mat_mean")] %>%
 #      pivot_wider(id_cols = year, names_from = age, values_from = prop_mat_mean, names_sort = T) %>%
 #      rename(cm1 = '1', cm2 = '2', cm3 = '3', cm4 = '4', cm5 = '5', cm6 = '6') %>%
@@ -651,6 +658,7 @@ str(matCAA)
 # 
 # matCAA_m <- as.matrix(df_caa_tab_mat[, 2:4])
 
+# plot CAA by ln(abundance) and age across years
 p <- ggplot(data = df_caa_all, aes(x = year))
 p <- p + geom_line(aes(y = log10(c2)), colour = "red")
 p <- p + geom_line(aes(y = log10(c3)), colour = "green")
