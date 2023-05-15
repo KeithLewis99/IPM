@@ -18,7 +18,7 @@ ls_jag <- function(log, forecast, matrix = NULL){
             n.occasions = length(df_dis_tab$year),
             I2 =  df_dis_tabLog$I2,
             I3 =  df_dis_tabLog$I3,
-            m = df_mat$mat,
+            m = df_mat$mat2,  ### note that this may not be meaningful - just putting in a column so that code will run
             LD = df_ld$lnlarvae,
             TI = df_ice$tice,
             CO = df_con$meanCond
@@ -28,7 +28,7 @@ ls_jag <- function(log, forecast, matrix = NULL){
             n.occasions = length(df_dis_tab$year),
             I2 =  df_dis_tab$I2,
             I3 =  df_dis_tab$I3,
-            m = df_mat$mat,
+            m = df_mat$mat2,  ### note that this may not be meaningful - just putting in a column so that code will run
             LD = df_ld$larvae,
             TI = df_ice$tice,
             CO = df_con$meanCond
@@ -38,7 +38,7 @@ ls_jag <- function(log, forecast, matrix = NULL){
             n.occasions = length(df_dis_tab$year) + num_forecasts,
             I2 =  c(df_dis_tab$I2, rep(NA, num_forecasts)),
             I3 =  c(df_dis_tab$I3, rep(NA, num_forecasts)),
-            m = c(df_mat$mat, rep(mean(df_mat$mat), num_forecasts)),
+            m = c(df_mat$mat2, rep(mean(df_mat$mat), num_forecasts)),  ### note that this may not be meaningful - just putting in a column so that code will run
             LD = c(df_ld$larvae, rep(mean(df_ld$larvae), num_forecasts)),
             TI = c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),
             CO = c(df_con$meanCond, rep(mean(df_ice$tice), num_forecasts))
@@ -49,7 +49,7 @@ ls_jag <- function(log, forecast, matrix = NULL){
       I2 =  c(df_dis_tabLog$I2, rep(NA, num_forecasts)),
       I3 =  c(df_dis_tabLog$I3, rep(NA, num_forecasts)),
       I4 =  c(df_dis_tabLog$I4, rep(NA, num_forecasts)),
-      m = c(df_mat$mat, rep(mean(df_mat$mat), num_forecasts)),
+      m = c(df_mat$mat2, rep(mean(df_mat$mat), num_forecasts)),  ### note that this may not be meaningful - just putting in a column so that code will run
       LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts-1)),10)),
       TI = as.vector(scale(c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),10)),
       CO = as.vector(scale(c(df_con$meanCond, rep(mean(df_con$meanCond, na.rm = T), num_forecasts))))
@@ -66,6 +66,11 @@ ls_jag <- function(log, forecast, matrix = NULL){
       matB[,2] <- c(df_baa_tabLog$B3[1:37], rep(NA, num_forecasts))
       matB[,3] <- c(df_baa_tabLog$B4[1:37], rep(NA, num_forecasts))
 
+      matM <- matrix(NA, nrow=39, ncol = 3)
+      matM[,1] <- c(df_mat_tabLog$M2[1:37], rep(NA, num_forecasts))
+      matM[,2] <- c(df_mat_tabLog$M3[1:37], rep(NA, num_forecasts))
+      matM[,3] <- c(df_mat_tabLog$M4[1:37], rep(NA, num_forecasts))
+      
    # make a list of the observations and covariates
     ## scale the covariates only
       jags.data <- list(#year = df_dis_tab$year,
@@ -74,7 +79,8 @@ ls_jag <- function(log, forecast, matrix = NULL){
          matI = matI,
          matB = matB,
          matI_TB = matITB,
-         matM = m_matM, # not scaling this.  Its technically a covariate but its between zero and 1
+         matM = matM, 
+         df_mat_prop = df_mat_prop,  # not scaling this.  Its technically a covariate but its between zero and 1
          maa_TB = m_maaTB,
          matCAA = matCAA,
         # matM = rbind(m_matM,matrix(data=NA, nrow = 2, ncol = 3)),

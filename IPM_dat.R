@@ -309,8 +309,6 @@ write_csv(df_agg_bio, "data/capelin_aggregated_biomass_1985-2022.csv")
 
 
 ## maturity ----
-
-## mat - diaggregated ----
 ### USE THIS ONE, NOT CODE UNDER maturity or mat-matrix
 ## 1999-present - abundance mature based on import from AA file
 df_mat_tab <- df_dis_summ[, c(1:2, 6)] %>%
@@ -341,13 +339,20 @@ str(df_mat_1985, give.attr = F)
 
 
 # this is the mature abundance for age-2 to -5 and total (includes unknowns and 6s)
-df_mat1 <- rbind(df_mat_1985[1:14, c(-2, -7)], df_mat_tab[,c(1:5, 7)])
-str(df_mat1, give.attr = F)
+df_mat <- rbind(df_mat_1985[1:14, c(-2, -7)], df_mat_tab[,c(1:5, 7)])
+str(df_mat, give.attr = F)
 
-# this is just taking the year column separately, then, dividing the mature abundance by the total mature and multiplyint by 100 to get a percentage.
-df_mat1_per <- cbind(df_mat1[1], df_mat1[-1]/df_dis_tab[c(3:7)]*100)
-str(df_mat1_per, give.attr = F)
-write.csv(df_mat1_per, "data/derived/capelin_perMat_1985-2022.csv", row.names = F)
+df_mat_tabLog <- df_mat %>%
+   mutate(M2 = log(mat2), M3 = log(mat3), M4 = log(mat4), M = log(matureAbun)) %>%
+   select(year, M2, M3, M4, M)
+
+df_mat_tabLog
+
+
+# this is just taking the year column separately, then, dividing the mature abundance by the total mature and multiplying by 100 to get a percentage.
+df_mat_prop <- cbind(df_mat[1], df_mat[-1]/df_dis_tab[c(3:7)])
+str(df_mat_prop, give.attr = F)
+write.csv(df_mat_prop, "data/derived/capelin_perMat_1985-2022.csv", row.names = F)
 
 
 ## Trinity Bay ----
@@ -697,7 +702,7 @@ str(jdy)
 # jd_raw <- as.data.frame(jd_raw)
 # jd_raw <- cbind(year = year, jd_raw)
 
-#source("IPM_fun.R")
+source("IPM_fun.R")
 jags.data.m <- ls_jag("yes", "yes", "yes")
 str(jags.data.m)
 
