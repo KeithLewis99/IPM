@@ -360,3 +360,13 @@ if(disaggregated == "1985-present") {
 df_ssb$abundance_tp2 <- lead(df_ssb$abundance,2)
 
 write.csv(df_ssb, "data/ssb_all.csv")
+
+
+# CAA ----
+# plot CAA by ln(abundance) and age across years
+p <- ggplot(data = df_caa_all, aes(x = year))
+p <- p + geom_line(aes(y = log10(c2)), colour = "red")
+p <- p + geom_line(aes(y = log10(c3)), colour = "green")
+p <- p + geom_line(aes(y = log10(c4)), colour = "blue")
+p <- p + geom_line(aes(y = log10(c2+c3+c4)))
+p

@@ -663,13 +663,6 @@ str(matCAA)
 # 
 # matCAA_m <- as.matrix(df_caa_tab_mat[, 2:4])
 
-# plot CAA by ln(abundance) and age across years
-p <- ggplot(data = df_caa_all, aes(x = year))
-p <- p + geom_line(aes(y = log10(c2)), colour = "red")
-p <- p + geom_line(aes(y = log10(c3)), colour = "green")
-p <- p + geom_line(aes(y = log10(c4)), colour = "blue")
-p <- p + geom_line(aes(y = log10(c2+c3+c4)))
-p
 
 
 # Bundle data----
@@ -702,7 +695,7 @@ str(jdy)
 # jd_raw <- as.data.frame(jd_raw)
 # jd_raw <- cbind(year = year, jd_raw)
 
-source("IPM_fun.R")
+#source("IPM_fun.R")
 jags.data.m <- ls_jag("yes", "yes", "yes")
 str(jags.data.m)
 
