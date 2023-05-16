@@ -667,38 +667,16 @@ str(matCAA)
 
 # Bundle data----
 num_forecasts = 2 # 2 extra years
-jags.data <- ls_jag("yes", "yes", "no")
-str(jags.data)
-jd <- as.data.frame(jags.data[2:8])
-
-# get lengths of jags.data
-leng_jd <- rep(NA, 8)
-for (i in 1:length(jags.data)){
-        len_jd <- length(jags.data[[i]])
-        leng_jd[i] <- len_jd
-}
-leng_jd
-
-# add years for convenience of graphing later
-if(disaggregated == "1985-present") {
-        yearF <- 1985:2023
-        year <- 1985:2021
-} else {
-        yearF <- 1999:2023
-        year <- 1999:2021
-}
-
-jdy <- cbind(year = yearF, jd)
-str(jdy)
-
-# jd_raw <- ls_jag("no", "no")
-# jd_raw <- as.data.frame(jd_raw)
-# jd_raw <- cbind(year = year, jd_raw)
-
-#source("IPM_fun.R")
 jags.data.m <- ls_jag("yes", "yes", "yes")
 str(jags.data.m)
 
+# check that the lengths of the lists all match
+leng_jd <- rep(NA, 8)
+for (i in 1:length(jags.data)){
+   len_jd <- length(jags.data[[i]])
+   leng_jd[i] <- len_jd
+}
+leng_jd
 
-
-
+# Note that I haven't done the imputation for df_mat_prop
+jd <- as.data.frame(jags.data.m[c(2:5, 7:11)])
