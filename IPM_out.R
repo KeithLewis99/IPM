@@ -1,12 +1,14 @@
+# The purpose of this file is to take the bundled data from IPM_dat.R and the models from IPM_mod.R to make an age-structured, state-space model for capelin.  Model outputs are fed to IPM_out_diag.Rmd which is run through the IPM_master.R file which renders the output, i.e., makes all the figures.
 
+## IPM_JAGS_settings is a helper file to indicate what model and what paramaters JAGS should estimate.
+
+# Start----
 # required packages
 library(rjags)
 library(R2jags)
 library(ggplot2)
 library(lattice)
 
-# Start----
-rm(list=ls())
 
 # Source files
 source("IPM_dat.R")
@@ -39,6 +41,7 @@ source("IPM_JAGS-settings.R")
 #     jags.data.m$q <- 2
 # }
 
+ 
 jags.data.m$Ni <- 3 # ages
 jags.data.m$M <- 3 # maturity in matrix matM
 
@@ -51,6 +54,7 @@ jags.data.m$M <- 3 # maturity in matrix matM
 # jags.data.m$CO <- jags.data.m$CO[1:6]
 # year <- 1985:1995
 
+# what is this for
 if(disaggregated == "1985-present"){
     jags.data$N2end <- 18
     jags.data$N2start <- 19
