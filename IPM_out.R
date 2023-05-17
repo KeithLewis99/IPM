@@ -20,7 +20,7 @@ source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 # JAGS settings ----
 # model - the value of b will determine what model and parameters from IPM_JAGS-settings.R
 b <- 10
-smoother <- "yes"
+smoother <- "no"
 matrix <- "yes"
 
 source("IPM_JAGS-settings.R")
@@ -34,16 +34,15 @@ source("IPM_JAGS-settings.R")
 # ni <- 5000000; nt <- 1000; nb <- 300000; nc <- 3 # this produces really nice ACFs!!!!
 
 # these are just preliminary values for p (auto-regression: AR) and q (MA: moving average)
-# if(smoother == "yes"){
-#     jags.data$p <- 2
-#     jags.data$q <- 2
-#     jags.data.m$p <- 2
-#     jags.data.m$q <- 2
-# }
+if(smoother == "yes"){
+    jags.data.m$p <- 2
+    jags.data.m$q <- 2
+}
 
- 
-jags.data.m$Ni <- 3 # ages
-jags.data.m$M <- 3 # maturity in matrix matM
+
+# set index for loops
+jags.data.m$Ni <- 3 # ages - N is abundance and i is the index for age
+jags.data.m$M <- 3 # maturity in matrix matM - this may not be needed
 
 # these are values to make the JAGS code more generalized, i.e., that the indices are not hard coded.  Currently applies only to cap.v20.
 # jags.data.m$n.occasions <- 6
@@ -54,7 +53,7 @@ jags.data.m$M <- 3 # maturity in matrix matM
 # jags.data.m$CO <- jags.data.m$CO[1:6]
 # year <- 1985:1995
 
-# what is this for
+# This was an attempt to make the start and end dates generalizable - not sure how effective it was,,,,
 if(disaggregated == "1985-present"){
     jags.data$N2end <- 18
     jags.data$N2start <- 19
@@ -97,7 +96,7 @@ if(matrix == "no") {
     # out$sims.list$osa_sd4 <- out$sims.list$osa_sd[,,3]
 }
 
-# all of this is to find out why i'm getting negative values which we then, can't take the log of - starting to wonder if log is a good idea
+# all of this is (L100 - L419) is to find out why i'm getting negative values which we then, can't take the log of - starting to wonder if log is a good idea
 
 #Shaekel only
 # looking for values < 0 in JAGS output - abundance * maturity
