@@ -672,8 +672,8 @@ str(jags.data.m)
 
 # check that the lengths of the lists all match
 leng_jd <- rep(NA, 8)
-for (i in 1:length(jags.data)){
-   len_jd <- length(jags.data[[i]])
+for (i in 1:length(jags.data.m)){
+   len_jd <- length(jags.data.m[[i]])
    leng_jd[i] <- len_jd
 }
 leng_jd
