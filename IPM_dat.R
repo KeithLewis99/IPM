@@ -341,7 +341,10 @@ str(df_mat_1985, give.attr = F)
 # this is the mature abundance for age-2 to -5 and total (includes unknowns and 6s)
 df_mat <- rbind(df_mat_1985[1:14, c(-2, -7)], df_mat_tab[,c(1:5, 7)])
 str(df_mat, give.attr = F)
+matM <- as.matrix(df_mat[, 2:4])
 
+# natural log of maturity
+## this may not be needed.
 df_mat_tabLog <- df_mat %>%
    mutate(M2 = log(mat2), M3 = log(mat3), M4 = log(mat4), M = log(matureAbun)) %>%
    select(year, M2, M3, M4, M)
@@ -397,12 +400,13 @@ if(disaggregated == "1985-present") {
 } 
 
 # impute
+## 2006, 2014:2016, 2020:2022
 ## Note that this works but do we really want to impute???  No I think.
 imp <- colMeans(df_tb_NAA[,2:7], na.rm = T)
 df_tb_NAA[c(22,30:32, 36:39), 2:4] <- imp
 
 
-matITB <- as.matrix(df_tb_NAA[, 2:4])
+matITB <- as.matrix(df_tb_NAA[, 3:5])
 
 
 df_tb_NAALog <- df_tb_NAA %>%
