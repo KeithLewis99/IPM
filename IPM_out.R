@@ -59,12 +59,12 @@ if(disaggregated == "1985-present"){
     jags.data$N2start <- 19
     jags.data$N3end <- 11
     jags.data$N3start <- 12
-} else {
-    jags.data$N2end <- 4
-    jags.data$N2start <- 5
-    jags.data$N3end <- jags.data$n.occasions
-    jags.data$N3start <- 11
-}
+ } #else {
+#     jags.data$N2end <- 4
+#     jags.data$N2start <- 5
+#     jags.data$N3end <- jags.data$n.occasions
+#     jags.data$N3start <- 11
+# }
 
 # run model----
 #source("IPM_mod.R")
