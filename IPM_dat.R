@@ -91,9 +91,9 @@ df_dis_tab <- df_dis_summ[, c(1:3)] %>%
 df_dis_tab
 
 # create a df with missing years
-df_tmp <- df_dis_tab[1:3,]
+df_tmp <- df_dis_tab[1:4,]
 df_tmp[, 1:length(df_tmp)] <- NA
-df_tmp$year[1:3] <- c(2006, 2016, 2020)
+df_tmp$year[1:nrow(df_tmp[])] <- c(2006, 2016, 2020, 2022)
 df_tmp
 
 # bind the blank years (NAs) with the data
@@ -169,9 +169,9 @@ str(df_ag_1985)
 df_agg <- rbind(df_ag_1985[1:14, 1:4], df_ag_1999)
 
 # add years with no data
-df_tmp <- df_agg[1:3,]
+df_tmp <- df_agg[1:4,]
 df_tmp[, 1:length(df_tmp)] <- NA
-df_tmp$year[1:3] <- c(2006, 2016, 2020)
+df_tmp$year[1:nrow(df_tmp)] <- c(2006, 2016, 2020, 2021)
 df_tmp
 
 # combine wtih age-aggregagated data 1985-present
@@ -221,9 +221,9 @@ df_baa_tab <- df_baa_filter[, c(1:3)] %>%
 df_baa_tab
 
 # create a df with missing years
-df_tmp <- df_baa_tab[1:3,]
+df_tmp <- df_baa_tab[1:4,]
 df_tmp[, 1:length(df_tmp)] <- NA
-df_tmp$year[1:3] <- c(2006, 2016, 2020)
+df_tmp$year[1:nrow(df_tmp)] <- c(2006, 2016, 2020, 2021)
 df_tmp
 
 # bind the blank years (NAs) with the data
@@ -321,10 +321,10 @@ df_mat_tab <- df_dis_summ[, c(1:2, 6)] %>%
 df_mat_tab
 str(df_mat_tab, give.attr=F)
 
-# create empty rows
-df_tmp <- df_mat_tab[1:3,]
+# # create empty rows
+df_tmp <- df_mat_tab[1:4,]
 df_tmp[, 1:length(df_tmp)] <- NA
-df_tmp$year[1:3] <- c(2006, 2016, 2020)
+df_tmp$year[1:nrow(df_tmp)] <- c(2006, 2016, 2020, 2021)
 df_tmp
 
 # bind the blank years (NAs) with the data
@@ -342,6 +342,12 @@ str(df_mat_1985, give.attr = F)
 df_mat <- rbind(df_mat_1985[1:14, c(-2, -7)], df_mat_tab[,c(1:5, 7)])
 str(df_mat, give.attr = F)
 matM <- as.matrix(df_mat[, 2:4])
+
+
+# impute
+## Note that this works but do we really want to impute???  No I think.
+df_mat[7:38, ] <- lapply(df_mat[7:38, ], function(x) replace(x, is.na(x), mean(x, na.rm = TRUE)))
+
 
 # natural log of maturity
 ## this may not be needed.
@@ -380,8 +386,8 @@ df_tb_NAA
 
 # add missing years
 df_tmp <- df_tb_NAA[1:7,] 
-df_tmp[, 1:7] <- NA
-df_tmp$year[1:7] <- c(2006, 2014:2016, 2020:2022)
+df_tmp[, 1:length(df_tb_NAA)] <- NA
+df_tmp$year[1:nrow(df_tmp)] <- c(2006, 2014:2016, 2020:2022)
 df_tmp
 
 # bind summarized data with missing data
@@ -402,10 +408,10 @@ if(disaggregated == "1985-present") {
 # impute
 ## 2006, 2014:2016, 2020:2022
 ## Note that this works but do we really want to impute???  No I think.
-imp <- colMeans(df_tb_NAA[,2:7], na.rm = T)
-df_tb_NAA[c(22,30:32, 36:39), 2:4] <- imp
+df_tb_NAA[15:38, 3:5] <- lapply(df_tb_NAA[15:38, 3:5], function(x) replace(x, is.na(x), mean(x, na.rm = TRUE)))
 
 
+# convert to a Matrix
 matITB <- as.matrix(df_tb_NAA[, 3:5])
 
 
@@ -422,8 +428,8 @@ df_tb_matAA <- df_tb %>%
 
 # add missing years
 df_tmp <- df_tb_matAA[1:7,] 
-df_tmp[1:7, ] <- NA
-df_tmp$year[1:7] <- c(2006, 2014:2016, 2020:2022)
+df_tmp[1:length(df_tb_matAA), ] <- NA
+df_tmp$year[1:nrow(df_tmp)] <- c(2006, 2014:2016, 2020:2022)
 df_tmp
 
 
@@ -445,8 +451,7 @@ if(disaggregated == "1985-present") {
 
 # impute
 ## Note that this works but do we really want to impute???  No I think.
-imp <- colMeans(df_tb_matAA[,2:4], na.rm = T)
-df_tb_matAA[c(22,30:32, 36:39), 2:4] <- imp
+df_tb_matAA[15:38, 2:4] <- lapply(df_tb_matAA[15:38, 2:4], function(x) replace(x, is.na(x), mean(x, na.rm = TRUE)))
 
 # change '1' to high percentage
 df_tb_matAA[,3][df_tb_matAA[,3] == 1] <- 0.995
@@ -485,7 +490,7 @@ str(df_ld)
 
 ## ice ----
 #Note that I added in dummy data for 2021
-df_ice  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/ice-m1-2020.csv"
+df_ice  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/ice-m1-2021.csv"
 )
 str(df_ice)
 
@@ -497,7 +502,18 @@ if(disaggregated == "1985-present") {
         slice(31:54)
 } 
 
+# add missing years
+## Note just doing this because I don't have the 2022 data
+df_tmp <- df_ice[1,] 
+df_tmp[, 1:length(df_ice)] <- NA
+df_tmp$year[1:nrow(df_tmp)] <- c(2022)
+df_tmp
+df_ice <- rbind(df_tmp, df_ice) %>%
+   arrange(year) 
 
+# impute
+## Note just doing this because I don't have the 2022 data
+df_ice[, 2:4] <- lapply(df_ice[, 2:4], function(x) replace(x, is.na(x), mean(x, na.rm = TRUE)))
 
 ## condition ----
 #Note that I added in dummy data for 2021
@@ -505,17 +521,24 @@ if(disaggregated == "1985-present") {
 df_con <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/condition_2JK_ag1_2_MF_2022.csv")
 str(df_con)
 
-
+# add missing year.  Note that 2002 is there just because I don't have the 2023 data
 if(disaggregated == "1985-present") {
-        df_tmp <- as.data.frame(matrix(NA, 10, 2))
-        df_tmp[, 1] <- c(1985:1994)
+        df_tmp <- as.data.frame(matrix(NA, 11, 2))
+        df_tmp[, 1] <- c(1985:1994, 2022)
         names(df_tmp) <- names(df_con)
-        df_con <- rbind(df_tmp, df_con)
+        df_con <- rbind(df_tmp, df_con) %>%
+                 arrange(year) 
 } else {
         df_con <- df_con %>%
                 slice(5:27)
         } 
 str(df_con)
+
+
+# impute
+## Note just doing this because I don't have the 2022 data
+df_con <- as.data.frame(apply(df_con, 2, function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))))
+
 
 ## catch-at-age----
 # CAA 1998-2021
@@ -539,14 +562,14 @@ df_caa_tab_abun <- tmp[c("year", "age", "abundance_sum")] %>%
 df_caa_tab_abun
 
 # insert 2022 and 2023 as average of last 10 years
-df_tmp <- as.data.frame(matrix(NA, 2, 4))
-df_tmp[, 1] <- c(2022, 2023)
+df_tmp <- as.data.frame(matrix(NA, 1, 4))
+df_tmp[, 1] <- c(2022)
 names(df_tmp) <- names(df_caa_tab_abun)
 df_caa_tab_abun <- as.data.frame(rbind(df_caa_tab_abun, df_tmp))
 
-imp_post <- colMeans(df_caa_tab_abun[14:24, 2:4], na.rm = T)
-df_caa_tab_abun[25, 2:4] <- imp_post
-df_caa_tab_abun[26, 2:4] <- imp_post
+#impute
+df_caa_tab_abun[, 2:4] <- lapply(df_caa_tab_abun[, 2:4], function(x) replace(x, is.na(x), mean(x, na.rm = TRUE)))
+
 
 ## this is the same as the above but for biomass
 ### i'm going to leave the commented out code for CAA because I may use this at some point
@@ -625,15 +648,14 @@ tmp_caa <- df_caa1982_1997 %>%
 df_tmp <- as.data.frame(matrix(NA, 4, 4))
 df_tmp[, 1] <- c(1984, 1989, 1991, 1992)
 names(df_tmp) <- names(tmp_caa)
-df_caa_tab_1985_1997 <- (rbind(df_tmp, tmp_caa))
+df_caa_tab_1985_1997 <- rbind(df_tmp, tmp_caa)
 df_caa_tab_1985_1997 <- df_caa_tab_1985_1997[order(df_caa_tab_1985_1997$year),]
 
 # average of precollapse years
-imp_pre <- colMeans(df_caa_tab_1985_1997[1:7, 2:4], na.rm = T)
-df_caa_tab_1985_1997[3, 2:4] <- imp_pre
-df_caa_tab_1985_1997[8, 2:4] <- imp_pre
+#impute
+df_caa_tab_abun[1:7, 2:4] <- lapply(df_caa_tab_abun[1:7, 2:4], function(x) replace(x, is.na(x), mean(x, na.rm = TRUE)))
+# no catches
 df_caa_tab_1985_1997[c(10:11, 14), 2:4] <- 0
-
 
 df_caa_all <- rbind(df_caa_tab_1985_1997[3:15,], df_caa_tab_abun)
 
@@ -668,7 +690,7 @@ str(matCAA)
 # matCAA_m <- as.matrix(df_caa_tab_mat[, 2:4])
 
 
-
+#source("IPM_fun.R")
 # Bundle data----
 num_forecasts = 2 # 2 extra years
 jags.data.m <- ls_jag("yes", "yes", "yes")
