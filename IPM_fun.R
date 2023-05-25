@@ -72,24 +72,27 @@ ls_jag <- function(log, forecast, matrix = NULL){
       # matM[,3] <- c(df_mat_tabLog$M4[1:38], rep(NA, num_forecasts))
 
      
-     matI <- apply(df_dis_tabLog, 2, function(x) c(x, rep(NA, num_forecasts)))
-      matB <- apply(df_dis_tabLog, 2, function(x) c(x, rep(NA, num_forecasts)))
-      matM <- apply(df_dis_tabLog, 2, function(x) c(x, rep(NA, num_forecasts)))
+      matI <- apply(df_dis_tabLog, 2, function(x) c(x, rep(NA, num_forecasts)))
+      matB <- apply(df_baa_tabLog[4:41,], 2, function(x) c(x, rep(NA, num_forecasts)))
+      matM <- apply(matM, 2, function(x) c(x, rep(NA, num_forecasts)))
       matI_TB <- apply(matITB, 2, function(x) c(x, rep(NA, num_forecasts)))
+      maa_TB <- apply(m_maaTB, 2, function(x) c(x, rep(NA, num_forecasts)))
+      matCAA <- apply(matCAA, 2, function(x) c(x, rep(NA, num_forecasts)))
+      
    # make a list of the observations and covariates
     ## scale the covariates only
       jags.data <- list(#year = df_dis_tab$year,
          n.occasions = length(df_dis_tab$year) + num_forecasts,
          ## observations
-         matI = matI,
-         matB = matB,
+         matI = matI[, 2:4],
+         matB = matB[, 2:4],
          matM = matM, 
+         matMp = matMp,
          #matI_TB = matITB,
          matI_TB = matI_TB,
-         df_mat_prop = df_mat_prop,  # not scaling this.  Its technically a covariate but its between zero and 1
-      #  maa_TB = m_maaTB,
-         maa_TB <- apply(m_maaTB, 2, function(x) c(x, rep(NA, num_forecasts))),
-         matCAA <- apply(matCAA, 2, function(x) c(x, rep(NA, num_forecasts))),
+         #df_mat_prop = df_mat_prop,  # not scaling this.  Its technically a covariate but its between zero and 1
+        maa_TB = maa_TB,
+        matCAA = matCAA,
 
         ## covariates - scale these - see Zuur (Beginners Guide to GLM and GLMM - pg 55)
          LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts)),10)), 
