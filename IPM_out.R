@@ -55,10 +55,10 @@ jags.data.m$M <- 3 # maturity in matrix matM - this may not be needed
 
 # This was an attempt to make the start and end dates generalizable - not sure how effective it was,,,,
 if(disaggregated == "1985-present"){
-    jags.data$N2end <- 18
-    jags.data$N2start <- 19
-    jags.data$N3end <- 11
-    jags.data$N3start <- 12
+    jags.data.m$N2end <- 18
+    jags.data.m$N2start <- 19
+    jags.data.m$N3end <- 11
+    jags.data.m$N3start <- 12
  } #else {
 #     jags.data$N2end <- 4
 #     jags.data$N2start <- 5
@@ -77,12 +77,12 @@ if(matrix == "no") {
 } else if(matrix == "yes"){
     ssm27 <- jags(jags.data.m, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
     ssm27
-    out <- ssm27$BUGSoutput 
-    out$sims.list$N2 <- out$sims.list$N[,,1]
-    out$sims.list$N3 <- out$sims.list$N[,,2]
-    out$sims.list$N4 <- out$sims.list$N[,,3]
-    #out$sims.list$N <- NULL
-    out$sims.list$mu2 <- out$sims.list$mu[,,1]
+    # out <- ssm27$BUGSoutput 
+    # out$sims.list$N2 <- out$sims.list$N[,,1]
+    # out$sims.list$N3 <- out$sims.list$N[,,2]
+    # out$sims.list$N4 <- out$sims.list$N[,,3]
+    # #out$sims.list$N <- NULL
+    # out$sims.list$mu2 <- out$sims.list$mu[,,1]
     #out$sims.list$mu3 <- out$sims.list$mu[,,2]
     #out$sims.list$mu4 <- out$sims.list$mu[,,3]
     # out$sims.list$eps2 <- out$sims.list$eps[,,1]
