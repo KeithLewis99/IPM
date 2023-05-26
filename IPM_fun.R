@@ -71,14 +71,20 @@ ls_jag <- function(log, forecast, matrix = NULL){
       # matM[,2] <- c(df_mat_tabLog$M3[1:38], rep(NA, num_forecasts))
       # matM[,3] <- c(df_mat_tabLog$M4[1:38], rep(NA, num_forecasts))
 
-     
+     # add NAs for forecasts
       matI <- apply(df_dis_tabLog, 2, function(x) c(x, rep(NA, num_forecasts)))
       matB <- apply(df_baa_tabLog[4:41,], 2, function(x) c(x, rep(NA, num_forecasts)))
-      matM <- apply(matM, 2, function(x) c(x, rep(NA, num_forecasts)))
+      #matM <- apply(matM, 2, function(x) c(x, rep(NA, num_forecasts)))
       matI_TB <- apply(matITB, 2, function(x) c(x, rep(NA, num_forecasts)))
       maa_TB <- apply(m_maaTB, 2, function(x) c(x, rep(NA, num_forecasts)))
       matCAA <- apply(matCAA, 2, function(x) c(x, rep(NA, num_forecasts)))
-      
+      matMp <- as.data.frame(apply(df_mat_prop, 2, function(x) c(x, rep(NA, num_forecasts))))
+      # fill years
+      matMp[39:40, 1] <- c(2023, 2024)
+      # subset - remember that this is a loop so the the mean(x) is a vector.  If you do x[7:38,] you get dimension errors
+      # the c(7:8, 12, 15:21, 23:31, 33:35, 38) is so that we are not calculation averages with imputed values
+      matMp <- apply(matMp, 2, function(x) replace(x, is.na(x), mean(x[c(7:8, 12, 15:21, 23:31, 33:35, 38)], na.rm = T)))
+
    # make a list of the observations and covariates
     ## scale the covariates only
       jags.data <- list(#year = df_dis_tab$year,
@@ -86,8 +92,8 @@ ls_jag <- function(log, forecast, matrix = NULL){
          ## observations
          matI = matI[, 2:4],
          matB = matB[, 2:4],
-         matM = matM, 
-         matMp = matMp,
+         #matM = matM, 
+         matMp = matMp[, 2:4],
          #matI_TB = matITB,
          matI_TB = matI_TB,
          #df_mat_prop = df_mat_prop,  # not scaling this.  Its technically a covariate but its between zero and 1
