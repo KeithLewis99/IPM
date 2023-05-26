@@ -12,8 +12,8 @@ library(lattice)
 
 # Source files
 source("IPM_dat.R")
-source("IPM_fun.R")
-source("IPM_mod.R")
+#source("IPM_fun.R")
+source("IPM_mod1.R")
 source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
 source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
 
@@ -77,7 +77,7 @@ if(matrix == "no") {
 } else if(matrix == "yes"){
     ssm27 <- jags(jags.data.m, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
     ssm27
-    # out <- ssm27$BUGSoutput 
+    out <- ssm27$BUGSoutput
     # out$sims.list$N2 <- out$sims.list$N[,,1]
     # out$sims.list$N3 <- out$sims.list$N[,,2]
     # out$sims.list$N4 <- out$sims.list$N[,,3]
@@ -105,12 +105,6 @@ str(out$sims.list$N[,,1]*(1-out$sims.list$m[,,1]))
 tmp <- exp(out$sims.list$N[,,1])*(1-out$sims.list$m[,,1])
 tmp[tmp < 0]
 
-# looking for values < 0 in JAGS output - abundance * maturity - catch (not in all models)
-exp(out$sims.list$N[,,1])*out$sims.list$m[,,1] - out$sims.list$C[,,1]
-str(out$sims.list$N[,,1]*(out$sims.list$m[,,1]))
-tmp <- exp(out$sims.list$N[,,1])*out$sims.list$m[,,1] - out$sims.list$C[,,1]
-tmp <- log(exp(out$sims.list$N[,,1])*out$sims.list$m[,,1]- out$sims.list$C[,,1])
-str(tmp)
 rownames(tmp) <- 1:length(tmp[,1])
 
 tmp[rowSums(is.nan(tmp[,1:39]))>1,]
@@ -120,22 +114,40 @@ x <-1480
 y <- 25
 z <- 1
 
-exp(out$sims.list$N[x,y,z])*out$sims.list$m[x,y,z] - out$sims.list$C[x,y,z]
-exp(out$sims.list$N[x,y,z])*out$sims.list$m[x,y,z]
-exp(out$sims.list$N[x,y,z])
+# the below is to try and determine why i'm getting negative values 
+tmp <- exp(out$sims.list$N[,,1])*(1-out$sims.list$m[,,1])
+tmp[1480, 25] # a negative value
+exp(out$sims.list$N[x,y,z])*(1-out$sims.list$m[x,y,z]) # N*(1-m)
+exp(out$sims.list$N[x,y,z]) # N
+1-out$sims.list$m[x,y,z] # 1-m
+w <- exp(out$sims.list$N[x,y,z]) # N
+u <- 1-out$sims.list$m[x,y,z] # 1-m
+w*u # N*(1-m)
+
+
+q <- out$sims.list$m[x,y,z] # 1-m
+p <- jags.data.m$matMp[1,1] # probability
+m <- log(p/(1-p)) # logit
+
+# OK - after a tonne of work, I realized that the dnorm distribution in JAGS was giving values of maturity <0 and >1 - not possible.  Bernoulli distribution is probability of a single trialbeing 0 or 1.  Binomial is success/trial based on p.  But neither of these give the distribution of a probability.  For that, you need the beta distribution.  And this makes JAGS give sensibile values
+plot(density(rbeta(10000, p*100, (1-p)*100)))
+     
 out$sims.list$m[x,y,z]
-log(exp(out$sims.list$N[x,y,z])*out$sims.list$m[x,y,z])
+log(exp(out$sims.list$N[x,y,z])*(1-out$sims.list$m[x,y,z]))
 log(exp(out$sims.list$N[x,y,z]))
-log(out$sims.list$C[x,y,z])
-plot(density(log(exp(out$sims.list$N[,y,z])*out$sims.list$m[,y,z])))
+plot(density(log(exp(out$sims.list$N[,y,z])*(1-out$sims.list$m[,y,z]))))
+plot(density(exp(out$sims.list$N[,y,z])*(1-out$sims.list$m[,y,z])))
 
 # doing the same but with the actual data
-exp(jags.data.m$matI[25,1])*jags.data.m$matM[25,1]
-log(exp(jags.data.m$matI[25,1])*jags.data.m$matM[25,1])
-jags.data.m$matCAA[25,1]
-log(jags.data.m$matCAA[25,1])
+exp(jags.data.m$matI[y,z])*jags.data.m$matMp[y,z]
+log(exp(jags.data.m$matI[y,z])*jags.data.m$matM[y,z])
+jags.data.m$matCAA[y,z]
+log(jags.data.m$matCAA[y,z])
 jags.data.m$matI-log(jags.data.m$matCAA)
 
+
+plot(density(out$sims.list$s[,y,z]))
+plot(density(out$sims.list$s[,y,2]))
 
 plot(density(out$sims.list$si[,1]))
 plot(density(out$sims.list$sm[,1]))
