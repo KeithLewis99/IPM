@@ -73,8 +73,8 @@ df_dis_summ <- df_dis %>%
           matabun = med.mat.abund.age.fran, 
           matabun.lci = low.mat.abund.age.fran, matabun.uci = up.mat.abund.age.fran
    ) %>% # select and rename 
-   mutate_at(vars(abun:matabun.uci), ~ ./ 1000) %>% # convert to billions
-   mutate_at(vars(abun:matabun.uci), round, 2) # round - this may be causing a slight discrepancy between my values and Aarons.
+   mutate_at(vars(abun:matabun.uci), ~ ./ 1000) #%>% # convert to billions
+   #mutate_at(vars(abun:matabun.uci), round, 2) # round - this may be causing a slight discrepancy between my values and Aarons.
 
 df_dis_summ  
 str(df_dis_summ, give.attr = FALSE)
@@ -206,8 +206,8 @@ df_baa_filter <- df_dis %>%
           matbio = med.mat.bm.age.fran, 
           matbio.lci = low.mat.bm.age.fran, matbio.uci = up.mat.bm.age.fran
 ) %>%  # select and rename
-   mutate_at(vars(bio:matbio.uci), ~ ./ 1000) %>% # convert units to kt
-   mutate_at(vars(bio:matbio.uci), round, 2) # round - this may be causing a slight discrepancy between my values and Aarons.
+   mutate_at(vars(bio:matbio.uci), ~ ./ 1000) #%>% # convert units to kt
+   #mutate_at(vars(bio:matbio.uci), round, 2) # round - this may be causing a slight discrepancy between my values and Aarons.
 
 
 # pivot the data - longer to wider with the disaggregated abundance as columns
@@ -319,7 +319,7 @@ df_mat_tab <- df_dis_summ[, c(1:2, 6)] %>%
    mutate(matureAbun = sum(c_across(starts_with("m")), na.rm = T)) %>%
    mutate(var = var(c_across(starts_with("m")), na.rm = T))  %>%
    mutate(sd = sd(c_across(starts_with("m")), na.rm = T))
-df_mat_tab
+`df_mat_tab`
 str(df_mat_tab, give.attr=F)
 
 # # create empty rows
@@ -342,13 +342,6 @@ str(df_mat_1985, give.attr = F)
 # this is the mature abundance for age-2 to -5 and total (includes unknowns and 6s)
 df_mat <- rbind(df_mat_1985[1:14, c(-2, -7)], df_mat_tab[,c(1:5, 7)])
 str(df_mat, give.attr = F)
-matM <- as.matrix(df_mat[, 2:4])
-
-
-# impute
-## Note that this works but do we really want to impute???  No I think.
-df_mat[7:38, ] <- lapply(df_mat[7:38, ], function(x) replace(x, is.na(x), mean(x, na.rm = TRUE)))
-matM <- as.matrix(df_mat[, 2:4])
 
 # natural log of maturity
 ## this may not be needed.
@@ -358,31 +351,24 @@ df_mat_tabLog <- df_mat %>%
 
 df_mat_tabLog
 
-### proprotion ----
+### proportion ----
 # this is just taking the year column separately, then, dividing the mature abundance by the total mature and multiplying by 100 to get a percentage.
-df_mat_prop <- cbind(df_mat[1], df_mat[-1]/df_dis_tab[c(3:7)])
+df_mat_prop <- cbind(df_mat[1], df_mat[-1]/df_dis_tab[c(3:6, 8)])
 str(df_mat_prop, give.attr = F)
 write.csv(df_mat_prop, "data/derived/capelin_perMat_1985-2022.csv", row.names = F)
+round(df_mat_prop, 3)
 
-#impute
+# remove the NaN (not a number) which creates and Inf value when dividing maturity by abundance
+df_mat_prop[7:38, ] <- lapply(df_mat_prop[7:38, ], function(x) replace(x, is.nan(x), NA))
+
+#impute - using means is crude - could do this based on a regression but this is fine for now.
 df_mat_prop[7:38, ] <- lapply(df_mat_prop[7:38, ], function(x) replace(x, is.na(x), mean(x, na.rm = TRUE)))
 
+df_mat_prop <- apply(df_mat_prop, 2, function(x) replace(x, x==1, 0.999))
 
 # confirms the means of the years
-mean_tmp <- apply(df_mat_prop[7:38, 2:5], 2, function(x) mean(x))
+apply(df_mat_prop[7:38, 2:5], 2, function(x) mean(x))
 
-# add NAs for forecasts
-matMp <- as.data.frame(apply(df_mat_prop, 2, function(x) c(x, rep(NA, num_forecasts))))
-# fill years
-matMp[39:40, 1] <- c(2023, 2024)
-
-# subset - remember that this is a loop so the the mean(x) is a vector.  If you do x[7:38,] you get dimension errors
-# the c(7:8, 12, 15:21, 23:31, 33:35, 38) is so that we are not calculation averages with imputed values
-matMp <- apply(matMp, 2, function(x) replace(x, is.na(x), mean(x[c(7:8, 12, 15:21, 23:31, 33:35, 38)], na.rm = T)))
-
-# note that this could be done more cleanly by simply adding the years 2023 and 2024 to df_mat_prop and then the following 
-#df_mat_prop[7:40, ] <- lapply(df_mat_prop[7:40, ], function(x) replace(x, is.na(x), mean(x, na.rm = TRUE)))
-#Keeping the above because it took so long to figure out. 
 
 
 ## Trinity Bay ----
@@ -726,4 +712,4 @@ for (i in 1:length(jags.data.m)){
 leng_jd
 
 # Note that I haven't done the imputation for df_mat_prop
-jd <- as.data.frame(jags.data.m[c(2:5, 7:11)])
+jd <- as.data.frame(jags.data.m[c(-1)])
