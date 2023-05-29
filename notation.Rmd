@@ -4,44 +4,44 @@ output:
   html_document:
     df_print: paged
 ---
+Last revision: 2023-05-29  
+$`r Sys.Date()`$
 
 ## Subscripts  
-a = age (2:4; not age 0 or 1)    
-t = time (year from start of spring acoustic survey)  
-s = survey (not currently used as only spring acoustic survey is part of the model)
+a = age (2:4; not age 0 or 1 or $5^+$)    
+t = time (year from start of spring acoustic survey: 1985-present)  
+s = survey (not applicable: currently used as only spring acoustic survey is part of the model although it is hoped that the USSR data could be used eventually)
 
 ## Covariates 
 <!-- PMR: simplified covariate symbols.  KL: I know Edwards recommends one letter per variable but C is also used for Catch-at-age and I wanted to keep the covariates consistent -->
 $TI_t$ = t~*ice*~ or timing of the ice retreat from most southerly latitude in the year of the spring acoustic survey; a proxy for stratification (1969-present)  
 $LD_{t-2}$ = larval density  (2001-present) two years prior to the acoustic survey  
-$CO_{t-1}$ = capelin condition in the fall prior to the acoustic survey
+$CO_{t-1}$ = capelin condition in the fall prior to the acoustic survey (1995-present)
 
 ** Note that all covariates are centered and scaled using function scale.**
 ** Need age disaggregated condition **
 
-### Process
+### Process variables
 $N_{a,t}$ = natural log of population at age by survey and year  
 $S_{a,t}$ = survival  (only for age-2 and age-3)  
 $R_{t}$ = recruits in the current year???  
 
-### Observation
+### Observation varaibles
 $I_{s,a,t}$ = observed population by age, year, and survey  (1985-present); (s=1 in this case as only spring acoustic has been included)  
-$m_{a,t}$ = percent mature at age and year  (1985-present)  
-$C_{a,t}$ = catch-at-age (1998-present but maybe more)  
+$m_{a,t}$ = proportion mature at age and year  (1985-present)  
+$C_{a,t}$ = catch-at-age (1985-present)  
 
-### Assumed?
+### Assumed
 Not included below
 $q_{s}$ = catchability by survey  
 
 
-## State Space Model ----
+## State Space Model  
 
 ### Priors
 
 #### Precision
-Variance is dealt with as precision which is 1/variance.  All priors for variance follow the same format more or less and won't be repeated.  
-
-E.g. Precision (= 1/variance) for process (proc) error - Note that upper bounds on uniform distribution subject to change.
+Variance in JAGS is dealt with as precision, i.e., 1/variance.  Note that upper bounds on uniform distribution are subject to change.
 
 Process error:  
 $$
@@ -59,7 +59,10 @@ $$
 \sigma_{mat} \sim Unif(0.01, 1) \\
 \tau_{mat} = 1/\sigma^2_{mat} 
 $$
-#### Variables and parameters  
+A maturity prior may not be needed if we use the Beta distribution.
+
+
+#### Variables   
 For maturity-at-age, *mat* is the raw data and *m* is the variable used in models below. $\tau_{mat}$ is estimated as above.
 
 
@@ -67,9 +70,18 @@ $$
 logit(\hat{m}_{a,t}) = Norm(logit(m_{a,t}), \tau_{m}) \\
 m_{a,t} = ilogit(logit(\hat{m}_{a,t}))
 $$
-<!-- The first equation is Paul's correction to my attempt and its probably right.  I've added in my version just bc it makes more sense to me. -->
+The problem with the above is that it creates values <0 and >1 which is mathematically impossible on the ln scale for the former and not biologically possible for the latter.  
 
-For parameters (see equations below):
+I think that a better approach would be below because the Beta is the "only standard continuous distribution besides the uniform distribution with a finite range , from 0 to 1, i.e., it is the inferred distribution of the probability of success in a binomial trial with a-1 observed successes and b-1 observed failures. ...  It is good for modelling probabilities or proportions."  See Bolker 2008 pg 133-4.
+
+$$
+m_{a,t} \sim dbeta(a-1, b-1)
+$$
+So, a = $mat_{t,a}$ and b = $1-mat_{t,a}$.  I have multiplied both by 10 because, according to Bolker, this is the right scale.  Using plot(density(rbeta(10000, 90, 10))), I have experimented wth what to multiply a-1 and b-1 by. The higher the number, the tighter the distribution with decimals (e.g., 0.9 & 0.1 giving a spike near 1.0 and a very long tail while 900 & 100 give a more uniform distribution between 0.88 and 0.92).  
+
+This eliminates the <0 and >1 problem that held me up for so long in the fall.
+
+#### Parameters (see equations below):
 
 $$ 
 \alpha_a \sim Norm(0, 100^{-2}) \\
@@ -99,9 +111,10 @@ N_{2,t} = \alpha_2 + \beta_2*LD_{t-2} + \gamma_2*TI_t*(1-TI_t/\delta_2) + \tau_t
 N_{2,t} = \alpha_2 + \beta_2*LD_{t-2} + \gamma_2*TI_t*(1-TI_t/\delta_2) + \ E_2*CO_{t-1} + \tau_t 
 $$
 
-Where TI (or t~*ice*~) is timing of the ice retreat from the same calendar year and CO is the condition of capelin the previous fall.  For TI, the $gamma$ parameter is for Note that Buren et al. (2014) did not have an intercept in their equation in their dome-shaped model.  This was added by Lewis et al. (2019 - see Fig. 4) when combining the regression of Murphy et al. (2018) with the dome-shaped model.  
+Where TI (or t~*ice*~) is timing of the ice retreat from the same calendar year and CO is the condition of capelin the previous fall.  For TI, the $gamma$ and $delta$ parameters are the peak and width for the dome respectively.  
+Note that Buren et al. (2014) did not have an intercept in their equation in their dome-shaped model.  This was added by Lewis et al. (2019 - see Fig. 4) when combining the regression of Murphy et al. (2018) with the dome-shaped model.  
 
-So, I have been using this approach until recently (December 2022):
+So, I was using this approach until recently (December 2022):
 
 
 \begin{equation*}
@@ -111,7 +124,7 @@ So, I have been using this approach until recently (December 2022):
     \alpha_2 + \gamma_2*TI_t*(1-TI_t/\delta_2) & , & 1985-1995 \\ 
     
     \alpha_2 + \gamma_2*TI_t*(1-TI_t/\delta_2) + \epsilon_2*CO_{t-1} & , & 1996-2002 or  \\
-    \N_{t-1} + u & , & 1985-2002 \\ 
+    N_{t-1} + u & , & 1985-2002 \\ 
     \alpha_2 + \beta_2*LD_{t-2} + \gamma_2*TI_t*(1-TI_t/\delta_2) + \ E_2*CO_{t-1} & , & 2003-present
   \end{matrix}
   \right\}
@@ -129,7 +142,8 @@ Note also that I really don't like the first two terms (1985-1995, and 1996-2002
 **Perhaps one way to get at LD pre-2003 is to use the abundance as an indicator with a very loose prior? This assumes some sort of SRR which we don't have but perhaps it will put it in the ball park.  But perhaps a random walk will do the trick????**
 <!-- PMR: using abundance as a prior would be circular as you're using abundance as an input, so it is getting information on the size and variability of N2 from that. For those pre 2003 blocks, the alpha will provide a baseline level of abundance but a random walk or stock recruit function would allow for some variability. KL: sorry, that wasn't clear. As I wrote it, yes, it is circular.    What I meant was to use N2[t-1] as a prior for N2[t] and then got the idea for a rdm walk as I think the SRR would not be as good an approach.  -->
 
-So, the below for 1985-2002 but with an informative prior on 1985 and 1991.
+So, the below for 1985-2002 but with an informative prior on 1985 and 1991 (implemented in ~ Dec 2022).
+
 $$
 mu_{t,1} =  N_{t-1,1} \\
 N_{t,1} \sim Norm(mu_{t,1}, \tau_{proc})
@@ -265,21 +279,3 @@ N_{2_{t+2}} = LD_{a,t}S_{lar_{a}} + \epsilon_{LD_{t}} \\
 R_{y+2} \sim logNormal(LD_{a,y}, \sigma_{LD_{y}}) \\
 L_{R}(S_{lar}|LD) \\
 $$
-
-
-## Rant^1^
-
-We lack information on LD before 2001 but this is a critical component of the model which leads to a rant about using all data available: 
-
-> "In general, as long as a time series as possible should be used in establishing reference points for a stock... 
-
-> Many stocks will show substantial variation in productivity over a long time series, and this variation should be taken into account when setting the reference points. Scientifically sound ways have been established for dealing with the special cases when this variation appears to be structured as periods of consistently high or low productivity... 
-
-> These cases need to be evaluated individually, but as a general rule the only circumstances when reference points should be estimated using only information from a period of low productivity is when there is no expectation that the conditions consistent with higher productivity will ever recur naturally or be achievable through management.
-" DFO 2009 [https://www.dfo-mpo.gc.ca/reports-rapports/regs/sff-cpd/precaution-eng.htm
-]
-
-**The above needs serious consideration in the case of capelin because I believe it *may* be flawed in terms of theory, open DFO to serious criticism ito charges of hypocrisy, and may be fine when one has a last name of Cadigan or Varkey but not for some/many of us mortals.**
-
-*PMR: I think we're on the right track by using the whole series. There is still information on 'recruits' (inferred through age 2) coming from the survey through the historic period. Finally, capelin are pelagic and that group are known throughout the world to go through boom and bust cycles; we have been waiting on a boom phase, but there is no reason to expect we are stuck in the current state.*
-*KL: I really do hope that this works but feel like we need to "hope for the best and prepare for the worst".  And I think that the key word is "no expectation...will ever recur".  Maybe I don't understand the theory but I find this language problematic*
