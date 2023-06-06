@@ -73,17 +73,20 @@ ls_jag <- function(log, forecast, matrix = NULL){
 
      # add NAs for forecasts
       matI <- apply(df_dis_tabLog, 2, function(x) c(x, rep(NA, num_forecasts)))
-      matB <- apply(df_baa_tabLog[4:41,], 2, function(x) c(x, rep(NA, num_forecasts)))
+      matB <- apply(df_baa_tabLog, 2, function(x) c(x, rep(NA, num_forecasts)))
       #matM <- apply(matM, 2, function(x) c(x, rep(NA, num_forecasts)))
-      matI_TB <- apply(matITB, 2, function(x) c(x, rep(NA, num_forecasts)))
-      maa_TB <- apply(m_maaTB, 2, function(x) c(x, rep(NA, num_forecasts)))
-      matCAA <- apply(matCAA, 2, function(x) c(x, rep(NA, num_forecasts)))
-      matMp <- as.data.frame(apply(df_mat_prop, 2, function(x) c(x, rep(NA, num_forecasts))))
-      # fill years
+      matI_TB <- apply(df_tb_NAALog, 2, function(x) c(x, rep(NA, num_forecasts)))
+      maa_TB <- apply(df_tb_matAA, 2, function(x) c(x, rep(NA, num_forecasts)))
+      matCAA <- apply(df_caa_all, 2, function(x) c(x, rep(NA, num_forecasts)))
+      
+      matMp <- apply(df_mat_prop, 2, function(x) c(x, rep(NA, num_forecasts)))
+      # fill years only for maturity so that JAGS can run - probably need to fix this at some point but its a stop gap measure for now.
       matMp[39:40, 1] <- c(2023, 2024)
+      matMp <- apply(matMp, 2, function(x) replace(x, is.na(x), mean(x[c(7:8, 12, 15:21, 23:31, 33:35, 38)], na.rm = T)))
+      
       # subset - remember that this is a loop so the the mean(x) is a vector.  If you do x[7:38,] you get dimension errors
       # the c(7:8, 12, 15:21, 23:31, 33:35, 38) is so that we are not calculation averages with imputed values
-      matMp <- apply(matMp, 2, function(x) replace(x, is.na(x), mean(x[c(7:8, 12, 15:21, 23:31, 33:35, 38)], na.rm = T)))
+     
 
    # make a list of the observations and covariates
     ## scale the covariates only
@@ -91,14 +94,14 @@ ls_jag <- function(log, forecast, matrix = NULL){
          n.occasions = length(df_dis_tab$year) + num_forecasts,
          ## observations
          matI = matI[, 2:4],
-         matB = matB[, 2:4],
+         matB = matB[-(1:3), 2:4],
          #matM = matM, 
          matMp = matMp[, 2:4],
          #matI_TB = matITB,
-         matI_TB = matI_TB,
+         matI_TB = matI_TB[,3:5],
          #df_mat_prop = df_mat_prop,  # not scaling this.  Its technically a covariate but its between zero and 1
-        maa_TB = maa_TB,
-        matCAA = matCAA,
+        maa_TB = maa_TB[,2:4],
+        matCAA = matCAA[,2:4],
 
         ## covariates - scale these - see Zuur (Beginners Guide to GLM and GLMM - pg 55)
          LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts)),10)), 
@@ -251,18 +254,23 @@ ipm_plot <- function(df_med = x, df_cri = y, df_pri = z, df_dat = w){
      #                     colour = "red")
      # 
      # plot error bars from aggregated survey
-     p <- p + geom_errorbar(data = df_dat, aes(x = year, min=log(ab_lci*1000), ymax=log(ab_uci*1000)), width = 0.3, colour = "black")
+     # p <- p + geom_errorbar(data = df_dat, aes(x = year, min=log(ab_lci*1000), ymax=log(ab_uci*1000)), width = 0.3, colour = "black")
+     p <- p + geom_errorbar(data = df_dat, aes(x = year, min=log(ab_lci), ymax=log(ab_uci)), width = 0.3, colour = "black")
      
      # plot points from disaggregated survey
      # p <- p + geom_point(aes(y = df1$I, x = c(year, forecast)),
      #                     shape = 16, 
      #                     size = 1.5)
      # # points from teh aggregated survey
-     p <- p + geom_point(aes(y = log(df_dat$abundance_med*1000), x = c(year, forecast)),
+     # p <- p + geom_point(aes(y = log(df_dat$abundance_med*1000), x = c(year, forecast)),
+     #                     shape = 18, 
+     #                     size = 2,
+     #                     colour = "red")
+     p <- p + geom_point(aes(y = log(df_dat$abundance_med), x = c(year)),
                          shape = 18, 
                          size = 2,
                          colour = "red")
-     p <- p + ylab("ln(Capelin abundance x 1,000)") + xlab("Year")
+    p <- p + ylab("ln(Capelin abundance x 1,000)") + xlab("Year")
      p <- p + theme(axis.text.x = element_text(size = 25), axis.text.y = element_text(size = 25)) + theme_bw() 
      return(p)
 }
