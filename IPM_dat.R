@@ -122,7 +122,7 @@ df_dis_tab$I6 <- NA
 # combine the data sets 
 ## filter out Unknowns, mature, perAge2, var, and sd 
 if(disaggregated == "1985-present") {
-        df_dis_tab <- rbind(df_dis_1998[, c(1:7, 11:13)], df_dis_tab[, c(1:6, 11, 8:10)])
+        df_dis_tab <- as.data.frame(rbind(df_dis_1998[, c(1:7, 11:13)], df_dis_tab[, c(1:6, 11, 8:10)]))
 } else {
         df_dis_tab
 } 
@@ -208,6 +208,7 @@ df_baa_filter <- df_dis %>%
 ) %>%  # select and rename
    mutate_at(vars(bio:matbio.uci), ~ ./ 1000) #%>% # convert units to kt
    #mutate_at(vars(bio:matbio.uci), round, 2) # round - this may be causing a slight discrepancy between my values and Aarons.
+str(df_baa_filter, give.attr = F)
 
 
 # pivot the data - longer to wider with the disaggregated abundance as columns
@@ -220,6 +221,7 @@ df_baa_tab <- df_baa_filter[, c(1:3)] %>%
    mutate(var = var(c_across(bio1:Unknown), na.rm = T))  %>%
    mutate(sd = sd(c_across(bio1:Unknown), na.rm = T))
 df_baa_tab
+str(df_baa_tab)
 
 # create a df with missing years
 df_tmp <- df_baa_tab[1:4,]
@@ -345,11 +347,11 @@ str(df_mat, give.attr = F)
 
 # natural log of maturity
 ## this may not be needed.
-df_mat_tabLog <- df_mat %>%
-   mutate(M2 = log(mat2), M3 = log(mat3), M4 = log(mat4), M = log(matureAbun)) %>%
-   select(year, M2, M3, M4, M)
-
-df_mat_tabLog
+# df_mat_tabLog <- df_mat %>%
+#    mutate(M2 = log(mat2), M3 = log(mat3), M4 = log(mat4), M = log(matureAbun)) %>%
+#    select(year, M2, M3, M4, M)
+# 
+# df_mat_tabLog
 
 ### proportion ----
 # this is just taking the year column separately, then, dividing the mature abundance by the total mature and multiplying by 100 to get a percentage.
@@ -364,11 +366,12 @@ df_mat_prop[7:38, ] <- lapply(df_mat_prop[7:38, ], function(x) replace(x, is.nan
 #impute - using means is crude - could do this based on a regression but this is fine for now.
 df_mat_prop[7:38, ] <- lapply(df_mat_prop[7:38, ], function(x) replace(x, is.na(x), mean(x, na.rm = TRUE)))
 
-df_mat_prop <- apply(df_mat_prop, 2, function(x) replace(x, x==1, 0.999))
+df_mat_prop <- as.data.frame(apply(df_mat_prop, 2, function(x) replace(x, x==1, 0.999)))
 
 # confirms the means of the years
 apply(df_mat_prop[7:38, 2:5], 2, function(x) mean(x))
 
+str(df_mat_prop)
 
 
 ## Trinity Bay ----
@@ -417,11 +420,7 @@ if(disaggregated == "1985-present") {
 ## Note that this works but do we really want to impute???  No I think.
 df_tb_NAA[15:38, 3:5] <- lapply(df_tb_NAA[15:38, 3:5], function(x) replace(x, is.na(x), mean(x, na.rm = TRUE)))
 
-
-# convert to a Matrix
-matITB <- as.matrix(df_tb_NAA[, 3:5])
-
-
+# put in Log form
 df_tb_NAALog <- df_tb_NAA %>%
    mutate(I1 = log(I1), I2 = log(I2), I3 = log(I3), I4 = log(I4), I5 = log(I5))
 
@@ -463,7 +462,6 @@ df_tb_matAA[15:38, 2:4] <- lapply(df_tb_matAA[15:38, 2:4], function(x) replace(x
 # change '1' to high percentage
 df_tb_matAA[,3][df_tb_matAA[,3] == 1] <- 0.995
      
-m_maaTB <- as.matrix(df_tb_matAA[,2:4])
 
 ## USSR data 1981-1992----
 ### This will take a lot of attention from Divya or maybe a M.Sc student.  It is beyond me to try and determine how to compare the spatial and temproal coverages of the various Soviet surveys and how they calculate the biomass and abundance given these discrepancies.
@@ -664,12 +662,11 @@ df_caa_tab_abun[1:7, 2:4] <- lapply(df_caa_tab_abun[1:7, 2:4], function(x) repla
 # no catches
 df_caa_tab_1985_1997[c(10:11, 14), 2:4] <- 0
 
-df_caa_all <- rbind(df_caa_tab_1985_1997[3:15,], df_caa_tab_abun)
-
+df_caa_all <- rbind(df_caa_tab_1985_1997[4:16,], df_caa_tab_abun)
+df_caa_all <- df_caa_all[order(df_caa_all$year),]
+rownames(df_caa_all) <- 1:nrow(df_caa_all)
 write.csv(df_caa_all, "data/CAA.csv")
 
-matCAA <- as.matrix(df_caa_all[, 2:4])
-str(matCAA)
 
 ## this is the mature CAA - probably not relevant since most fish caught are mature, at least in more recent times.  Perhaps this was not true pre-2000 when lots of discarding.
 ### i'm going to leave the commented out code for CAA because I may use this at some point
