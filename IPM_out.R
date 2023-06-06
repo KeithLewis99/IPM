@@ -78,9 +78,9 @@ if(matrix == "no") {
     ssm27 <- jags(jags.data.m, parameters=parms, n.iter=ni, n.burnin = nb, n.chains=nc, n.thin=nt, model.file = textConnection(tC))
     ssm27
     out <- ssm27$BUGSoutput
-    # out$sims.list$N2 <- out$sims.list$N[,,1]
-    # out$sims.list$N3 <- out$sims.list$N[,,2]
-    # out$sims.list$N4 <- out$sims.list$N[,,3]
+     out$sims.list$N2 <- out$sims.list$N[,,1]
+     out$sims.list$N3 <- out$sims.list$N[,,2]
+     out$sims.list$N4 <- out$sims.list$N[,,3]
     # #out$sims.list$N <- NULL
     # out$sims.list$mu2 <- out$sims.list$mu[,,1]
     #out$sims.list$mu3 <- out$sims.list$mu[,,2]
@@ -96,18 +96,18 @@ if(matrix == "no") {
     # out$sims.list$osa_sd4 <- out$sims.list$osa_sd[,,3]
 }
 
-# all of this is (L100 - L419) is to find out why i'm getting negative values which we then, can't take the log of - starting to wonder if log is a good idea
-
-#Shaekel only
-# looking for values < 0 in JAGS output - abundance * maturity
-exp(out$sims.list$N[,,1])*(1-out$sims.list$m[,,1])
-str(out$sims.list$N[,,1]*(1-out$sims.list$m[,,1]))
-tmp <- exp(out$sims.list$N[,,1])*(1-out$sims.list$m[,,1])
-tmp[tmp < 0]
-
-rownames(tmp) <- 1:length(tmp[,1])
-
-tmp[rowSums(is.nan(tmp[,1:39]))>1,]
+# # all of this is (L100 - L419) is to find out why i'm getting negative values which we then, can't take the log of - starting to wonder if log is a good idea
+# 
+# #Shaekel only
+# # looking for values < 0 in JAGS output - abundance * maturity
+# exp(out$sims.list$N[,,1])*(1-out$sims.list$m[,,1])
+# str(out$sims.list$N[,,1]*(1-out$sims.list$m[,,1]))
+# tmp <- exp(out$sims.list$N[,,1])*(1-out$sims.list$m[,,1])
+# tmp[tmp < 0]
+# 
+# rownames(tmp) <- 1:length(tmp[,1])
+# 
+# tmp[rowSums(is.nan(tmp[,1:39]))>1,]
 
 # search for problem runs
 x <-1480
@@ -115,14 +115,14 @@ y <- 25
 z <- 1
 
 # the below is to try and determine why i'm getting negative values 
-tmp <- exp(out$sims.list$N[,,1])*(1-out$sims.list$m[,,1])
-tmp[1480, 25] # a negative value
-exp(out$sims.list$N[x,y,z])*(1-out$sims.list$m[x,y,z]) # N*(1-m)
-exp(out$sims.list$N[x,y,z]) # N
-1-out$sims.list$m[x,y,z] # 1-m
-w <- exp(out$sims.list$N[x,y,z]) # N
-u <- 1-out$sims.list$m[x,y,z] # 1-m
-w*u # N*(1-m)
+# tmp <- exp(out$sims.list$N[,,1])*(1-out$sims.list$m[,,1])
+# tmp[1480, 25] # a negative value
+# exp(out$sims.list$N[x,y,z])*(1-out$sims.list$m[x,y,z]) # N*(1-m)
+# exp(out$sims.list$N[x,y,z]) # N
+# 1-out$sims.list$m[x,y,z] # 1-m
+# w <- exp(out$sims.list$N[x,y,z]) # N
+# u <- 1-out$sims.list$m[x,y,z] # 1-m
+# w*u # N*(1-m)
 
 
 q <- out$sims.list$m[x,y,z] # 1-m
@@ -131,7 +131,10 @@ m <- log(p/(1-p)) # logit
 
 # OK - after a tonne of work, I realized that the dnorm distribution in JAGS was giving values of maturity <0 and >1 - not possible.  Bernoulli distribution is probability of a single trialbeing 0 or 1.  Binomial is success/trial based on p.  But neither of these give the distribution of a probability.  For that, you need the beta distribution.  And this makes JAGS give sensibile values
 plot(density(rbeta(10000, p*100, (1-p)*100)))
-     
+  
+
+
+   
 out$sims.list$m[x,y,z]
 log(exp(out$sims.list$N[x,y,z])*(1-out$sims.list$m[x,y,z]))
 log(exp(out$sims.list$N[x,y,z]))
@@ -149,66 +152,69 @@ jags.data.m$matI-log(jags.data.m$matCAA)
 plot(density(out$sims.list$s[,y,z]))
 plot(density(out$sims.list$s[,y,2]))
 
-plot(density(out$sims.list$si[,1]))
-plot(density(out$sims.list$sm[,1]))
-plot(density(out$sims.list$si[,2]))
-plot(density(out$sims.list$sm[,2]))
+plot(density(out$sims.list$si))  # where the fuck does this come from???????
+plot(density(out$sims.list$s[,i,2]))
+# plot(density(out$sims.list$sm[,1]))
+# plot(density(out$sims.list$si[,2]))
+# plot(density(out$sims.list$sm[,2]))
 
 apply(out$sims.list$si, 2, 'median')
-apply(out$sims.list$sm, 2, 'median')
+apply(out$sims.list$s, 2, 'median')
+#apply(out$sims.list$sm, 2, 'median')
 
-# calculations but with assummed mortalities
-exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + (exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1])*.5    
-
-exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 
-(exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1])*.5
-log((exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1])*.5)
-
-
-exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + (exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1])*.5
-
-exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]*.5
+# calculations but with assummed mortalities - I think that this was all just to see if I could get values greater than zero
+# exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + (exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1]/1000)*.5    
+# 
+# exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 
+# (exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1]/1000)*.5
+# log((exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1]/1000)*.5)
 
 
-log(exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + (exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1])*.5)
+# exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + (exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1]/1000)*.5
+# 
+# exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]*.5
+# 
+# 
+# log(exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + (exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]-jags.data.m$matCAA[,1]/1000)*.5)
+# 
+# log(exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]*.5)
+# 
+# (exp(jags.data.m$matI[,2])*jags.data.m$matM[,2]-jags.data.m$matCAA[,2]/1000)*.5
+# log((exp(jags.data.m$matI[,2])*jags.data.m$matM[,2]-jags.data.m$matCAA[,2]/1000)*.5)
 
-log(exp(jags.data.m$matI[,1])*(1-jags.data.m$matM[,1])*.2 + exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]*.5)
 
-(exp(jags.data.m$matI[,2])*jags.data.m$matM[,2]-jags.data.m$matCAA[,2])*.5
-log((exp(jags.data.m$matI[,2])*jags.data.m$matM[,2]-jags.data.m$matCAA[,2])*.5)
-
-
-# look at survival values - all 
-str(out$sims.list)
-#plot(density(head(out$sims.list$s[,,1])))
-plot(density(out$sims.list$s[,,1]))
-head(out$sims.list$s[,,1])
-apply(head(out$sims.list$s[,,1]), 2, 'median')
-apply(out$sims.list$s[,,1], 2, 'median')
-apply(out$sims.list$s[,,1], 2, 'mean')
-plot(density(head(out$sims.list$logit_s[,,1])))
-plot(density(out$sims.list$logit_s[,,1]))
-
-apply(head(out$sims.list$m[,,1]), 2, 'median')
-apply(head(out$sims.list$m[,,2]), 2, 'median')
-plot(density(out$sims.list$m[,,1]))
-plot(density(out$sims.list$m[,,2]))
+# # look at survival values - all ## Already looked at this above and not using logit_s anymore
+# str(out$sims.list)
+# #plot(density(head(out$sims.list$s[,,1])))
+# plot(density(out$sims.list$s[,,1]))
+# head(out$sims.list$s[,,1])
+# apply(head(out$sims.list$s[,,1]), 2, 'median')
+# apply(out$sims.list$s[,,1], 2, 'median')
+# apply(out$sims.list$s[,,1], 2, 'mean')
+# plot(density(head(out$sims.list$logit_s[,,1])))
+# plot(density(out$sims.list$logit_s[,,1]))
+# 
+# apply(head(out$sims.list$m[,,1]), 2, 'median')
+# apply(head(out$sims.list$m[,,2]), 2, 'median')
+# plot(density(out$sims.list$m[,,1]))
+# plot(density(out$sims.list$m[,,2]))
 
 #plot(density(head(out$sims.list$s[,,2])))
-plot(density(out$sims.list$s[,,2]))
-apply(head(out$sims.list$s[,,2]), 2, 'median')
-apply(head(out$sims.list$s[,,2]), 2, 'mean')
-plot(density(head(out$sims.list$logit_s[,,2])))
+# plot(density(out$sims.list$s[,,2]))
+# apply(head(out$sims.list$s[,,2]), 2, 'median')
+# apply(head(out$sims.list$s[,,2]), 2, 'mean')
+# plot(density(head(out$sims.list$logit_s[,,2])))
+# 
+# apply(out$sims.list$alpha, 2, 'median')
+# 
 
-apply(out$sims.list$alpha, 2, 'median')
-
-
+# Below is to plot the time series to try and figure out what is going on.
 age2 = apply(out$sims.list$N[,,1], 2, 'median')
 age3 = apply(out$sims.list$N[,,2], 2, 'median')
 age4 = apply(out$sims.list$N[,,3], 2, 'median')
 
 # cohort graphs ----
-tmp2 <- as.data.frame(cbind(year = 1985:2023, N2=age2, N3 = lead(age3), N4=lead(age4, 2)))
+tmp2 <- as.data.frame(cbind(year = 1985:2024, N2=age2, N3 = lead(age3), N4=lead(age4, 2)))
 tmp2$immN <- log(exp(tmp2$N2)*(1-jags.data.m$matM[,1]))
 tmp2$matN <- log(exp(tmp2$N2)*jags.data.m$matM[,1])
 
@@ -241,8 +247,8 @@ p <- p + guides(fill=guide_legend(title="Age/Mat"))
 p <- p + theme_bw()
 p
 
-# Mariano exercise
-tmp <- as.data.frame(cbind(year = 1985:2023, I2 = jags.data.m$matI[,1], I3 = lead(jags.data.m$matI[,2], 1), I4 = lead(jags.data.m$matI[,3], 2)))
+# Mariano exercise - are declines exponential like we expect??
+tmp <- as.data.frame(cbind(year = 1985:2024, I2 = jags.data.m$matI[,1], I3 = lead(jags.data.m$matI[,2], 1), I4 = lead(jags.data.m$matI[,3], 2)))
 
 str(tmp)
 
@@ -250,7 +256,7 @@ tmp3_long <- tmp %>%
      pivot_longer(cols = c("I2", "I3", "I4"))
 str(tmp3_long)
 
-tmp3_long$exp <- rep(NA, 117)
+tmp3_long$exp <- rep(NA, nrow(tmp3_long))
 M <- 0.6
 N_ <- NA
 for (i in seq_along(tmp3_long$exp)){
@@ -267,6 +273,7 @@ for (i in seq_along(tmp3_long$exp)){
 str(tmp3_long)
 head(tmp3_long, 20)
 
+# shows change in cohort
 p <- ggplot()
 p <- p + geom_bar(data = tmp3_long, aes (x = name, y = value, fill = factor(name), group=1), stat="identity", position=position_dodge())
 p <- p + scale_fill_manual(values = c("lightgoldenrod2", "darkgreen", "red"))
@@ -276,14 +283,15 @@ p <- p + theme_bw()
 p <- p + facet_wrap(~ year)
 p
 
-# trying for the above but with immature sepearted from amture
+# trying for the above but with immature separated from mature
+## not sure if this was every successful
 tmp_mat <- as.data.frame(cbind(
-   year = 1985:2023, 
-   I2 = jags.data.m$matI[,1]*jags.data.m$matM[,1], 
-   I3 = lead(jags.data.m$matI[,2],1)*lead(jags.data.m$matM[,1], 1), 
-   I4 = lead(jags.data.m$matI[,3],1)*lead(jags.data.m$matM[,1], 2)))
+   year = 1985:2024, 
+   I2 = log(exp(jags.data.m$matI[,1])*jags.data.m$matM[,1]), 
+   I3 = lead(log(exp(jags.data.m$matI[,2]),1)*lead(jags.data.m$matM[,1]), 1),    I4 = lead(log(exp(jags.data.m$matI[,3]),1)*lead(jags.data.m$matM[,1], 2))
+   ))
 
-tmp_mat_long <- tmp_imm %>% 
+tmp_mat_long <- tmp_mat %>% # tmp_mat was tmp_imm....not sure why bc no sign of tmp_imm so this may have been a typo or I overwrote somehting
    pivot_longer(cols = c("I2", "I3", "I4"))
 str(tmp_mat_long)
 
@@ -343,12 +351,12 @@ p
 
 # compare I and N----
 
-tmp2 <- as.data.frame(cbind(year = 1985:2023, N2=age2, N3 = lead(age3), N4=lead(age4, 2)))
+tmp2 <- as.data.frame(cbind(year = 1985:2024, N2=age2, N3 = lead(age3), N4=lead(age4, 2)))
 tmp2$immN <- log(exp(tmp2$N2)*(1-jags.data.m$matM[,1]))
 tmp2$matN <- log(exp(tmp2$N2)*jags.data.m$matM[,1])
 
 names_matI <- c()
-tmp4 <- as.data.frame(jags.data.m$matI) |> rename(I2 = V1, I3 = V2, I4 = V3)
+tmp4 <- as.data.frame(jags.data.m$matI)
 tmp4$immI <- log(exp(tmp4$I2)*(1-jags.data.m$matM[,1]))
 tmp4$matI <- log(exp(tmp4$I2)*jags.data.m$matM[,1])
 
@@ -393,40 +401,42 @@ p
 raw <- ls_out(out)
 str(raw)
 
-plot(density(raw$logit_s[,,1]/raw$gamma[1]*(raw$delta[1]/2)*(1-(raw$delta[1]/2)/raw$delta[1])))
+#plot(density(raw$logit_s[,,1]/raw$gamma[1]*(raw$delta[1]/2)*(1-(raw$delta[1]/2)/raw$delta[1])))
 
-tmp <- (exp(raw$N[,29:32,1])*(1-raw$m[,29:32,1])+ raw$Ntb[,15:18,1])*0.5
-tmp1 <- log((exp(raw$N[,30:31,1])*(1-raw$m[,30:31,1])+ raw$Ntb[,16:17,1])*.5)
-tmp2 <- log((exp(raw$N[,30:31,1])*(1-raw$m[,30:31,1]))*.5)
-tmp <- exp(raw$N[,13,1])*(1-raw$m[,13,1])-raw$C[,13,1]
-tmp <- cbind(exp(raw$N[,14,1]), raw$m[,14,1], raw$C[,14,1])
-subset(tmp, tmp[,1]*tmp[,2]<tmp[,3])
-str(tmp)
-test <- ifelse(tmp[,1]*tmp[,2]-tmp[,3]<=1, 1, tmp[,1]*tmp[,2]-tmp[,3])
-tt <- cbind(tmp, test)
-tt[tt[,4] < 1]
-tt[tt[,4] < 1,]
-tt[,5] <- rep(NA, length(tt))
-str(tt)
-log(tt[,4])
+# this was to test Trinity Bay values
+# tmp <- (exp(raw$N[,29:32,1])*(1-raw$m[,29:32,1])+ raw$Ntb[,15:18,1])*0.5
+# tmp1 <- log((exp(raw$N[,30:31,1])*(1-raw$m[,30:31,1])+ raw$Ntb[,16:17,1])*.5)
+# tmp2 <- log((exp(raw$N[,30:31,1])*(1-raw$m[,30:31,1]))*.5)
+# tmp <- exp(raw$N[,13,1])*(1-raw$m[,13,1])-raw$C[,13,1]
+# tmp <- cbind(exp(raw$N[,14,1]), raw$m[,14,1], raw$C[,14,1])
+# subset(tmp, tmp[,1]*tmp[,2]<tmp[,3])
+# str(tmp)
+# test <- ifelse(tmp[,1]*tmp[,2]-tmp[,3]<=1, 1, tmp[,1]*tmp[,2]-tmp[,3])
+# tt <- cbind(tmp, test)
+# tt[tt[,4] < 1]
+# tt[tt[,4] < 1,]
+# tt[,5] <- rep(NA, length(tt))
+# str(tt)
+# log(tt[,4])
 
-plot(density(tmp[tmp<1000]))
-x <- "[,3]"
-raw$m[raw$m <= 0]
-raw[[x]][raw[[x]] <= 0]
-exp(raw[[x]][raw[[x]] <= 0])
-raw$C[,13,1][raw$C[,13,1] <=0]
-raw[[x]][is.na(raw[[x]])]
-raw[[x]][is.nan(raw[[x]])]
+# just figuring out subsetting - not sure if this is worth keeping
+# plot(density(tmp[tmp<1000]))
+# x <- 3
+# raw$m[raw$m <= 0]
+# raw[[x]][raw[[x]] <= 0]
+# exp(raw[[x]][raw[[x]] <= 0])
+# raw$C[,13,1][raw$C[,13,1] <=0]
+# raw[[x]][is.na(raw[[x]])]
+# raw[[x]][is.nan(raw[[x]])]
 
-tmp[tmp<0]
-log(tmp)
-mean(log(tmp))
-var(log(tmp))
-plot(density)
+# tmp[tmp<0]
+# log(tmp)
+# mean(log(tmp))
+# var(log(tmp))
+# plot(density)
 # this worked by taking the mu1 out of the N2 equation.  It was still calculated.  
 
-raw$mu[raw$mu < 0]
+# raw$mu[raw$mu < 0]
 
 #extract medians, credible intervals, and prediction intervals
 #source("IPM_fun.R")
@@ -441,9 +451,9 @@ str(pri, 1)
 
 
 if(disaggregated == "1985-present") {
-    cbind(1985:2023, calc$Nt2, jd$I2, calc$N3, jd$I3, calc$mu3)
+    cbind(1985:2024, calc$Nt2, jd$I2, calc$N3, jd$I3, calc$mu3)
 } else {
-    cbind(1999:2023, calc$Nt2, jd$I2, calc$N3, jd$I3, calc$mu3)
+    cbind(1999:2024, calc$Nt2, jd$I2, calc$N3, jd$I3, calc$mu3)
 } 
 
 
@@ -455,21 +465,21 @@ ssm26_dic <- out$DIC
 # figures ----
 
 if(disaggregated == "1985-present") {
-    year <- 1985:2021
+    year <- 1985:2022
  } else {
-     year <- 1999:2021
+     year <- 1999:2022
  } 
 
 ly <- length(year)
-forecast <- 2022:2023
+forecast <- 2023:2024
 lf <- length(forecast)
 
 # N2: observation median v process median
-plot(jd$I2, calc$N2)
+plot(jd$matI.I2, calc$N2)
 # N3: observation median v process median
-plot(jd$I3, calc$N3)
+plot(jd$matI.I3, calc$N3)
 # N4: observation median v process median
-plot(jd$I4, calc$N4)
+plot(jd$matI.I4, calc$N4)
 # Observation median over time
 plot(c(year,forecast), ls_all$N_med)
 
@@ -477,14 +487,15 @@ plot(c(year,forecast), ls_all$N_med)
 # variables for IPM plots
 
 # set capelin years
-if(disaggregated == "1985-present") {
-    cap <- df_cap 
-} else {
-    cap <- df_cap[15:39,]
-}
+# if(disaggregated == "1985-present") {
+#     cap <- df_cap 
+# } else {
+#     cap <- df_cap[15:40,]
+# }
 
+source("IPM_fun.R")
 # combined N2-N4[t]
-tmp_plot <- ipm_plot(df_med = ls_all$N_med, df_cri = ls_all$N_ci, df_pri = ls_all$Pr_ci, df_dat = cap) # ignore warnings - all legit NAs although df_cap needs to be updated. 
+tmp_plot <- ipm_plot(df_med = ls_all$N_med, df_cri = ls_all$N_ci, df_pri = ls_all$Pr_ci, df_dat = df_agg) # ignore warnings - all legit NAs although df_cap needs to be updated. 
 tmp_plot <- tmp_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = log(exp(I2) + exp(I3)), x = year),
                                       shape = 16, size = 2)
@@ -492,7 +503,7 @@ tmp_plot
 
 
 # N2[t] - create plot, then add the capelin data
-tmpN2_plot <- ipm_plot(df_med = calc$N2, df_cri = cri$N2_cri, df_pri = pri$I2.rep_pri, df_dat = cap) # ignore warnings - all legit NAs although df_cap needs to be updated.
+tmpN2_plot <- ipm_plot(df_med = calc$N2, df_cri = cri$N2_cri, df_pri = pri$I2.rep_pri, df_dat = df_agg) # ignore warnings - all legit NAs although df_cap needs to be updated.
 tmpN2_plot <- tmpN2_plot + geom_point(data = df_dis_tabLog,
                                       aes(y = I2, x = year),
                                       shape = 16, size = 2)
@@ -501,7 +512,7 @@ tmpN2_plot
 
 # N3[t]
 #source("IPM_fun.R")
-tmpN3_plot <- ipm_plot(df_med = calc$N3, df_cri = cri$N3_cri, df_pri = pri$I3.rep_pri, df_dat = cap) # ignore warnings - all legit NAs although df_cap needs to be updated.
+tmpN3_plot <- ipm_plot(df_med = calc$N3, df_cri = cri$N3_cri, df_pri = pri$I3.rep_pri, df_dat = df_agg) # ignore warnings - all legit NAs although df_cap needs to be updated.
 #tmpN3_plot <- tmpN3_plot + 
     
 tmpN3_plot <- tmpN3_plot + geom_point(data = df_dis_tabLog,
@@ -511,7 +522,7 @@ tmpN3_plot
 
 
 
-tmpN4_plot <- ipm_plot(df_med = calc$N4, df_cri = cri$N4_cri, df_pri = pri$I4.rep_pri, df_dat = cap) # ignore warnings - all legit NAs although df_cap needs to be updated.
+tmpN4_plot <- ipm_plot(df_med = calc$N4, df_cri = cri$N4_cri, df_pri = pri$I4.rep_pri, df_dat = df_agg) # ignore warnings - all legit NAs although df_cap needs to be updated.
 #tmpN3_plot <- tmpN3_plot + 
 
 tmpN4_plot <- tmpN4_plot + geom_point(data = df_dis_tabLog,
