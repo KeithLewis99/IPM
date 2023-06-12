@@ -148,6 +148,8 @@ jags.data.m$matCAA[y,z]
 log(jags.data.m$matCAA[y,z])
 jags.data.m$matI-log(jags.data.m$matCAA)
 
+plot(density(out$sims.list$s[,,1]))
+plot(density(out$sims.list$s[,,2]))
 
 plot(density(out$sims.list$s[,y,z]))
 plot(density(out$sims.list$s[,y,2]))
