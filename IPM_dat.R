@@ -1,5 +1,5 @@
 # Data file for IPM for capelin
-## This includes the biomass correcations of 2022 - see A. Adamack for details or 2023 Res Doc.
+## This includes the biomass corrections of 2022 - see A. Adamack for details or 2023 Res Doc.
 
 ## Some of below is confusing because there are two data sets.  1985-1998 and 1999-present.  None of them seem to be in the same form.  So a lot of the below is bringing in two data sets and combining them.  Ideally, this should all be in one step but I leave that to Pelagics.
 
