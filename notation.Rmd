@@ -63,21 +63,23 @@ A maturity prior may not be needed if we use the Beta distribution.
 
 
 #### Variables   
-For maturity-at-age, *mat* is the raw data and *m* is the variable used in models below. $\tau_{mat}$ is estimated as above.
+For maturity-at-age, *mat* is the raw data and *m* is the variable used in models below.  
+<!-- $\tau_{mat}$ is estimated as above. -->
 
 
-$$
-logit(\hat{m}_{a,t}) = Norm(logit(m_{a,t}), \tau_{m}) \\
-m_{a,t} = ilogit(logit(\hat{m}_{a,t}))
-$$
-The problem with the above is that it creates values <0 and >1 which is mathematically impossible on the ln scale for the former and not biologically possible for the latter.  
+<!-- $$ -->
+<!-- logit(\hat{m}_{a,t}) = Norm(logit(m_{a,t}), \tau_{m}) \\ -->
+<!-- m_{a,t} = ilogit(logit(\hat{m}_{a,t})) -->
+<!-- $$ -->
+<!-- The problem with the above is that it creates values <0 and >1 which is mathematically impossible on the ln scale for the former and not biologically possible for the latter.   -->
 
-I think that a better approach would be below because the Beta is the "only standard continuous distribution besides the uniform distribution with a finite range , from 0 to 1, i.e., it is the inferred distribution of the probability of success in a binomial trial with a-1 observed successes and b-1 observed failures. ...  It is good for modelling probabilities or proportions."  See Bolker 2008 pg 133-4.
+The Beta is the "only standard continuous distribution besides the uniform distribution with a finite range , from 0 to 1, i.e., it is the inferred distribution of the probability of success in a binomial trial with a-1 observed successes and b-1 observed failures. ...  It is good for modelling probabilities or proportions."  See Bolker 2008 pg 133-4.  Therefore,
 
 $$
 m_{a,t} \sim dbeta(a-1, b-1)
 $$
-So, a = $mat_{t,a}$ and b = $1-mat_{t,a}$.  I have multiplied both by 10 because, according to Bolker, this is the right scale.  Using plot(density(rbeta(10000, 90, 10))), I have experimented wth what to multiply a-1 and b-1 by. The higher the number, the tighter the distribution with decimals (e.g., 0.9 & 0.1 giving a spike near 1.0 and a very long tail while 900 & 100 give a more uniform distribution between 0.88 and 0.92).  
+where, a = $mat_{t,a}$ and b = $1-mat_{t,a}$.  I have multiplied both by 10 because, according to Bolker, this is the right scale.  
+As a test, and using plot(density(rbeta(10000, 90, 10))), I have experimented wth what to multiply a-1 and b-1 by. The higher the number, the tighter the distribution with decimals (e.g., 0.9 & 0.1 giving a spike near 1.0 and a very long tail while 900 & 100 give a more uniform distribution between 0.88 and 0.92).  
 
 This eliminates the <0 and >1 problem that held me up for so long in the fall.
 
@@ -142,6 +144,7 @@ Note also that I really don't like the first two terms (1985-1995, and 1996-2002
 **Perhaps one way to get at LD pre-2003 is to use the abundance as an indicator with a very loose prior? This assumes some sort of SRR which we don't have but perhaps it will put it in the ball park.  But perhaps a random walk will do the trick????**
 <!-- PMR: using abundance as a prior would be circular as you're using abundance as an input, so it is getting information on the size and variability of N2 from that. For those pre 2003 blocks, the alpha will provide a baseline level of abundance but a random walk or stock recruit function would allow for some variability. KL: sorry, that wasn't clear. As I wrote it, yes, it is circular.    What I meant was to use N2[t-1] as a prior for N2[t] and then got the idea for a rdm walk as I think the SRR would not be as good an approach.  -->
 
+#### Change of Direction
 So, the below for 1985-2002 but with an informative prior on 1985 and 1991 (implemented in ~ Dec 2022).
 
 $$
@@ -158,7 +161,7 @@ $$
   x_{3,t} = \left\{ 
   \begin{matrix}
     \alpha_3 + \gamma*TI_t*(1-TI_t/\delta) & , & 1985-1995 \\ 
-    \alpha_3 + \gamma*TI_t*(1-TI_t/\delta) + \ E_2*CO_{t-1} & , & 2003-present
+    \alpha_3 + \gamma*TI_t*(1-TI_t/\delta) + \ E_2*CO_{t-1} & , & 1996-present
   \end{matrix}
   \right\}
 \end{equation*} \\
@@ -176,7 +179,7 @@ $$
   x_{3,t} = \left\{ 
   \begin{matrix}
     \gamma_2*TI_t*(1-TI_t/\delta_2) & , & 1985-1995 \\ 
-    \gamma_2*TI_t*(1-TI_t/\delta_2) + \ E_2*CO_{t-1} & , & 2003-present
+    \gamma_2*TI_t*(1-TI_t/\delta_2) + \ E_2*CO_{t-1} & , & 1996-present
   \end{matrix}
   \right\}
 \end{equation*} \\
