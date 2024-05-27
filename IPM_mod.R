@@ -11016,16 +11016,28 @@ for (a in 1:Ni){
 }
 
 for (a in 1:Ni){
-     for (t in 3:n.occasions){
-     osa_mean[t,a] <- mean(N[1:(t-1), a])
-     osa[t,a] <- N[t,a] - osa_mean[t,a]
-     osa_sd[t,a] <- sd(osa[1:(t-1), a]) # this is the SD for t-1
-     #posa[t,a] <- osa[t,a]/sd(osa[,a]) # this is the SD for all t
-     #posa[t,a] <- osa[t,a]/osa_mean[t,a] # this is nonsense but it works
-     #posa[t,a] <- osa[t,a]*osa_sd[t,a]   # this is nonsense but it works
-     #posa[t,a] <- osa[t,a]/osa_sd[t,a] # get error in parent value posa[3,1] - WTF WTF WTF!!!!!!!!
-     #posa[t,a] <- osa[t,a]/sd(osa[1:(t-1), a])
-     }
+   for (t in 3:n.occasions){
+        osa_mean[t,a] <- mean(N[1:(t-1), a])
+        osa[t,a] <- N[t,a] - osa_mean[t,a]
+        osa_sd[t,a] <- sd(osa[1:(t-1), a]) # this is the SD for t-1
+        #posa[t,a] <- osa[t,a]/sd(osa[,a]) # this is the SD for all t
+        #posa[t,a] <- osa[t,a]/osa_mean[t,a] # this is nonsense but it works
+        #posa[t,a] <- osa[t,a]*osa_sd[t,a]   # this is nonsense but it works
+        #posa[t,a] <- osa[t,a]/osa_sd[t,a] # get error in parent value posa[3,1] - WTF WTF WTF!!!!!!!!
+        #posa[t,a] <- osa[t,a]/sd(osa[1:(t-1), a])
+        
+   # osa_mean[1, a] <- 0
+   # osa[1, a] <- 0
+   # for (t in 2:n.occasions){
+   #   osa_mean[t,a] <- mean(N[1:(t-1), a])
+   #   osa[t,a] <- N[t,a] - osa_mean[t,a]
+   #   osa_sd[t,a] <- sd(osa[1:(t-1), a]) # this is the SD for t-1
+   #   posa[t,a] <- osa[t,a]/sd(osa[,a]) # this is the SD for all t
+   #   #posa[t,a] <- osa[t,a]/osa_mean[t,a] # this is nonsense but it works
+   #   #posa[t,a] <- osa[t,a]*osa_sd[t,a]   # this is nonsense but it works
+   #   #posa[t,a] <- osa[t,a]/osa_sd[t,a] # get error in parent value posa[3,1] - WTF WTF WTF!!!!!!!!
+   #   #posa[t,a] <- osa[t,a]/sd(osa[1:(t-1), a])
+   }
 }
 
 #for (a in 1:(Ni-1)){

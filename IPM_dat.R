@@ -3,6 +3,7 @@
 
 ## Some of below is confusing because there are two data sets.  1985-1998 and 1999-present.  None of them seem to be in the same form.  So a lot of the below is bringing in two data sets and combining them.  Ideally, this should all be in one step but I leave that to Pelagics.
 
+makeData <- function(){
 
 # NOTE THAT I AM IN A LOT OF DOUBT ABOUT THE NUMBERS, ESPECIALLY FOR PROPORTIONS WHICH DON'T MATCH THE 2020 SAR.  THE AGE DISAGGREGATED ONLY GOES BACK TO 1999!!!!!!  The age disaggregated data that I downloaded from teh database also does not correspond to the master list in caplein2021.xlsx.....so all of this needs to be vetted by Fran and Aaron before we do ANYTHING WITH IT!!!!!
 
@@ -38,7 +39,7 @@ library(plotly)
 library(purrr)
 
 # Source files
-source("IPM_fun.R")
+source(here("IPM_fun.R"))
 options(dplyr.print_max = 1e9)
 
 # variables
@@ -54,12 +55,12 @@ disaggregated <- "1985-present" # "1999-present"
 
 ### Units millions -> convert to billions below
 ### Units in tonnes -> convert to kilotonnes below
-df_dis <- read_csv("data/abundance and biomass by age and year2.csv")
+df_dis <- read_csv(here("data/abundance and biomass by age and year2.csv"))
 str(df_dis)
 
 # bring in the historical data - 
 ## 1985 2017 - abundance: # in billions
-df_dis_1985 <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin_age_disaggregate_abundance1.csv")
+df_dis_1985 <- read_csv(here("data/capelin_age_disaggregate_abundance1.csv"))
 str(df_dis_1985)
 
 # Manipulate 1999-2021 data first, then 1985-2021
@@ -128,7 +129,7 @@ if(disaggregated == "1985-present") {
 } 
 
 # abundance-at-age 1985-2022
-write.csv(df_dis_tab, "data/derived/capelin_abundance_1985-2022.csv")
+write.csv(df_dis_tab, "data/capelin_abundance_1985-2022.csv")
 
 # # abundance-at-age 1985-2022 in natural logarithms
 ## NOTE THAT this is only I2-I4 because that is what the state space model deals with
@@ -163,7 +164,7 @@ df_ag_1999 <- df_dis_summ[, c(1:5)] %>%
 # df_ag_1985$ab_lci <- NA
 # df_ag_1985$ab_uci <- NA
 # units in billions and kilotonnes - note that I don't have the 1982 abundance - i'll add the biomass below
-df_ag_1985 <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/capelin-2021.csv")
+df_ag_1985 <- read_csv(here("data/capelin-2021.csv"))
 str(df_ag_1985)
 
 # combine the 1985-1998 and 1999-present.
@@ -186,7 +187,7 @@ write_csv(df_agg, "data/derived/capelin_aggregated_abundance_1985-2022.csv")
 ## biomass disagregated ----
 # biomass-at-age-1985-2012 - from FRan
 ## units (kt)
-df_baa_FM <- read_csv("data/baa-1985-2012.csv")
+df_baa_FM <- read_csv(here("data/baa-1985-2012.csv"))
 df_baa_FM[,2:7] <- round(df_baa_FM[, 2:7], 1)
 str(df_baa_FM, give.attr = F)
 
@@ -337,7 +338,7 @@ df_mat_tab <- bind_rows(df_tmp, df_mat_tab) %>%
 
 ## 1985-2012 - abundance mature
 ### based on file from the biochar file (BIOCHAR FROM ACOUSTICS_revised to use Monte Carlo abundnace for 1988-1996 in annual page (003).xls; C:\Users\lewiske\Documents\capelin_LRP\IPM\data)  
-df_mat_1985 <- read_csv("data/matAbun.csv")
+df_mat_1985 <- read_csv(here("data/matAbun.csv"))
 str(df_mat_1985, give.attr = F)
 
 
@@ -379,7 +380,7 @@ str(df_mat_prop)
 ### Note that thie below is for abundance only.  I have not done similar work for biomass altough it would be the same as above.
 ### Units millions -> convert to billions below
 ### Units in tonnes -> convert to kilotonnes below
-df_tb <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/TB_abun_atAge.csv")
+df_tb <- read_csv(here("data/TB_abun_atAge.csv"))
 str(df_tb, give.attr = F)
 head(df_tb)
 df_tb$age <- as.factor(df_tb$age)
@@ -468,7 +469,7 @@ df_tb_matAA[,3][df_tb_matAA[,3] == 1] <- 0.995
 
 
 ## larval density ----
-df_ld  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/larvae2001_2022.csv")
+df_ld  <- read_csv(here("data/larvae2001_2022.csv"))
 str(df_ld)
 
 # add extra years to start the time series
@@ -495,7 +496,7 @@ str(df_ld)
 
 ## ice ----
 #Note that I added in dummy data for 2021
-df_ice  <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/ice-m1-2021.csv"
+df_ice  <- read_csv(here("data/ice-m1-2021.csv")
 )
 str(df_ice)
 
@@ -523,7 +524,7 @@ df_ice[, 2:4] <- lapply(df_ice[, 2:4], function(x) replace(x, is.na(x), mean(x, 
 ## condition ----
 #Note that I added in dummy data for 2021
 #df_con <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/analyses/capelinLRP/data/condition_ag1_2_MF_out.csv")
-df_con <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/condition_2JK_ag1_2_MF_2022.csv")
+df_con <- read_csv(here("data/condition_2JK_ag1_2_MF_2022.csv"))
 str(df_con)
 
 # add missing year.  Note that 2002 is there just because I don't have the 2023 data
@@ -542,12 +543,12 @@ str(df_con)
 
 # impute
 ## Note just doing this because I don't have the 2022 data
-df_con <- as.data.frame(apply(df_con, 2, function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))))
+# df_con <- as.data.frame(apply(df_con, 2, function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))))
 
 
 ## catch-at-age----
 # CAA 1998-2021
-df_caa <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/fromAaron/catchAtAge1998_2021.csv")
+df_caa <- read_csv(here("data/catchAtAge1998_2021.csv"))
 ## units millions and tonnes
 str(df_caa, give.attr = FALSE)
 df_caa
@@ -637,7 +638,7 @@ df_caa_tab_abun[, 2:4] <- lapply(df_caa_tab_abun[, 2:4], function(x) replace(x, 
 
 # CAA 1982-1997 abundance
 # note that this actually goes to 1998
-df_caa1982_1997 <- read_csv("C:/Users/lewiske/Documents/capelin_LRP/data/Fran/catchAtAge1982_1997abun.csv")
+df_caa1982_1997 <- read_csv(here("data/catchAtAge1982_1997abun.csv"))
 str(df_caa1982_1997, give.attr = FALSE)
 
 
@@ -697,16 +698,83 @@ write.csv(df_caa_all, "data/CAA.csv")
 #source("IPM_fun.R")
 # Bundle data----
 num_forecasts = 2 # 2 extra years
-jags.data.m <- ls_jag("yes", "yes", "yes")
-str(jags.data.m)
+# jags.data.m <- ls_jag("yes", "yes", "yes")
+matI <- apply(df_dis_tabLog, 2, function(x) c(x, rep(NA, num_forecasts)))
+matB <- apply(df_baa_tabLog, 2, function(x) c(x, rep(NA, num_forecasts)))
+
+matI_TB <- apply(df_tb_NAALog, 2, function(x) c(x, rep(NA, num_forecasts)))
+maa_TB <- apply(df_tb_matAA, 2, function(x) c(x, rep(NA, num_forecasts)))
+matCAA <- apply(df_caa_all, 2, function(x) c(x, rep(NA, num_forecasts)))
+
+matMp <- apply(df_mat_prop, 2, function(x) c(x, rep(NA, num_forecasts)))
+matMp[39:40, 1] <- c(2023, 2024)
+matMp <- apply(matMp, 2, function(x) replace(x, is.na(x), mean(x[c(7:8, 12, 15:21, 23:31, 33:35, 38)], na.rm = T)))
+
+jags.data.m <- list(#year = df_dis_tab$year,
+   n.occasions = length(df_dis_tab$year) + num_forecasts,
+   matI = matI[, 2:4],
+   matB = matB[-(1:3), 2:4],
+   matMp = matMp[, 2:4],
+   matI_TB = matI_TB[,3:5],
+   maa_TB = maa_TB[,2:4],
+   matCAA = matCAA[,2:4],
+   LD = as.vector(scale(c(df_ld$larvae, rep(NA, num_forecasts)),10)), 
+   TI = as.vector(scale(c(df_ice$tice, rep(mean(df_ice$tice), num_forecasts)),10)),
+   CO = as.vector(scale(c(df_con$meanCond, rep(mean(df_con$meanCond, na.rm = T), num_forecasts))))
+)
+# str(jags.data.m)
 
 # check that the lengths of the lists all match
-leng_jd <- rep(NA, 8)
-for (i in 1:length(jags.data.m)){
-   len_jd <- length(jags.data.m[[i]])
-   leng_jd[i] <- len_jd
-}
-leng_jd
+# leng_jd <- rep(NA, 8)
+# for (i in 1:length(jags.data.m)){
+#    len_jd <- length(jags.data.m[[i]])
+#    leng_jd[i] <- len_jd
+# }
+# leng_jd
 
 # Note that I haven't done the imputation for df_mat_prop
-jd <- as.data.frame(jags.data.m[c(-1)])
+# jd <- as.data.frame(jags.data.m[c(-1)])
+
+# For lorenzen M --
+lhc <- data.table::fread(here("2024_runs/data/capelin_condition_maturation_v1.csv")) |>
+   select(length, age, year) |>
+   filter(!is.na(age)) |>
+   filter(age > 0 & age <= 4) |>
+   filter(year >= 1985)
+
+#age-stratification
+split.length.data <- function(lhc, slice = 1000){
+   
+   N <- nrow(lhc)
+   A <- max(lhc$age)
+   ix <- c()
+   tab <- lhc$age |> table()
+   rat <- (tab)/sum(tab)
+   tot <- rat * slice
+   
+   data <- data.frame(length = NULL, age = NULL, year = NULL)
+   for(i in 1:slice){
+      ix <- c(ix, sample(1:N, 1))
+      
+      item <- lhc[ix[i]]
+      for(a in 1:A){
+         if(item$age == a & tot[a] > 0 & (!(i %in% ix))){
+            data <- rbind(data, item) 
+         }
+      }
+   }
+   data
+   
+}
+lhc <- split.length.data(lhc)
+
+jags.data.m$lengths = lhc$length
+jags.data.m$lages = lhc$age
+jags.data.m$lyears = lhc$year-min(lhc$year)+1
+jags.data.m$nL = nrow(lhc)
+jags.data.m$lAmax = max(lhc$age)
+# ------ #
+
+assign('jags.data.m', jags.data.m, envir = .GlobalEnv)
+
+}

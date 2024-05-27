@@ -1,0 +1,895 @@
+---
+title: "Overview of model updates from April 2024 onward"
+output: 
+   # html_document:
+   bookdown::html_document2:
+      toc: true
+      number_sections: true
+# output:
+#   pdf_document:
+#     citation_package: natbib
+#   bookdown::pdf_book:
+#     citation_package: biblatex
+vertical_layout: scroll
+bibliography: references.bib
+author: Nicholas Gullage
+
+---
+
+```{r init, include=F, warning=F, results='hide'}
+
+library(rjags)
+library(R2jags)
+library(tidyverse)
+library(lattice)
+library(here)
+library(flextable)
+
+# knitr::opts_knit$set(root.dir = here('2024_runs'))
+source(here("IPM_dat.R"))
+source(here('2024_runs/R/plot_functions.R'))
+
+jags.data.m <- makeData()
+
+```
+  
+# Version 1 {-}
+   
+## Version 1.0 (2024-04-25) {-}
+
+I started the process model from scratch, but took much of the parameter priors and diagnostics from model "cap.v37" from Keith. Below are the Priors, Cohort model, and diagnostic equations used for the first version of the Capelin SS JAGS model.
+
+This version details the "base" model to which modifications are be added. Unless otherwise specified, future versions will maintain every component of this version version to itself.
+ 
+### Priors {-}
+
+The priors for model variance defined as follows:
+
+\begin{equation}
+   \sigma_{proc} \sim dnorm(0.01, 20)
+\end{equation}
+\begin{equation}
+   \sigma_{obs} \sim dnorm(0.01, 20)
+\end{equation}
+\begin{equation}
+   \sigma_{mat} \sim dnorm(0.01, 1)
+\end{equation}
+\begin{equation}
+   \sigma_{rec} \sim dnorm(0.01, 20)
+\end{equation}
+
+where $\sigma_{proc}$ is process error variance, $\sigma_{obs}$ is observation error variance, $\sigma_{mat}$ is variance in maturity values, and $\sigma_{rec}$ is variance in recruitment before larval density information is available.
+
+Priors for abundances-at-age for the first year are defined as follows:
+
+\begin{equation}
+   rec_{y=1} \sim dnorm(15, 1/9)
+\end{equation}
+\begin{equation}
+   N^{a=2}_{y=1} \sim dnorm(12.8, 1/9)
+\end{equation}
+\begin{equation}
+   N^{a=3}_{y=1} \sim dnorm(11.3, 1/9)
+\end{equation}
+\begin{equation}
+   N^{a=4}_{y=1} \sim dnorm(8.2, 1/9)
+\end{equation}
+
+Priors for age-dependent processes for survival and recruitment are defined as follows:
+
+\begin{equation}
+   \alpha \sim dnorm(0, 100^-2)
+\end{equation}
+\begin{equation}
+   \beta \sim dnorm(0, 100^-2)
+\end{equation}
+\begin{equation}
+   \delta^a \sim dnorm(0.01, 1)
+\end{equation}
+\begin{equation}
+   \gamma^a \sim dnorm(1.29, 2.56)
+\end{equation}
+\begin{equation}
+   \varepsilon^a \sim dnorm(0, 100^-2).
+\end{equation}
+
+Here, $\gamma^a$ represents the effect of ice width and $\delta^a$ represents the effect of timing/rate of ice coverage (see [Buren et al., 2014](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0087589)) on total mortality for each age, $\varepsilon^a$ represents the effect of fish condition on mortality for each age, and $\alpha$ and $\beta$ are parameters modeling a linear relationship between recruitment (abundance at age 1) once larval density information is available,
+
+Recruitment for years prior to larval density estimates are defined as a random walk on previous years' recruitment estimates, where priors defined as follows:
+
+\begin{equation}
+   rec_y \sim dlnorm(ln(rec_{y-1}), \sigma_{rec}).
+\end{equation}
+
+Here, I use a lognormal relationship to bound the value of recruitment to $rec_y \in (0, \infty)$.
+Priors for maturities-at-age are defined as follows:
+
+\begin{equation}
+   M^a_{est} \sim dbeta(100 M^a_{obs}, 100 (1-M^a_{obs})),
+\end{equation}
+
+where $M_{est}$ is the estimated maturity-at-age and $M_{obs}$ is the observed maturity-at-age.
+
+A total mortality component was added to replace survival from previous models, and priors are defined as follows:
+
+\begin{equation}
+   \sigma_Z \sim dunif(0.01, 1),
+\end{equation}
+\begin{equation}
+   Z^a_0 \sim dlnorm(0, \tau_Z),
+\end{equation}
+
+where $Z^a_0$ is used as an offset (intercept) for total mortality-at-age. I use a lognormal relatioship foo $Z^a_0$ for similar reasons as recruitment, i.e. we expect the *unknown* mortality component to be non-negative, since a negative value for mortality would increase stock size. We define values for natural mortality for ages 1 (i.e. recruitment), 2, and 3. Value for $Z_0$ for age 4 fish are irrelevant because we assume a total mortality at this age.
+
+
+### Process Equations {-}
+
+Total mortality is used in place of survival from previous model versions, where
+
+\begin{equation}
+   S^a_y = exp(-Z^a_y),\hspace{.5in} Z^a_y = -ln(S^a_y).
+\end{equation}
+
+We define total mortality as a function of ice coverage, $TI_y$, and Fall capelin condition, $CO_y$, when condition information becomes available (i.e, 1995),
+
+$$
+   Z^a_y = 
+   \begin{cases}
+   4 \gamma^a \frac{TI_y}{\delta^a} (1 - \frac{TI_y}{\delta^a}) + Z^a_0,\hspace{.5cm} y < 1995 \\
+   4 \gamma^a \frac{TI_y}{\delta^a} (1 - \frac{TI_y}{\delta^a}) + \varepsilon^a CO_y + Z^a_0,\hspace{.5cm} y \geq 1995. \\
+   \end{cases}
+$$
+
+Abundance-at-age is defined as in the cohort equation, such that
+
+\begin{equation}
+   N^a_y = \mu^{a-1}_{y-1} - Z^{a-1}_{y-1},
+   (\#eq:process)
+\end{equation}
+
+where Abundances for proceeding ages depend on the *processed* abundances of previous ages. Note, we define *N* as the natural log of abundance, $N^a_y := ln(Abundance)$. Abundance across all ages for the first year are estimated parameters defined by priors (see above). 
+
+Abundances at age 2 (i.e. $N^{a=2}_y$) are calculated similar to Eq. \@ref(eq:process), as
+
+\begin{equation}
+   N^{a=2}_y = \rho_{y-1} - Z^{rec}_{y-1}.
+\end{equation}
+
+Recruitment is defined by priors (see above) for years where larval density information is unavailable for their respective cohort. When larval density information is available (years 2004-present), values for recruitment, *rec*, are estimated as
+
+\begin{equation}
+   rec_y = \alpha + \beta LD_{y-1}.
+\end{equation}
+
+where *LD* is larval density.
+
+Observed indices are fitted to process-corrected abundance estimates as
+
+\begin{equation}
+   I^a_y \sim dnorm(\mu^a_y, \sigma_{obs}).
+\end{equation}
+
+Additionally, priors are fitted against the projected cohort abundance (see below) to estimate process error in abundances-at-age,
+
+\begin{equation}
+   \mu^a_y \sim dnorm(N^a_y, \sigma_{proc}),
+\end{equation}
+
+where $\mu$ is the estimate of abundance accounting for process error. Priors are also fitted against recruit abundance,
+
+\begin{equation}
+   \rho_y \sim dnorm(rec_y, \sigma_{proc}).
+\end{equation}
+
+
+
+### Diagnostics {.unlisted .unnumbered .tabset}
+
+```{r setupv1.0, echo=F}
+   data <- readRDS(here('2024_runs/data/models/model_a.rds'))
+   # knitr::opts_knit$set(root.dir = here('2024_runs/output'))
+   old.par <- par()
+   # data <- read_rds(here('2024_runs/model_a.rds'))
+```
+
+#### Stock Trends {- .tabset}
+
+##### Index Estimates {-}
+
+```{r, echo=F, warning=F}
+   IPMplot(data$raw, jags.data.m$matI)
+   # knitr::include_graphics('output/Index_trend.png')
+```
+
+##### Maturity Estimates {-}
+
+```{r, echo=F, warning=F}
+   maturity_plot(data)
+   # knitr::include_graphics(here('2024_runs/output/mat.png'))
+```
+
+##### Recruitment Estimates {-}
+
+```{r, echo=F, warning=F}
+   recruitment_plot(data)
+   # knitr::include_graphics(here('2024_runs/output/mat.png'))
+```
+
+##### SPAY {-}
+
+```{r, echo=F, warning=F}
+   spay_plot(data)
+   # knitr::include_graphics(here('2024_runs/output/mat.png'))
+```
+
+#### Summaries {- .tabset}
+
+##### Parameters {-}
+
+```{r, echo=F, warning=F}
+   parm_names <- c('alpha', 'beta', 
+              'delta', 'epsilon', 'gamma', 
+              "Z0",
+              "sigma.rec", "sigma.Z", 
+              "tau.obs", "tau.proc")
+   pris <- sapply(paste(parm_names, 'pri', sep = '_'),
+                                \(x) data$pri[[x]])
+   data.frame(Median = data$med[parm_names] |>
+                 unlist(),
+              Upper = lapply(pris, \(x)x[2,]) |>
+                 unlist(),
+              Lower = lapply(pris, \(x)x[1,]) |>
+                 unlist()
+              ) |>
+      round(2) |>
+      tibble::rownames_to_column(var = 'Parameter') |>
+      flextable() |>
+      set_header_labels(values = c('Parameter', 'Value', '95% PI', '05% PI')) |>
+      compose(1, 1, as_paragraph("\u3b1")) |>
+      compose(2, 1, as_paragraph("\u3b2")) |>
+      compose(3:5, 1, as_paragraph("\u3b4", as_sup(2:4))) |>
+      compose(6:8, 1, as_paragraph("\u3b5", as_sup(2:4))) |>
+      compose(9:11, 1, as_paragraph("\u3b3", as_sup(2:4))) |>
+      compose(12:14, 1, as_paragraph("Z", as_sup(1:3), as_sub('0'))) |>
+      compose(15, 1, as_paragraph("\u3c3", as_sub("rec"))) |>
+      compose(16, 1, as_paragraph("\u3c3", as_sub("Z"))) |>
+      compose(17, 1, as_paragraph("\u3c4", as_sub("obs"))) |>
+      compose(18, 1, as_paragraph("\u3c4", as_sub("proc")))
+   
+```
+
+##### Statistics {-}
+
+```{r, echo=F, warning=F}
+   
+   data$stats |>
+      as.data.frame() |>
+      tibble::rownames_to_column('Metric') |>
+      flextable(cwidth = c(.2, .8)) |>
+      set_header_labels(values = c("Metric", "Mean (900 samples)")) |>
+      width(2, 2) |>
+      align(j = 2, align = 'center')
+
+```
+
+#### Posterior Samples & Densities {- .tabset}
+
+##### Alpha & Beta {-}
+
+Alpha ($\alpha$) is the estimate of the constant effect of larval density on recruitment, and beta ($\beta$) is the estimate of the linear effect of larval desnity on recruitment.
+
+```{r, echo=F, warning=F}
+   par(mfrow = c(2,1), mar = c(2, 4, 1, .4))
+   data$raw$alpha |> plot(type = 'l', ylab = 'alpha')
+   data$raw$beta |> plot(type = 'l', ylab = 'beta')
+   # knitr::include_graphics('alpha_beta.png')
+```
+
+```{r, echo=F, warning=F}
+   par(mfrow = c(1,2))
+   plot(density(data$raw$alpha), main = expression(alpha))
+   abline(v = 0, lty = 2)
+   plot(density(data$raw$beta), main = expression(beta))
+   abline(v = 0, lty = 2)
+```
+
+##### Delta {-}
+
+Delta ($\delta$) is the estimate of the ice-width effect on survivability, i.e. total mortality, for each age.
+
+```{r, echo=F, warning=F}
+   par(mfrow = c(3,1), mar = c(2, 4, 1, .4))
+   data$raw$delta[,1] |> plot(type = 'l', ylab = '')
+   data$raw$delta[,2] |> plot(type = 'l', ylab = 'delta')
+   data$raw$delta[,3] |> plot(type = 'l', ylab = '')
+   # knitr::include_graphics('delta.png')
+```
+
+```{r, echo=F, warning=F}
+   par(mfrow = c(1,1))
+   plot(density(data$raw$delta[,1]), col = 'darkolivegreen3', ylim = c(0, 1.0), 
+        main = expression(delta))
+   lines(density(data$raw$delta), col = 'coral')
+   lines(density(data$raw$delta[,3]), col = 'steelblue')
+   abline(v = 0, lty = 2)
+   legend('topright', c('Age 2', 'Age 3', 'Age 4'),
+          col = c('darkolivegreen3', 'coral', 'steelblue'),
+          lty = c(2,2,2))
+   # knitr::include_graphics('density_delta.png')
+```
+
+##### Gamma {-}
+
+Gamma ($\gamma$) is the estimate of the timing effect on survivabilty, i.e. total mortality, for each age.
+
+```{r, echo=F, warning=F}
+   par(mfrow = c(3,1))
+   data$raw$gamma[,1] |> plot(type = 'l', ylab = '')
+   data$raw$gamma[,2] |> plot(type = 'l', ylab = 'gamma') # this has a trend
+   data$raw$gamma[,3] |> plot(type = 'l', ylab = '')
+   # knitr::include_graphics('gamma.png')
+```
+
+```{r, echo = F, warning=F}
+   plot(density(data$raw$gamma[,1]), col = 'darkolivegreen3', ylim = c(0, 1.5), 
+        main = expression(gamma))
+   lines(density(data$raw$gamma[,2]), col = 'coral')
+   lines(density(data$raw$gamma[,3]), col = 'steelblue')
+   abline(v = 0, lty = 2)
+   legend('topright', c('Age 2', 'Age 3', 'Age 4'),
+          col = c('darkolivegreen3', 'coral', 'steelblue'),
+          lty = c(2,2,2), cex = .8)
+   # knitr::include_graphics('density_gamma.png')
+```
+
+##### Epsilon {-}
+
+Epsilon ($\varepsilon$) is the estimate of the fish condition effect on survivability, i.e. total mortality, for each age. This affect is only present from 
+
+```{r, echo=F, warning=F}
+   data$raw$epsilon[,1] |> plot(type = 'l', ylab = '')
+   data$raw$epsilon[,2] |> plot(type = 'l', ylab = 'epsilon')
+   data$raw$epsilon[,3] |> plot(type = 'l', ylab = '')
+   # knitr::include_graphics('epsilon.png')
+```
+
+```{r, echo=F, warning=F}
+   plot(density(data$raw$epsilon[,1]), col = 'darkolivegreen3', 
+        ylim = c(0, 2.5), xlim = c(-1, 1), 
+        main = expression(epsilon))
+   lines(density(data$raw$epsilon[,2]), col = 'coral')
+   lines(density(data$raw$epsilon[,3]), col = 'steelblue')
+   abline(v = 0, lty = 2)
+   legend('topright', c('Age 2', 'Age 3', 'Age 4'),
+          col = c('darkolivegreen3', 'coral', 'steelblue'),
+          lty = c(2,2,2), cex = .8)
+   # knitr::include_graphics('density_epsilon.png')
+```
+
+##### Z0 {-}
+
+```{r, echo=F, warning=F}
+   c('Z0' = data$med$Z0) |>
+      barplot(las = 1)
+   abline(h = 0, lty = 1)
+   # knitr::include_graphics('Z0.png')
+```
+
+```{r, echo=F, warning=F}
+   plot(density(data$raw$Z0[,1]), col = 'darkolivegreen3', ylim = c(0, 1.5), 
+        main = expression(Z[0]))
+   lines(density(data$raw$Z0[,2]), col = 'coral')
+   lines(density(data$raw$Z0[,3]), col = 'steelblue')
+   abline(v = 0, lty = 2)
+   legend('topright', c('Age 1', 'Age 2', 'Age 3'),
+          col = c('darkolivegreen3', 'coral', 'steelblue'),
+          lty = c(2,2,2))
+```
+
+##### Variances {-}
+
+```{r, echo=F, warning=F}
+   c('sigma.Z' = data$med$sigma.Z,
+     'sigma.rec' = data$med$sigma.rec,
+     'sigma.obs' = 1/sqrt(data$med$tau.obs),
+     'sigma.proc' = 1/sqrt(data$med$tau.proc)
+      ) |> barplot()
+   abline(h = 0, lty = 1)
+```
+
+```{r, echo=F, warning=F}
+   # data.frame('Tau proc' = 
+   #               data$raw$tau.proc[data$raw$tau.proc < quantile(data$raw$tau.proc, .90) & 
+   #                            data$raw$tau.proc > quantile(data$raw$tau.proc, .1)], 
+   #            'Tau obs' = data$raw$tau.obs[data$raw$tau.obs < quantile(data$raw$tau.obs, .90) & 
+   #                                    data$raw$tau.obs > quantile(data$raw$tau.obs, .1)]) |>
+   data.frame("sigma.obs" = 1/sqrt(data$raw$tau.obs),
+              "sigma.proc" = 1/sqrt(data$raw$tau.proc)
+              ) |>
+   boxplot()
+```
+
+```{r, echo=F, warning=F}
+   data$raw$tau.obs|> boxplot()
+```
+
+
+```{r, echo=F, warning=F}
+   plot(density(data$raw$sigma.Z), main = expression(sigma[Z0]))
+   abline(v = 0, lty = 2)
+
+```
+
+```{r, echo=F, warning=F}
+   plot(density(data$raw$sigma.rec), main = expression(sigma[rec]))
+   abline(v = 0, lty = 2)
+```
+
+```{r, echo=F, warning=F}
+   plot(density(1/sqrt(data$raw$tau.obs)), main = expression(sigma[obs]))
+   abline(v = 0, lty = 2)
+```
+
+```{r, echo=F, warning=F}
+   plot(density(1/sqrt(data$raw$tau.proc)), main = expression(sigma[proc]))
+   abline(v = 0, lty = 2)
+```
+
+#### Correlations {- .tabset}
+
+##### Correlation of Abundance-at-age {-}
+
+```{r, echo=F, warning=F}
+   c(data$med$rec, NA) |>
+      cbind(data$med$N) |>
+      as.data.frame() |>
+      rename('Age 0' = V1, 'Age 1' = V2, 'Age 2' = V3, 'Age 3' = V4) |>
+      as.data.frame() |>
+      GGally::ggpairs()
+```
+
+##### OSA Correlations {-}
+
+```{r, echo=F, warning=F}
+   data$med$osa |>
+      as.data.frame() |>
+      rename("Age 2" = V1, "Age 3" = V2, "Age 4" = V3) |>
+      GGally::ggpairs()
+```
+
+```{r, echo=F, warning=F}
+   data$med$osa |>
+      as.data.frame() |>
+      pivot_longer(everything(), names_to = 'N', values_to = 'osa') |>
+      mutate(N = gsub('V', '', N), N = factor(as.numeric(N)+1)) |>
+      ggplot(aes(sample = osa, col = N)) +
+      stat_qq() + geom_qq_line()
+```
+
+##### POSA Correlations {-}
+
+```{r, echo=F, warning=F}
+   data$med$posa |>
+      as.data.frame() |>
+      rename("Age 2" = V1, "Age 3" = V2, "Age 4" = V3) |>
+      GGally::ggpairs()
+```
+
+```{r, echo=F, warning=F}
+   data$med$posa |>
+      as.data.frame() |>
+      pivot_longer(everything(), names_to = 'N', values_to = 'osa') |>
+      mutate(N = gsub('V', '', N), N = factor(as.numeric(N)+1)) |>
+      ggplot(aes(sample = osa, col = N)) +
+      stat_qq() + geom_qq_line()
+```
+
+#### Residuals {- .tabset}
+
+##### Standard Residuals {-}
+
+```{r, echo=F, warning=F}
+   data$med$eps |>
+      as.data.frame() |>
+      rename('Age 1' = V1, 'Age 2' = V2, 'Age 3' = V3) |>
+      mutate(Year = 1985:2024) |>
+      pivot_longer(cols = 'Age 1':'Age 3', names_to = 'Age', values_to = 'Eps') |>
+      ggplot(aes(x = Year, y = Eps)) +
+      geom_point() +
+      geom_hline(yintercept = 0, lty = 2) +
+      facet_wrap(~Age, ncol = 1)
+```
+
+##### One-Step Ahead Residuals (OSA) by Cohort {-}
+
+```{r, echo=F, warning=F, fig.width=9}
+   knitr::include_graphics("output/osa_resid_cohort.png")
+```
+
+##### One-Step Ahead Residuals (OSA) by Year {-}
+
+```{r, echo=F, warning=F, fig.width=9}
+   knitr::include_graphics("output/osa_resid_year.png")
+```
+
+##### Pearson One-Step Ahead Residuals (POSA) by Cohort {-}
+
+```{r, echo=F, warning=F, fig.width=9}
+   knitr::include_graphics("output/posa_resid_cohort.png")
+```
+
+##### Pearson One-Step Ahead Residuals (POSA) by Year {-}
+
+```{r, echo=F, warning=F, fig.width=9}
+   knitr::include_graphics("output/posa_resid_year.png")
+```
+
+# Version 2 {-}
+
+## Version 2.0 (2024-05-16) {-}
+
+### Changes {-}
+
+Three primary changes were made for this version from version 1.0.
+
+First, I added a separate process error term to the recruitment to distinguish from the process error added to abundance, since abundance is fit to indices but recruitment is estimated directly and will likely have greater variance. Initially, it seemed that this is redundant (and likely nonidentifiable) because "processed" recruitment is a prior based on another prior, where
+
+$$ \rho_y \sim dlnorm(rec_y, \sigma_{procrec}), $$
+which is equivalent to
+
+$$ \rho_y \sim dlnorm(dlnorm(rec_{y-1}, \sigma_{rec}), \sigma_{procrec}). $$
+
+However, recruitment process error variance is markedly larger than all other variance estimates, and trends in recruitment changed significantly from the previous version (see below).
+
+The second change was the inclusion of an estimated fish condition effect prior to and after data availability for condition. For the first 7 years (and last 3 years) of the assessment, fish condition, $CO_y$, follows a random walk forward in time,
+
+$$ \hat{CO}_y \sim dnorm(\hat{CO}_{y-1}, \sigma_{CO}), $$
+
+where $\hat{CO}$ is the estimate value of condition (to distinguish from the data values), and
+
+$$ \sigma_{CO} \sim dlnorm(0, 100), $$
+to keep the the variance near 1 (condition is normalized such that $\sigma \approx 1$, and a log-normal prior will ensure a positive value), and conditions start from the prior
+
+$$ \hat{CO}_{y=1} \sim dnorm(0, 1/1.44). $$
+which is defined using the mean and inverse-square variance of the condition data from 1995-2021. Total mortality at age is now defined as
+
+$$ 4 \gamma^a \frac{TI_y}{\delta^a} \left(1 - \frac{TI_y}{\delta^a}\right) + \varepsilon^a CO_{y-1} + \hat{Z}^a, $$
+for all years, where years prior to 1995 and afer 2021 use the estimated condition index. Note our definition for the additive mortality component changes.
+
+The last and most drastic change was the change in total mortality estimates. Here, I changed the constant total mortality to an allometric mortality based on the *Lorenzen* equation for natural mortality given length [see @lorenzen2022a]. Here, I defined an allometric equivalent for *total* mortality as
+
+$$ \hat{Z}^a = Z_{\infty}\left(\frac{L^a}{L_{\infty}}\right)^c,$$
+where $Z_{\infty}$ is a parameter with an uninformed prior,
+
+$$ Z_{\infty} \sim dunif(0.01, 5), $$
+assuming fish mortality caps at 5 (which is reasonable giving previous estimates for the additive mortality). Also, $c = -1$ is a good approximation and tends to be a consistent scale across relationships between $lnM$ and $ln(L/L_{\infty})$, although without modelling random effects (which here I do not) $c$ may be less negative [see Table 2, @lorenzen2022b]. Here we assume mortality has no year covariate.
+
+Our model for allometric mortality is based off the vonBertalanffy growth equation,
+
+$$ L^a = L_{\infty}(1-exp(-K * a)).$$
+Values for $K$ and $L_{\infty}$ are estimated by fitting length-age data to the above equation. Length-age data are stratified *by age* using **Proportionate Allocation** (see [Stratified Sampling](https://en.wikipedia.org/wiki/Stratified_sampling) and also [Proportional Allocation](https://www.sciencedirect.com/topics/mathematics/proportional-allocation)) using ages 1 to 4 (the max age available in the data) and a sample size of 1000. Length-age pairs were fit to estimate average length-at-ages for the data, such that
+
+$$ length(a_i) \sim dnorm(L^a, 1/\sigma^2_{L^a}) $$
+where *i* is the index of the length-age sample and $\sigma_{L^a}$ are standard deviations across ages. Several fits were made using ages 1 to 4 through 6 (always using 1000 samples), but RMSE was slightly smaller when ages were truncated at 4 likely due to the paucity of data for ages 5 and 6.
+
+Additional changes were made to prior information. Priors on log abundance at age for the first year were changed to
+
+\begin{equation}
+   rec_{y=1} \sim dnorm(6.6, 1/3)
+\end{equation}
+\begin{equation}
+   N^{a=2}_{y=1} \sim dnorm(5.9, 1/3)
+\end{equation}
+\begin{equation}
+   N^{a=3}_{y=1} \sim dnorm(4.4, 1/3)
+\end{equation}
+\begin{equation}
+   N^{a=4}_{y=1} \sim dnorm(1.3, 1/3).
+\end{equation}
+
+Previous values were set according to the abundance in billions \emdash these changes were made to reflect the abundance in millions.
+
+
+### Diagnostics {- .tabset}
+
+```{r setupv1.1, echo=F}
+   data <- read_rds(here('2024_runs/data/models/model_b.rds'))
+```
+
+#### Stock Trends {- .tabset}
+
+##### Index Estimates {-}
+
+```{r, echo=F, warning=F}
+   IPMplot(data$raw, jags.data.m$matI)
+```
+
+##### Recruitment Estimates {-}
+
+```{r, echo=F}
+   recruitment_plot(data)
+```
+
+##### Length-at-Age Estimates {-}
+
+```{r, echo=F}
+   plotLaA(data, jags.data.m)
+   # plotLaA(all.list, jags.data.m)
+```
+
+##### Condition {-}
+
+```{r, echo=F}
+   plot_condition(data, jags.data.m)
+   # plot_condition(all.list, jags.data.m)
+```
+
+#### Summaries {- .tabset}
+
+##### Parameters {-}
+
+```{r, echo=F, warning=F}
+   parm_names <- c('alpha', 'beta', 
+                    'delta', 'epsilon', 'gamma',
+                    "Zinf", "ZaA", "LaA",
+                    "sigma.rec", "sigma.procR",
+                    "tau.obs", "tau.proc",
+                    "sigma.co", "sigma.laa")
+   pris <- sapply(paste(parm_names, 'pri', sep = '_'),
+                                \(x) data$pri[[x]])
+   data.frame(Median = data$med[parm_names] |>
+                 unlist(),
+              Upper = lapply(pris, \(x)x[2,]) |>
+                 unlist(),
+              Lower = lapply(pris, \(x)x[1,]) |>
+                 unlist()
+              ) |>
+      round(2) |>
+      tibble::rownames_to_column(var = 'Parameter') |>
+      flextable() |>
+      set_header_labels(values = c('Parameter', 'Value', '95% PI', '05% PI')) |>
+      compose(1, 1, as_paragraph("\u3b1")) |>
+      compose(2, 1, as_paragraph("\u3b2")) |>
+      compose(3:5, 1, as_paragraph("\u3b4", as_sup(2:4))) |>
+      compose(6:8, 1, as_paragraph("\u3b5", as_sup(2:4))) |>
+      compose(9:11, 1, as_paragraph("\u3b3", as_sup(2:4))) |>
+      compose(12, 1, as_paragraph("Z", as_sub('\u221'))) |>
+      compose(13:16, 1, as_paragraph("Z", as_sup(1:4))) |>
+      compose(17:20, 1, as_paragraph("L", as_sup(1:4))) |>
+      compose(21, 1, as_paragraph("\u3c3", as_sub("rec"))) |>
+      compose(22, 1, as_paragraph("\u3c3", as_sub("procrec"))) |>
+      compose(23, 1, as_paragraph("\u3c4", as_sub("obs"))) |>
+      compose(24, 1, as_paragraph("\u3c4", as_sub("proc"))) |>
+      compose(25, 1, as_paragraph("\u3c3", as_sub("CO"))) |>
+      compose(26:29, 1, as_paragraph("\u3c3", as_sub(paste0("L", 1:4))))
+   
+```
+
+##### Statistics {-}
+
+```{r, echo=F, warning=F}
+   
+   data$stats |>
+      as.data.frame() |>
+      tibble::rownames_to_column('Metric') |>
+      flextable(cwidth = c(.2, .8)) |>
+      set_header_labels(values = c("Metric", "Mean (900 samples)")) |>
+      width(2, 2) |>
+      align(j = 2, align = 'center')
+
+```
+
+#### Posterior Samples & Densities {- .tabset}
+
+##### Z {-}
+
+```{r, echo=F}
+   #LORENZEN M#
+   c("muZ" = data$med$ZaA, 'Zinf' = data$med$Zinf) |>
+      barplot(las = 1)
+      abline(h = 0, lty = 1)
+```
+
+```{r, echo=F}
+
+   plot(density(data$raw$ZaA[,1]), col = 'darkolivegreen3', 
+        ylim = c(0, 2.5), 
+        main = expression(Z^a))
+   lines(density(data$raw$ZaA[,2]), col = 'coral')
+   lines(density(data$raw$ZaA[,3]), col = 'steelblue')
+   legend('topright', c('Age 1', 'Age 2', 'Age 3'),
+          col = c('darkolivegreen3', 'coral', 'steelblue'),
+          lty = c(2,2,2))
+
+```
+
+##### Lengths {-}
+
+```{r, echo=F}
+# par(mfrow = c(1,1), mar = c(6,3,2,2))
+   c("muL" = data$med$LaA, 'Linf' = data$med$Linf) |>
+      barplot(las = 2)
+   abline(h = 0, lty = 1)
+
+```
+
+```{r, echo=F}
+   
+   plot(density(data$raw$LaA[,1]), col = 'darkolivegreen3', 
+        ylim = c(0, .8), xlim = c(115, 165), main = expression(mu[L[a]]))
+   lines(density(data$raw$LaA[,2]), col = 'coral')
+   lines(density(data$raw$LaA[,3]), col = 'steelblue')
+   legend('topright', c('Age 1', 'Age 2', 'Age 3'),
+          col = c('darkolivegreen3', 'coral', 'steelblue'),
+          lty = c(2,2,2))
+
+```
+
+##### Variances {-}
+
+```{r, echo=F}
+   
+   c('sigma.laa' = data$med$sigma.laa
+     # 'sigma.rec' = data$med$sigma.rec,
+     # 'sigma.obs' = 1/sqrt(data$med$tau.obs),
+     # 'sigma.proc' = 1/sqrt(data$med$tau.proc),
+     # "sigma.procR" = data$med$sigma.procR,
+     # "sigma.co" = data$med$sigma.co
+   ) |> barplot(cex.names = .8)
+   abline(h = 0, lty = 1)
+   
+   # c('sigma.laa' = all.list$med$sigma.laa,
+   #   'sigma.rec' = all.list$med$sigma.rec,
+   #   'sigma.obs' = 1/sqrt(all.list$med$tau.obs),
+   #   'sigma.proc' = 1/sqrt(all.list$med$tau.proc),
+   #   "sigma.procR" = all.list$med$sigma.procR,
+   #   "sigma.co" = all.list$med$sigma.co
+   # ) |> barplot(cex.names = .8)
+   # abline(h = 0, lty = 1)
+```
+
+```{r, echo=F}
+   
+   c('sigma.rec' = data$med$sigma.rec,
+     'sigma.obs' = 1/sqrt(data$med$tau.obs),
+     'sigma.proc' = 1/sqrt(data$med$tau.proc),
+     "sigma.procR" = data$med$sigma.procR,
+     "sigma.co" = data$med$sigma.co
+   ) |> barplot(cex.names = .8)
+   abline(h = 0, lty = 1)
+
+```
+
+```{r, echo=F}
+   
+   plot(density(data$raw$sigma.laa[,1]), col = 'darkolivegreen3', 
+        ylim = c(0, .8), xlim = c(115, 165), main = expression(mu[L[a]]))
+   lines(density(data$raw$sigma.laa[,2]), col = 'coral')
+   lines(density(data$raw$sigma.laa[,3]), col = 'steelblue')
+   legend('topright', c('Age 1', 'Age 2', 'Age 3'),
+          col = c('darkolivegreen3', 'coral', 'steelblue'),
+          lty = c(2,2,2))
+
+```
+
+```{r, echo = F}
+
+   plot(density(data$raw$sigma.laa), main = expression(sigma[LaA]))
+
+```
+
+```{r, echo = F}
+
+   plot(density(data$raw$sigma.procR), main = expression(sigma[procrec]))
+
+```
+
+## Version 2.1 (2024-05-22) {-}
+
+### Changes {-}
+
+I first attempted a backward random walk from 1995 condition data to estimate condition prior to data availability. This was an attempt to avoid priors on condition for 1985 and keep condition consistent between 1995 and 1994 (see condition trends for version 1.1), but I ran into issues. Instead, I tried a simple normal prior on condition given the mean and variance of condition data,
+
+$$ \hat{CO}_y \sim dnorm(1, 1/1.44). $$
+According to values for DIC and WAIC, this model is a slightly worse fit..
+
+### Diagnostics {- .tabset}
+
+```{r setupv1.2, echo=F}
+   data <- read_rds(here('2024_runs/data/models/model_b2.rds'))
+```
+
+#### Stock Trends {- .tabset}
+
+##### Index Estimates {-}
+
+```{r, echo=F, warning=F}
+   IPMplot(data$raw, jags.data.m$matI)
+```
+
+##### Recruitment Estimates {-}
+
+```{r, echo=F}
+   recruitment_plot(data)
+```
+
+##### Condition {-}
+
+```{r, echo=F}
+   plot_condition(data, jags.data.m)
+   # plot_condition(all.list, jags.data.m)
+```
+
+#### Statistics {-}
+
+```{r, echo=F, warning=F}
+   
+   data$stats |>
+      as.data.frame() |>
+      tibble::rownames_to_column('Metric') |>
+      flextable(cwidth = c(.2, .8)) |>
+      set_header_labels(values = c("Metric", "Mean (900 samples)")) |>
+      width(2, 2) |>
+      align(j = 2, align = 'center')
+
+```
+
+## Version 2.2 (2024-05-23) {-}
+
+### Changes {-}
+
+I made another attempt at the backward random walk with success. Priors were based on condition for 1995,
+
+$$ \hat{CO}_{y=1994} \sim dnorm(CO_{y=1995}, \tau_{CO}), $$
+with a random walk such that,
+
+$$ \hat{CO}_{y-1} \sim dnorm(\hat{CO}_y, \tau_{CO}), $$
+where $y \in [1984, 1994]$. I also changed the prior on $\tau_{CO}$ to be less restrictive,
+
+$$ \tau_{CO} \sim dnorm(1.44, 10). $$
+This model also has a worse WAIC than version 1.1 but a better DIC, although only marginally, and the fits for estimated condition better matching the condition data.
+
+### Diagnostics {- .tabset}
+
+```{r setupv1.3, echo=F}
+   data <- read_rds(here('2024_runs/data/models/model_b1.rds'))
+```
+
+#### Stock Trends {- .tabset}
+
+##### Index Estimates {-}
+
+```{r, echo=F, warning=F}
+   IPMplot(data$raw, jags.data.m$matI)
+```
+
+##### Recruitment Estimates {-}
+
+```{r, echo=F}
+   recruitment_plot(data)
+```
+
+##### Condition {-}
+
+```{r, echo=F}
+   plot_condition(data, jags.data.m)
+   # plot_condition(all.list, jags.data.m)
+```
+
+#### Statistics {-}
+
+```{r, echo=F, warning=F}
+   
+   data$stats |>
+      as.data.frame() |>
+      tibble::rownames_to_column('Metric') |>
+      flextable(cwidth = c(.2, .8)) |>
+      set_header_labels(values = c("Metric", "Mean (900 samples)")) |>
+      width(2, 2) |>
+      align(j = 2, align = 'center')
+
+```
+
+
+
+# References

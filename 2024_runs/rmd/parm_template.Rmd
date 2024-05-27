@@ -1,0 +1,40 @@
+```{r setup, include = F}
+   parm <- `r parm_name`
+   load <- `r load`
+   data <- `r data`
+   data <- data[parm_name]
+   parm_l <- length(data)
+   cols <- c('darkolivegreen3', 'coral', 'steelblue')
+```
+
+```{r, include = F}
+   
+   if(load){
+      knitr::include_graphics('epsilon.png')
+   }else{
+      for(i in 1:parm_l){
+         data[,i] |> plot(type = 'l', ylab = '')  
+         if(i == 2){
+            ylab <- parm_name
+         }
+      }
+   }
+
+```
+
+```{r, include = F}
+
+   if(load){
+      # knitr::include_graphics('density_epsilon.png')  
+   }else{
+      # plot(density(data$raw$epsilon[,1]), col = , 
+      #      ylim = c(0, 2.5), xlim = c(-1, 1)
+      # lines(density(data$raw$epsilon[,3]), col = )
+      # legend('topright', c('Age 2', 'Age 3', 'Age 4'),
+      #        col = c('darkolivegreen3', 'coral', 'steelblue'),
+      #        lty = c(2,2,2), cex = .8)
+   }
+
+```
+
+rmarkdown::rend

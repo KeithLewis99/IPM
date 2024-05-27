@@ -35,13 +35,15 @@ library(R2jags)
 library(ggplot2)
 library(lattice)
 
+library(here)
 
 # Source files
 source("IPM_dat.R")
 #source("IPM_fun.R")
-source("IPM_mod1.R") # The main file is IPM_mod.R but this is a new file with just one model for simplicity.
-source('C:/Users/lewiske/Documents/R/zuur_rcode/MCMCSupportHighstatV2.R')
-source('C:/Users/lewiske/Documents/R/zuur_rcode/HighstatLibV7.R')
+# source("IPM_mod1.R") # The main file is IPM_mod.R but this is a new file with just one model for simplicity.
+## Here I'm using v36
+source(here('zuur/MCMCSupportHighstatV2.R'))
+source(here('zuur/HighstatLibV7.R'))
 
 # JAGS settings ----
 # model - the value of b will determine what model and parameters from IPM_JAGS-settings.R
@@ -122,7 +124,6 @@ if(matrix == "no") {
     # out$sims.list$osa_sd3 <- out$sims.list$osa_sd[,,2]
     # out$sims.list$osa_sd4 <- out$sims.list$osa_sd[,,3]
 }
-
 
 # JAGS output ----
 ## extract raw values from chains
@@ -298,7 +299,7 @@ raw$osa[1,3,1]/raw$osa_sd[1,3,1]
 #           out$sims.list$osa[,,i]/out$sims.list$osa_sd[,,i]
 # }
 
-str(out$sims.list$posa)
+out$sims.list$osa[,,1]
 
 # calculate teh median value for the POSA
 posa_med <- matrix(NA, nrow=37, ncol=3)
