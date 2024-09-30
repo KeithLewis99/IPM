@@ -10,9 +10,6 @@
 ## - are catch proportions at age based on numbers or biomass?
 ## - estimate observation error for surveys lacking a CV (all except spring survey)
 
-## - consider replacing zeros in the paa with a small value
-## - try to use direchlet-multinomial and supply a large Neff
-
 ## - apply q prior to all acoustic surveys
 ## - try estimating age-specific + ar1_y selectivity for the fishery
 ## - try to impose F blocks and/or selectivity blocks for pre-collapse, moratorium, then post-collapse
@@ -65,7 +62,7 @@ larval_den$den_cv <- larval_den$se / larval_den$den
 catch <- as.matrix(landings[, 2]) * 1000
 catch_cv <- matrix(ifelse(years < 1991, 0.5, ifelse(years < 2000, 0.2, 0.1)), 
                    ncol = 1, nrow = length(years))
-catch_Neff <- matrix(1000, ncol = 1, nrow = length(years))
+catch_Neff <- matrix(50, ncol = 1, nrow = length(years))
 catch_paa <- array(approx_paa_mat, dim = c(1, length(years), length(ages)))
 use_catch_paa <-as.matrix(rowSums(approx_paa_mat) > 0) |> unname() 
 selblock_pointer_fleets <- matrix(1, nrow = length(years))
@@ -102,7 +99,7 @@ initial_index_sd_scale <- rep(1, ncol(index))
 map_index_sd_scale <- seq.int(ncol(index)) # use to try and estimate observation error
 map_index_sd_scale[] <- NA 
 
-index_Neff <- t(replicate(length(years), rep(1000, ncol(index))))
+index_Neff <- t(replicate(length(years), rep(50, ncol(index))))
 index_fracyr <- t(replicate(length(years), c(5 / 12, 9 / 12, 9 / 12, 5 / 12, 0)))
 units_indices <- c(1, 1, 1, 1, 2)
 units_index_paa <- rep(2, ncol(index))
@@ -133,6 +130,7 @@ waa_vals[is.nan(waa_vals)] <- NA
 for (a in colnames(waa_vals)) {
     ind <- is.na(waa_vals[, a])
     int <- approx(x = years, y = waa_vals[, a], xout = years, rule = 2) # fill gaps using linear interpolation
+    if (a %in% c("bio5", "bio6")) int <- data.frame(x = years, y = mean(waa_vals[, a], na.rm = TRUE)) # unless age 5 and 6, in which case use time-series average as recent values may not be based on many samples
     waa_vals[ind, a] <- int$y[ind]
 }
 waa <- array(waa_vals, dim = c(1, length(years), length(ages)))
@@ -171,17 +169,20 @@ fracyr_ssb <-  matrix(0, ncol = 1, nrow = length(years))
 
 
 
-selectivity <- list(model = rep("age-specific", ncol(index) + 1), 
+selectivity <- list(model = c("age-specific", rep("age-specific", ncol(index))),
+                    # model = c("logistic", rep("age-specific", ncol(index))), 
                     n_selblocks = ncol(index) + 1,
                     re = c("2dar1", rep("none", ncol(index))),
                     initial_pars = list(c(0, rep(0.1, length(ages) - 1)), # Catches
+                                        # c(2, 0.2), 
                                         c(0.5, rep(1, length(ages) - 1)), # Acoustics
                                         c(0, rep(1, length(ages) - 1)),
                                         c(0, rep(1, length(ages) - 1)),
                                         c(0, rep(1, length(ages) - 1)),
                                         c(1, rep(0, length(ages) - 1))), # Larval
                     map_pars = list(c(NA, rep(1, length(ages) - 1)), 
-                                    c(2, rep(NA, length(ages) - 1)), 
+                                    # c(1, 2),
+                                    c(3, rep(NA, length(ages) - 1)), 
                                     c(rep(NA, length(ages))),
                                     c(rep(NA, length(ages))),
                                     c(rep(NA, length(ages))),
@@ -197,7 +198,9 @@ hist(x, breaks = 200, col = "grey", border = "grey")
 hist(plogis(x), breaks = 200, col = "grey", border = "grey")
 q_in <- list(q_upper = rep(1, ncol(index)), # q expected to be less than 1
              initial_q = rep(0.5, ncol(index)),
-             prior_sd = c(2, rep(NA, ncol(index) - 1))) # c(rep(2, ncol(index) - 1), NA)
+             # prior_sd =  c(rep(2, ncol(index) - 1), NA))
+             # prior_sd =  c(rep(1.5, ncol(index) - 1), 2))
+             prior_sd = c(1.5, rep(NA, ncol(index) - 1)))
 
 F_in <- list(
     F = cbind(rep(2, length(years))),
@@ -254,7 +257,7 @@ input1 <- prepare_wham_input(basic_info = basic_info,
                                 M = M_in, F = F_in,
                                 catchability = q_in, 
                                 NAA_re = NAA_in,
-                                age_comp = "logistic-normal-miss0") 
+                                age_comp = "logistic-normal-pool0") 
 
 # fit1 <- fit_wham(input1, do.fit = F, do.retro = F, do.brps = F, do.osa = F)
 # fit1$fn()
