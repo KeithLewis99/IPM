@@ -113,8 +113,8 @@ index_paa <- array(0, dim = c(ncol(index), length(years), length(ages)))
 for(y in 1:length(years)){
     for(a in 1:length(ages)){
         index_paa[1,y,a] <- ifelse(is.na(ipaa[y,a]), 0, ipaa[y,a])
-        index_paa[2,y,a] <- ifelse(a == 1, 1, 0)
-        index_paa[3:5,y,a] <- ifelse(a == 1, 0, 1)
+        index_paa[2:4,y,a] <- ifelse(a == 1, 0, 1)
+        index_paa[5,y,a] <- ifelse(a == 1, 1, 0)
     }
 }
 use_index_paa <- apply(index_paa, 1, rowSums) > 0
@@ -181,8 +181,9 @@ selectivity <- list(model = c("age-specific", rep("age-specific", ncol(index))),
                                         c(0, rep(1, length(ages) - 1)),
                                         c(1, rep(0, length(ages) - 1))), # Larval
                     map_pars = list(c(NA, rep(1, length(ages) - 1)), 
+                                    # c(NA, 2:3, 4, 4, 4),
                                     # c(1, 2),
-                                    c(3, rep(NA, length(ages) - 1)), 
+                                    c(1, rep(NA, length(ages) - 1)) + max(ages), 
                                     c(rep(NA, length(ages))),
                                     c(rep(NA, length(ages))),
                                     c(rep(NA, length(ages))),
@@ -203,8 +204,11 @@ q_in <- list(q_upper = rep(1, ncol(index)), # q expected to be less than 1
              prior_sd = c(1.5, rep(NA, ncol(index) - 1)))
 
 F_in <- list(
-    F = cbind(rep(2, length(years))),
-    map_F = cbind(rep(NA, length(years))))
+    F = cbind(rep(1, length(years))),
+    map_F = cbind(rep(NA, length(years)))
+    # map_F = cbind(rep(1, length(years)))
+    # map_F = cbind(ifelse(years %in% 1994:1995, 2, ifelse(years >= 1996, 3, 1))) # allow different scaling when the fishery closed, then the rest of the post-collapse years
+)
 
 basic_info <- list(
   n_stocks = 1L,
@@ -317,14 +321,14 @@ input4 <- set_NAA(input1,
                   list(N1_model = "equilibrium",
                        recruit_model = 3,
                        sigma = "rec+1",
-                       cor = "ar1_y"))
+                       cor = "2dar1"))
 
 fit4 <- fit_wham(input4, do.fit = T, do.retro = F, do.brps = F, do.osa = F, do.sdrep = T)
 fit4$opt
 fit4$sdrep
 
 # fit4 <- make_osa_residuals(fit4)
-# fit4$peels <- retro(fit4)
+# fit4$peels <- retro(fit4, use.mle = FALSE)
 
 # plot_wham_output(fit4, res = 600, dir.main = file.path(getwd(), "wham", "fit4"))
 
