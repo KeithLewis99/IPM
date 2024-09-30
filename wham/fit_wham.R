@@ -52,6 +52,7 @@ can_fall <- read.csv("wham/data/can_fall_acoustic_biomass.csv", col.names = c("y
 ussr_fall <- read.csv("wham/data/ussr_fall_acoustic_biomass.csv", col.names = c("year", "ussr_fall"))
 ussr_spring <- read.csv("wham/data/ussr_spring_acoustic_biomass.csv", col.names = c("year", "ussr_spring"))
 larval_den <- read.csv("wham/data/larvae2001_2022.csv", col.names = c("year", "den", "se")) 
+larval_den$year <- larval_den$year + 1 # den represents age 0; add one year to use this as an index of age 1
 
 ## TODO: drop approximation of standard errors if pelagics are able to provide
 ##       se values rather than just the 95% confidence intervals
@@ -59,12 +60,12 @@ approx_se_from_ci <- function(lower, upper) (upper - lower) / (2 * 1.96)
 can_spring$approx_se <- approx_se_from_ci(can_spring$lwr, can_spring$upr)
 can_spring$approx_cv <- can_spring$approx_se / can_spring$can_spring
 
-larval_den$cv <- larval_den$se / larval_den$den
+larval_den$den_cv <- larval_den$se / larval_den$den
 
 catch <- as.matrix(landings[, 2]) * 1000
 catch_cv <- matrix(ifelse(years < 1991, 0.5, ifelse(years < 2000, 0.2, 0.1)), 
                    ncol = 1, nrow = length(years))
-catch_Neff <- matrix(50, ncol = 1, nrow = length(years))
+catch_Neff <- matrix(1000, ncol = 1, nrow = length(years))
 catch_paa <- array(approx_paa_mat, dim = c(1, length(years), length(ages)))
 use_catch_paa <-as.matrix(rowSums(approx_paa_mat) > 0) |> unname() 
 selblock_pointer_fleets <- matrix(1, nrow = length(years))
@@ -76,7 +77,7 @@ index <- can_spring |>
     left_join(can_fall, by = "year") |> 
     left_join(ussr_fall, by = "year") |> 
     left_join(ussr_spring, by = "year") |> 
-    left_join(larval_den, by = "year") |> 
+    left_join(larval_den[, c("year", "den")], by = "year") |> 
     select(-year) |> 
     as.matrix() |> 
     unname()
@@ -84,23 +85,24 @@ index[, 1:4] <- index[, 1:4] * 1000 # convert all biomass indices to tonnes
 index[is.na(index)] <- 0
 
 index_cv <- can_spring |> 
-    select(year, approx_cv) |> 
-    right_join(data.frame(year = years), by = "year") |> 
-    arrange(year) |> 
-    left_join(larval_den, by = "year") |> 
-    mutate(can_fall_cv = mean(approx_cv, na.rm = TRUE) * 2,
-           ussr_fall_cv = mean(approx_cv, na.rm = TRUE),
-           ussr_spring_cv = mean(approx_cv, na.rm = TRUE),
-           approx_cv = replace_na(approx_cv, mean(approx_cv, na.rm = TRUE))) |> 
-    select(-year) |> 
-    as.matrix() |> 
-    unname()
+   select(year, approx_cv) |> 
+   right_join(data.frame(year = years), by = "year") |> 
+   arrange(year) |> 
+   mutate(can_fall_cv = mean(approx_cv, na.rm = TRUE) * 2,
+          ussr_fall_cv = mean(approx_cv, na.rm = TRUE),
+          ussr_spring_cv = mean(approx_cv, na.rm = TRUE),
+          approx_cv = replace_na(approx_cv, mean(approx_cv, na.rm = TRUE))) |> 
+   left_join(larval_den[, c("year", "den_cv")], by = "year") |> 
+   mutate(den_cv = replace_na(den_cv, mean(den_cv, na.rm = TRUE))) |> 
+   select(-year) |> 
+   as.matrix() |> 
+   unname()
 
 initial_index_sd_scale <- rep(1, ncol(index))
 map_index_sd_scale <- seq.int(ncol(index)) # use to try and estimate observation error
 map_index_sd_scale[] <- NA 
 
-index_Neff <- t(replicate(length(years), rep(50, ncol(index))))
+index_Neff <- t(replicate(length(years), rep(1000, ncol(index))))
 index_fracyr <- t(replicate(length(years), c(5 / 12, 9 / 12, 9 / 12, 5 / 12, 0)))
 units_indices <- c(1, 1, 1, 1, 2)
 units_index_paa <- rep(2, ncol(index))
@@ -193,9 +195,9 @@ M_in <- list(initial_MAA = array(1, dim = c(1, 1, length(years), length(ages))))
 x <- rnorm(100000, sd = 1.5)
 hist(x, breaks = 200, col = "grey", border = "grey")
 hist(plogis(x), breaks = 200, col = "grey", border = "grey")
-q_in <- list(q_upper = rep(1, ncol(index)),
+q_in <- list(q_upper = rep(1, ncol(index)), # q expected to be less than 1
              initial_q = rep(0.5, ncol(index)),
-             prior_sd = c(2, rep(NA, ncol(index) - 1))) # survey q should not exceed 1
+             prior_sd = c(2, rep(NA, ncol(index) - 1))) # c(rep(2, ncol(index) - 1), NA)
 
 F_in <- list(
     F = cbind(rep(2, length(years))),
@@ -245,7 +247,7 @@ NAA_in <- list(N1_model = "equilibrium")
 
 # ecov_info <- set_ecov()
 
-input_all <- prepare_wham_input(basic_info = basic_info, 
+input1 <- prepare_wham_input(basic_info = basic_info, 
                                 selectivity = selectivity, 
                                 catch_info = catch_info, 
                                 index_info = index_info, 
@@ -254,21 +256,19 @@ input_all <- prepare_wham_input(basic_info = basic_info,
                                 NAA_re = NAA_in,
                                 age_comp = "logistic-normal-miss0") 
 
-fit <- fit_wham(input_all, do.fit = F, do.retro = F, do.brps = F, do.osa = F)
-fit$fn()
-fit$rep$NAA[1,1,,]
+# fit1 <- fit_wham(input1, do.fit = F, do.retro = F, do.brps = F, do.osa = F)
+# fit1$fn()
+# fit1$rep$NAA[1,1,,]
 
-fit <- fit_wham(input_all, do.fit = T, do.retro = F, do.brps = F, do.osa = F, do.sdrep = T)
-fit$fn()
-fit$opt
-fit$sdrep
-round(fit$rep$NAA[1,1,,], 2)
-matplot(fit$rep$NAA[1,1,,], type = "l")
+# fit1 <- fit_wham(input1, do.fit = T, do.retro = F, do.brps = F, do.osa = F, do.sdrep = T)
+# fit1$fn()
+# fit1$opt
+# fit1$sdrep
+# round(fit1$rep$NAA[1,1,,], 2)
+# matplot(fit1$rep$NAA[1,1,,], type = "l")
 
-# plot_wham_output(fit, res = 600, dir.main = file.path(getwd(), "capelin"))
+# plot_wham_output(fit1, res = 600, dir.main = file.path(getwd(), "wham", "fit1"))
 
-input1 <- input_all
-fit1 <- fit
 
 ## Recruitment and cohort deviations -------------------------------------------
 
@@ -288,7 +288,7 @@ matplot(fit2$rep$NAA[1,1,,], type = "l")
 # fit2 <- make_osa_residuals(fit2)
 # fit2$peels <- retro(fit2)
 
-# plot_wham_output(fit2, res = 600, dir.main = file.path(getwd(), "capelin", "fit2"))
+# plot_wham_output(fit2, res = 600, dir.main = file.path(getwd(), "wham", "fit2"))
 
 
 ## Estimate M ----------------------------------------------------------------
@@ -305,7 +305,7 @@ fit3 <- fit_wham(input3, do.fit = T, do.retro = F, do.brps = F, do.osa = F, do.s
 fit3$opt
 fit3$sdrep
 
-# plot_wham_output(fit3, res = 600, dir.main = file.path(getwd(), "capelin", "fit3"))
+# plot_wham_output(fit3, res = 600, dir.main = file.path(getwd(), "wham", "fit3"))
 
 
 ## S-R ----------------------------------------------------------------
@@ -323,7 +323,7 @@ fit4$sdrep
 # fit4 <- make_osa_residuals(fit4)
 # fit4$peels <- retro(fit4)
 
-# plot_wham_output(fit4, res = 600, dir.main = file.path(getwd(), "capelin", "fit4"))
+# plot_wham_output(fit4, res = 600, dir.main = file.path(getwd(), "wham", "fit4"))
 
 
 ## Maturity effect -------------------------------------------------------------
@@ -352,5 +352,5 @@ fit5 <- fit_wham(input5, do.fit = T, do.retro = F, do.brps = F, do.osa = F, do.s
 fit5$opt
 fit5$sdrep
 
-# plot_wham_output(fit5, res = 600, dir.main = file.path(getwd(), "capelin", "fit5"))
+# plot_wham_output(fit5, res = 600, dir.main = file.path(getwd(), "wham", "fit5"))
 
