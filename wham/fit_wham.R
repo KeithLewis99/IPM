@@ -26,7 +26,6 @@ library(wham) # using dev branch
 library(ggplot2)
 library(dplyr)
 library(tidyr)
-Cap_data <- readRDS("wham/data/CapData.rds")
 
 source("wham/data/approx_catch_paa_from_figure.r")
 
@@ -49,10 +48,10 @@ baa <- read.csv("wham/data/capelin_biomass_1985-2022.csv") |>
     arrange(year)
 
 can_spring <- read.csv("wham/data/can_spring_acoustic_biomass.csv", col.names = c("year", "can_spring", "lwr", "upr"))
-larval_den <- data.frame(year = 1985:2024, larval_den = Cap_data$LD)
 can_fall <- read.csv("wham/data/can_fall_acoustic_biomass.csv", col.names = c("year", "can_fall"))
 ussr_fall <- read.csv("wham/data/ussr_fall_acoustic_biomass.csv", col.names = c("year", "ussr_fall"))
 ussr_spring <- read.csv("wham/data/ussr_spring_acoustic_biomass.csv", col.names = c("year", "ussr_spring"))
+larval_den <- read.csv("wham/data/larvae2001_2022.csv", col.names = c("year", "den", "se")) 
 
 ## TODO: drop approximation of standard errors if pelagics are able to provide
 ##       se values rather than just the 95% confidence intervals
@@ -60,7 +59,8 @@ approx_se_from_ci <- function(lower, upper) (upper - lower) / (2 * 1.96)
 can_spring$approx_se <- approx_se_from_ci(can_spring$lwr, can_spring$upr)
 can_spring$approx_cv <- can_spring$approx_se / can_spring$can_spring
 
-# Cap_data$landings <- Cap_data$landings[Cap_data$landings$year < 2022,]
+larval_den$cv <- larval_den$se / larval_den$den
+
 
 catch <- as.matrix(landings[, 2]) * 1000
 catch_cv <- matrix(ifelse(years < 1991, 0.5, ifelse(years < 2000, 0.2, 0.1)), 
@@ -88,10 +88,10 @@ index_cv <- can_spring |>
     select(year, approx_cv) |> 
     right_join(data.frame(year = years), by = "year") |> 
     arrange(year) |> 
+    left_join(larval_den, by = "year") |> 
     mutate(can_fall_cv = mean(approx_cv, na.rm = TRUE) * 2,
            ussr_fall_cv = mean(approx_cv, na.rm = TRUE),
            ussr_spring_cv = mean(approx_cv, na.rm = TRUE),
-           larval_den_cv = 0.3,
            approx_cv = replace_na(approx_cv, mean(approx_cv, na.rm = TRUE))) |> 
     select(-year) |> 
     as.matrix() |> 
