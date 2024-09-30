@@ -61,7 +61,6 @@ can_spring$approx_cv <- can_spring$approx_se / can_spring$can_spring
 
 larval_den$cv <- larval_den$se / larval_den$den
 
-
 catch <- as.matrix(landings[, 2]) * 1000
 catch_cv <- matrix(ifelse(years < 1991, 0.5, ifelse(years < 2000, 0.2, 0.1)), 
                    ncol = 1, nrow = length(years))
@@ -131,22 +130,28 @@ waa_vals[waa_vals == 0] <- NA
 waa_vals[is.nan(waa_vals)] <- NA
 for (a in colnames(waa_vals)) {
     ind <- is.na(waa_vals[, a])
-    waa_vals[ind, a] <- mean(waa_vals[, a], na.rm = TRUE) 
+    int <- approx(x = years, y = waa_vals[, a], xout = years, rule = 2) # fill gaps using linear interpolation
+    waa_vals[ind, a] <- int$y[ind]
 }
 waa <- array(waa_vals, dim = c(1, length(years), length(ages)))
 
-mat_vals <- data.frame(year = 1985:2024, Cap_data$matMp) |> 
-    right_join(data.frame(year = years), by = "year") |> 
-    arrange(year) |> 
-    select(-year) |> 
-    as.matrix() |> 
-    unname()
+
+mat_vals <- read.csv("wham/data/capelin_perMat_1985-2022.csv") |> 
+   select(-matureAbun) |> 
+   right_join(data.frame(year = years), by = "year") |> 
+   arrange(year) |> 
+   select(-year) |> 
+   as.matrix() |> 
+   unname()
+mat_vals <- mat_vals / 100
+mat_vals[years == 1989, ] <- NA # Drop likely error (16% and 0% mature reported for ages 5 and 6, respectively, cant be right)
 for (i in seq(ncol(mat_vals))) {
     ind <- is.na(mat_vals[, i])
-    mat_vals[ind, i] <- mean(mat_vals[, i], na.rm = TRUE)
+    int <- approx(x = years, y = mat_vals[, i], xout = years, rule = 2) # fill gaps using linear interpolation
+    mat_vals[ind, i] <- int$y[ind]
 }
 
-mat <- array(cbind(0, mat_vals, 1, 1), dim = c(1, length(years), length(ages)))
+mat <- array(cbind(0, mat_vals, 1), dim = c(1, length(years), length(ages)))
 waa_pointer_indices <- rep(1, ncol(index))
 waa_pointer_fleets <- 1
 waa_pointer_ssb <- 1
