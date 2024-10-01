@@ -328,36 +328,52 @@ fit4$opt
 fit4$sdrep
 
 # fit4 <- make_osa_residuals(fit4)
-# fit4$peels <- retro(fit4, use.mle = FALSE)
+# fit4$peels <- retro(fit4)
 
 # plot_wham_output(fit4, res = 600, dir.main = file.path(getwd(), "wham", "fit4"))
 
+# rds_path <- file.path(getwd(), "wham", "fit4", "fit4.rds")
+# saveRDS(fit4, file = rds_path)
+# fit4_jitter <- jitter_wham(fit_RDS = rds_path, n_jitter = 100, res_dir = dirname(rds_path), do_parallel = FALSE)
+# fit4_jitter_obj <- lapply(fit4_jitter$jitter_results, `[[`, "obj") |> unlist()
+# hist(fit4_jitter_obj, breaks = 20)
 
-## Maturity effect -------------------------------------------------------------
 
-input5 <- set_NAA(input1, 
-                  list(N1_model = "equilibrium",
-                       recruitment_model = 2,
-                       sigma = "rec+1",
-                       cor = "2dar1")) |> 
-    set_ecov(list(
-        label = "Maturity effect",
-        mean = mat[1,,],
-        logsigma = matrix(0.01, nrow = length(years), ncol = length(ages)),
-        year = years,
-        use_obs = mat[1,,] >= 0,
-        process_model = "rw",
-        M_how = array("lag-0-linear", dim = c(length(ages), 1, length(ages), 1))
-    )) |> 
-    set_M(list(
-        mean_model = "estimate-M",
-        initial_MAA = array(1, dim = c(1, 1, length(years), length(ages)))
-    ))
-input5$map$Ecov_beta_M <- factor(rep(1, length(input5$map$Ecov_beta_M)))
+## Ice effect ------------------------------------------------------------------
+
+tice <- read.csv("wham/data/ice-m1-2021.csv")
+
+ecov_off <- ecov_on <- list(
+   label = "tice",
+   mean = scale(tice$tice, scale = FALSE),
+   logsigma = "est_1",
+   year = tice$year,
+   use_obs = matrix(1, nrow = nrow(tice), ncol = 1),
+   process_model = "ar1",
+   process_mean_vals = 0,
+   process_sig_vals = 1,
+   process_cor_vals = 0.5,
+   M_how = array("none", c(1, 1, length(ages), 1))
+)
+ecov_on$M_how[] <- "lag-0-poly-2"
+
+input5 <- input4 |> 
+   set_ecov(ecov_off)
+
+input5$map$Ecov_process_pars <- factor(c(NA, 1, 2)) # drop estimation of mu since the data are centered
 
 fit5 <- fit_wham(input5, do.fit = T, do.retro = F, do.brps = F, do.osa = F, do.sdrep = T)
 fit5$opt
 fit5$sdrep
 
 # plot_wham_output(fit5, res = 600, dir.main = file.path(getwd(), "wham", "fit5"))
+
+input6 <- input4 |> 
+   set_ecov(ecov_on)
+
+input6$map$Ecov_process_pars <- factor(c(NA, 1, 2)) # drop estimation of mu since the data are centered
+
+fit6 <- fit_wham(input6, do.fit = T, do.retro = F, do.brps = F, do.osa = F, do.sdrep = T)
+fit6$opt
+fit6$sdrep
 
