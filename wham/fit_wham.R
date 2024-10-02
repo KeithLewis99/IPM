@@ -10,10 +10,8 @@
 ## - are catch proportions at age based on numbers or biomass?
 ## - estimate observation error for surveys lacking a CV (all except spring survey)
 
-## - apply q prior to all acoustic surveys
-## - try estimating age-specific + ar1_y selectivity for the fishery
-## - try to impose F blocks and/or selectivity blocks for pre-collapse, moratorium, then post-collapse
-##   to capture major fishery changes
+## - check correlation between process errors and potential covariates
+## - force assumption of no error in the covariate
 
 
 ### Capelin ###
@@ -343,6 +341,12 @@ fit4$sdrep
 
 tice <- read.csv("wham/data/ice-m1-2021.csv")
 
+mean_NAA_dev <- data.frame(year = years, NAA_dev = rowMeans(fit4$rep$NAA_devs[1,,,]))
+tice_vs_dev <- merge(tice, mean_NAA_dev, by = "year")
+plot(NAA_dev ~ year, data = tice_vs_dev, type = "l")
+abline(h = 0, lty = 2)
+plot(NAA_dev ~ tice, data = tice_vs_dev |> filter(year > 1975))
+
 ecov_off <- ecov_on <- list(
    label = "tice",
    mean = scale(tice$tice),
@@ -385,6 +389,10 @@ fit6$sdrep
 
 con <- read.csv("wham/data/condition_2JK_ag1_2_MF_2022.csv")
 
+con_vs_dev <- merge(con, mean_NAA_dev, by = "year")
+plot(NAA_dev ~ meanCond, data = con_vs_dev)
+
+
 ecov_off <- ecov_on <- list(
    label = "con",
    mean = scale(con$meanCond),
@@ -421,4 +429,54 @@ fit8$opt
 fit8$sdrep
 
 # plot_wham_output(fit8, res = 600, dir.main = file.path(getwd(), "wham", "fit8"))
+
+
+## NLCI effect ------------------------------------------------------------------
+
+nlci <- read.csv("wham/data/NL_climate_index.csv", col.names = c("year", "nlci")) |> 
+   subset(!is.na(nlci) & year >= min(years))
+
+nlci_vs_dev <- merge(nlci, mean_NAA_dev, by = "year")
+plot(exp(nlci) ~ year, data = nlci_vs_dev, type = "l")
+par(new = TRUE)
+plot(nlci_vs_dev$year, nlci_vs_dev$NAA_dev, col = "red", type = "l")
+plot(NAA_dev ~ nlci, data = nlci_vs_dev)
+
+ecov_off <- ecov_on <- list(
+   label = "nlci",
+   mean = as.matrix(nlci$nlci),
+   logsigma = matrix(0.05, nrow = nrow(nlci), ncol = 1),
+   year = nlci$year,
+   use_obs = matrix(1, nrow = nrow(nlci), ncol = 1),
+   process_model = "ar1",
+   process_mean_vals = 0,
+   process_sig_vals = 1,
+   process_cor_vals = 0.5,
+   M_how = array("none", c(1, 1, length(ages), 1))
+)
+
+input9 <- input4 |> 
+   set_ecov(ecov_off)
+
+input9$map$Ecov_process_pars <- factor(c(NA, 1, 2)) # drop estimation of mu since the data are centered
+
+fit9 <- fit_wham(input9, do.fit = T, do.retro = F, do.brps = F, do.osa = F, do.sdrep = T)
+fit9$opt
+fit9$sdrep
+
+# plot_wham_output(fit9, res = 600, dir.main = file.path(getwd(), "wham", "fit9"))
+
+ecov_on$M_how[] <- "lag-0-poly-1" 
+
+input10 <- input4 |> 
+   set_ecov(ecov_on)
+
+input10$map$Ecov_process_pars <- factor(c(NA, 1, 2)) # drop estimation of mu since the data are centered
+
+fit10 <- fit_wham(input10, do.fit = T, do.retro = F, do.brps = F, do.osa = F, do.sdrep = T)
+fit10$opt
+fit10$sdrep
+
+# plot_wham_output(fit10, res = 600, dir.main = file.path(getwd(), "wham", "fit10"))
+
 
