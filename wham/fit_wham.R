@@ -345,7 +345,7 @@ tice <- read.csv("wham/data/ice-m1-2021.csv")
 
 ecov_off <- ecov_on <- list(
    label = "tice",
-   mean = scale(tice$tice, scale = FALSE),
+   mean = scale(tice$tice),
    logsigma = "est_1",
    year = tice$year,
    use_obs = matrix(1, nrow = nrow(tice), ncol = 1),
@@ -355,7 +355,6 @@ ecov_off <- ecov_on <- list(
    process_cor_vals = 0.5,
    M_how = array("none", c(1, 1, length(ages), 1))
 )
-ecov_on$M_how[] <- "lag-0-poly-2"
 
 input5 <- input4 |> 
    set_ecov(ecov_off)
@@ -368,6 +367,8 @@ fit5$sdrep
 
 # plot_wham_output(fit5, res = 600, dir.main = file.path(getwd(), "wham", "fit5"))
 
+ecov_on$M_how[] <- "lag-0-poly-1" # poly-2 not working (bug?)
+
 input6 <- input4 |> 
    set_ecov(ecov_on)
 
@@ -376,4 +377,48 @@ input6$map$Ecov_process_pars <- factor(c(NA, 1, 2)) # drop estimation of mu sinc
 fit6 <- fit_wham(input6, do.fit = T, do.retro = F, do.brps = F, do.osa = F, do.sdrep = T)
 fit6$opt
 fit6$sdrep
+
+# plot_wham_output(fit6, res = 600, dir.main = file.path(getwd(), "wham", "fit6"))
+
+
+## Condition effect ------------------------------------------------------------------
+
+con <- read.csv("wham/data/condition_2JK_ag1_2_MF_2022.csv")
+
+ecov_off <- ecov_on <- list(
+   label = "con",
+   mean = scale(con$meanCond),
+   logsigma = "est_1",
+   year = con$year,
+   use_obs = matrix(1, nrow = nrow(con), ncol = 1),
+   process_model = "ar1",
+   process_mean_vals = 0,
+   process_sig_vals = 1,
+   process_cor_vals = 0.5,
+   M_how = array("none", c(1, 1, length(ages), 1))
+)
+
+input7 <- input4 |> 
+   set_ecov(ecov_off)
+
+input7$map$Ecov_process_pars <- factor(c(NA, 1, 2)) # drop estimation of mu since the data are centered
+
+fit7 <- fit_wham(input7, do.fit = T, do.retro = F, do.brps = F, do.osa = F, do.sdrep = T)
+fit7$opt
+fit5$sdrep
+
+# plot_wham_output(fit7, res = 600, dir.main = file.path(getwd(), "wham", "fit7"))
+
+ecov_on$M_how[] <- "lag-1-poly-1" 
+
+input8 <- input4 |> 
+   set_ecov(ecov_on)
+
+input8$map$Ecov_process_pars <- factor(c(NA, 1, 2)) # drop estimation of mu since the data are centered
+
+fit8 <- fit_wham(input8, do.fit = T, do.retro = F, do.brps = F, do.osa = F, do.sdrep = T)
+fit8$opt
+fit8$sdrep
+
+# plot_wham_output(fit8, res = 600, dir.main = file.path(getwd(), "wham", "fit8"))
 

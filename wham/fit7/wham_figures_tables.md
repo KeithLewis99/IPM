@@ -35,11 +35,11 @@ header-includes:
 
 ### Diagnostics
 
-<img src="plots_png/diagnostics/Catch_4panel_fleet_Fleet_1_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Fleet_1_region_1_a.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Fleet_1_region_1_b.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Fleet_1_region_1_c.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_fleet_Fleet_1_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_1_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_1_region_1_a.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_1_region_1_b.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_1_region_1_c.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_2_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_2_region_1_a.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_2_region_1_b.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_2_region_1_c.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_3_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_3_region_1_a.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_3_region_1_b.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_3_region_1_c.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_4_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_4_region_1_a.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_4_region_1_b.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_4_region_1_c.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_5_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_5_region_1_a.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_5_region_1_b.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_5_region_1_c.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_resids_Fleet_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_resids_Index_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Index_4panel_Index_1_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Index_4panel_Index_2_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Index_4panel_Index_3_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Index_4panel_Index_4_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Index_4panel_Index_5_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/likelihood.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/NAA_4panel_stock_1_region_1_age_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/NAA_4panel_stock_1_region_1_age_2.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/NAA_4panel_stock_1_region_1_age_3.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/NAA_4panel_stock_1_region_1_age_4.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/NAA_4panel_stock_1_region_1_age_5.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/NAA_4panel_stock_1_region_1_age_6.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Residuals_time.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/summary_text.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/tice_diagnostic.png" width="1440" style="display: block; margin: auto;" />
+<img src="plots_png/diagnostics/Catch_4panel_fleet_Fleet_1_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Fleet_1_region_1_a.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Fleet_1_region_1_b.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Fleet_1_region_1_c.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_fleet_Fleet_1_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_1_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_1_region_1_a.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_1_region_1_b.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_1_region_1_c.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_2_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_2_region_1_a.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_2_region_1_b.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_2_region_1_c.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_3_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_3_region_1_a.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_3_region_1_b.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_3_region_1_c.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_4_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_4_region_1_a.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_4_region_1_b.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_4_region_1_c.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_5_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_5_region_1_a.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_5_region_1_b.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_Index_5_region_1_c.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_resids_Fleet_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Catch_age_comp_resids_Index_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/con_diagnostic.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Index_4panel_Index_1_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Index_4panel_Index_2_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Index_4panel_Index_3_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Index_4panel_Index_4_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Index_4panel_Index_5_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/likelihood.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/NAA_4panel_stock_1_region_1_age_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/NAA_4panel_stock_1_region_1_age_2.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/NAA_4panel_stock_1_region_1_age_3.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/NAA_4panel_stock_1_region_1_age_4.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/NAA_4panel_stock_1_region_1_age_5.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/NAA_4panel_stock_1_region_1_age_6.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/Residuals_time.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/diagnostics/summary_text.png" width="6000" style="display: block; margin: auto;" />
 
 ### Results
 
-<img src="plots_png/results/CV_SSB_Rec_F.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/Ecov_1_tice.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/F_byfleet.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/M_at_age_stock_1_.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/MAA_tile.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/NAA_dev_tile.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Numbers_at_age_proportion_stock_1_region_1.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/Numbers_at_age_stock_1_region_1.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/q_prior_post.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/q_time_series.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/SelAA_tile.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Selectivity_Fleet_1_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Selectivity_Index_1_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Selectivity_Index_2_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Selectivity_Index_3_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Selectivity_Index_4_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Selectivity_Index_5_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_at_age_proportion_stock_1.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_at_age_stock_1.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_F_trend.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_Rec_loglog_stock_1.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_Rec_stock_1.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_Rec_stock_1_fit.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_Rec_time_stock_1.png" width="6000" style="display: block; margin: auto;" />
+<img src="plots_png/results/CV_SSB_Rec_F.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/Ecov_1_con.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/F_byfleet.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/M_at_age_stock_1_.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/MAA_tile.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/NAA_dev_tile.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Numbers_at_age_proportion_stock_1_region_1.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/Numbers_at_age_stock_1_region_1.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/q_prior_post.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/q_time_series.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/SelAA_tile.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Selectivity_Fleet_1_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Selectivity_Index_1_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Selectivity_Index_2_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Selectivity_Index_3_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Selectivity_Index_4_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/Selectivity_Index_5_region_1.png" width="1440" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_at_age_proportion_stock_1.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_at_age_stock_1.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_F_trend.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_Rec_loglog_stock_1.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_Rec_stock_1.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_Rec_stock_1_fit.png" width="6000" style="display: block; margin: auto;" /><img src="plots_png/results/SSB_Rec_time_stock_1.png" width="6000" style="display: block; margin: auto;" />
 
 ### Retro
 
@@ -72,9 +72,9 @@ header-includes:
   <tr>
    <td style="text-align:left;"> stock 1 B-H a </td>
    <td style="text-align:right;"> $2108.278$ </td>
-   <td style="text-align:right;"> $4687.822$ </td>
+   <td style="text-align:right;"> $4687.823$ </td>
    <td style="text-align:right;"> $26.993$ </td>
-   <td style="text-align:right;"> $164664.888$ </td>
+   <td style="text-align:right;"> $164664.893$ </td>
   </tr>
   <tr>
    <td style="text-align:left;"> stock 1 B-H b </td>
@@ -441,25 +441,25 @@ header-includes:
    <td style="text-align:right;"> $8.041$ </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Ecov tice: $\sigma$ </td>
-   <td style="text-align:right;"> $0.988$ </td>
-   <td style="text-align:right;"> $0.096$ </td>
-   <td style="text-align:right;"> $0.817$ </td>
-   <td style="text-align:right;"> $1.196$ </td>
+   <td style="text-align:left;"> Ecov con: $\sigma$ </td>
+   <td style="text-align:right;"> $0.563$ </td>
+   <td style="text-align:right;"> $0.374$ </td>
+   <td style="text-align:right;"> $0.153$ </td>
+   <td style="text-align:right;"> $2.068$ </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Ecov tice: AR1 $\rho$ </td>
-   <td style="text-align:right;"> $0.068$ </td>
-   <td style="text-align:right;"> $0.144$ </td>
-   <td style="text-align:right;"> $-0.212$ </td>
-   <td style="text-align:right;"> $0.337$ </td>
+   <td style="text-align:left;"> Ecov con: AR1 $\rho$ </td>
+   <td style="text-align:right;"> $0.699$ </td>
+   <td style="text-align:right;"> $0.350$ </td>
+   <td style="text-align:right;"> $-0.442$ </td>
+   <td style="text-align:right;"> $0.976$ </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> Ecov: tice obs. sd. </td>
-   <td style="text-align:right;"> $4.333\times 10^{-5}$ </td>
-   <td style="text-align:right;"> $2.980$ </td>
-   <td style="text-align:right;"> $0.000$ </td>
-   <td style="text-align:right;"> $ Inf$ </td>
+   <td style="text-align:left;"> Ecov: con obs. sd. </td>
+   <td style="text-align:right;"> $0.623$ </td>
+   <td style="text-align:right;"> $0.275$ </td>
+   <td style="text-align:right;"> $0.262$ </td>
+   <td style="text-align:right;"> $1.482$ </td>
   </tr>
 </tbody>
 </table>
@@ -482,7 +482,7 @@ header-includes:
 <tbody>
   <tr>
    <td style="text-align:left;"> 1972 </td>
-   <td style="text-align:right;"> 67864257 </td>
+   <td style="text-align:right;"> 67864256 </td>
    <td style="text-align:right;"> 24965865 </td>
    <td style="text-align:right;"> 9184428 </td>
    <td style="text-align:right;"> 3378762 </td>
@@ -491,7 +491,7 @@ header-includes:
   </tr>
   <tr>
    <td style="text-align:left;"> 1973 </td>
-   <td style="text-align:right;"> 67764651 </td>
+   <td style="text-align:right;"> 67764650 </td>
    <td style="text-align:right;"> 70240779 </td>
    <td style="text-align:right;"> 34935827 </td>
    <td style="text-align:right;"> 6132552 </td>
@@ -502,8 +502,8 @@ header-includes:
    <td style="text-align:left;"> 1974 </td>
    <td style="text-align:right;"> 77383082 </td>
    <td style="text-align:right;"> 57716699 </td>
-   <td style="text-align:right;"> 80842642 </td>
-   <td style="text-align:right;"> 17707214 </td>
+   <td style="text-align:right;"> 80842641 </td>
+   <td style="text-align:right;"> 17707213 </td>
    <td style="text-align:right;"> 1768135 </td>
    <td style="text-align:right;"> 543093 </td>
   </tr>
@@ -519,7 +519,7 @@ header-includes:
   <tr>
    <td style="text-align:left;"> 1976 </td>
    <td style="text-align:right;"> 57376635 </td>
-   <td style="text-align:right;"> 57896256 </td>
+   <td style="text-align:right;"> 57896255 </td>
    <td style="text-align:right;"> 63574597 </td>
    <td style="text-align:right;"> 23891083 </td>
    <td style="text-align:right;"> 7432984 </td>
@@ -563,7 +563,7 @@ header-includes:
   </tr>
   <tr>
    <td style="text-align:left;"> 1981 </td>
-   <td style="text-align:right;"> 49424929 </td>
+   <td style="text-align:right;"> 49424928 </td>
    <td style="text-align:right;"> 42730983 </td>
    <td style="text-align:right;"> 12797965 </td>
    <td style="text-align:right;"> 5863760 </td>
@@ -573,7 +573,7 @@ header-includes:
   <tr>
    <td style="text-align:left;"> 1982 </td>
    <td style="text-align:right;"> 58817390 </td>
-   <td style="text-align:right;"> 48317579 </td>
+   <td style="text-align:right;"> 48317578 </td>
    <td style="text-align:right;"> 70880817 </td>
    <td style="text-align:right;"> 3942276 </td>
    <td style="text-align:right;"> 852355 </td>
@@ -617,7 +617,7 @@ header-includes:
   </tr>
   <tr>
    <td style="text-align:left;"> 1987 </td>
-   <td style="text-align:right;"> 299584608 </td>
+   <td style="text-align:right;"> 299584607 </td>
    <td style="text-align:right;"> 148799186 </td>
    <td style="text-align:right;"> 42552249 </td>
    <td style="text-align:right;"> 65736825 </td>
@@ -788,7 +788,7 @@ header-includes:
   </tr>
   <tr>
    <td style="text-align:left;"> 2006 </td>
-   <td style="text-align:right;"> 158259377 </td>
+   <td style="text-align:right;"> 158259376 </td>
    <td style="text-align:right;"> 18424540 </td>
    <td style="text-align:right;"> 4663896 </td>
    <td style="text-align:right;"> 932844 </td>
@@ -824,7 +824,7 @@ header-includes:
   </tr>
   <tr>
    <td style="text-align:left;"> 2010 </td>
-   <td style="text-align:right;"> 116758286 </td>
+   <td style="text-align:right;"> 116758285 </td>
    <td style="text-align:right;"> 13979884 </td>
    <td style="text-align:right;"> 5164684 </td>
    <td style="text-align:right;"> 159319 </td>
