@@ -480,3 +480,30 @@ fit10$sdrep
 # plot_wham_output(fit10, res = 600, dir.main = file.path(getwd(), "wham", "fit10"))
 
 
+
+## Use maturity at age to inform mean shape of fishery selectivity -------------
+
+ind <- index[, 1] > 0
+index_years <- years[ind]
+mat_obs <- mat[1, ind, ]
+mean_mat <- colMeans(mat_obs)
+logistic_model <- nls(mean_mat ~ 1 / (1 + exp(-(ages - a) / b)), 
+                      start = list(a = 0, b = 1), 
+                      control = nls.control(maxiter = 100))
+params <- coef(logistic_model)
+a <- params["a"]
+b <- params["b"]
+plot(ages, mean_mat)
+x <- seq(min(ages), max(ages), length = 100)
+y <- 1 / (1 + exp(-(x - a) / b))
+lines(x, y)
+
+## Difficult to impose this form at present. Does the shape from fit4 look like this shape?
+
+mean_FAA <- colMeans(fit4$rep$FAA[1,,])
+lines(ages, mean_FAA / max(mean_FAA), col = "red")
+## Yes, quite well, except for age 6, which is not suprising given their absence from the population since the collapse
+
+
+
+
